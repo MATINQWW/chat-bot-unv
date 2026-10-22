@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0EA5E9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="سوپر همراه دانشجو">
+<title>سوپر همراه دانشجو</title>
+
+<!-- Security: Content Security Policy -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<!-- IRANYekan Font (from persian-fonts-cdn via JSDelivr) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/AmirAbbasVafaee/persian-fonts-cdn@main/css/iran-yekan.css">
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="g-brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0891B2"/><stop offset=".45" stop-color="#06B6D4"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient>
+    <linearGradient id="g-ai" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#06B6D4"/><stop offset=".5" stop-color="#8B5CF6"/><stop offset="1" stop-color="#D946EF"/></linearGradient>
+    <linearGradient id="g-cap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#E0F2FE"/></linearGradient>
+    <linearGradient id="g-mascot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#06B6D4"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient>
+  </defs>
+  <symbol id="s-logo" viewBox="0 0 40 40">
+    <rect width="40" height="40" rx="12" fill="url(#g-brand)"/>
+    <path d="M9 24 L20 11 L31 24 L31 26 L9 26 Z" fill="url(#g-cap)" opacity=".95"/>
+    <path d="M20 11 L31 24 L31 25 L20 26 L9 25 L9 24 Z" fill="#fff" opacity=".5"/>
+    <path d="M13.5 26 v4.5 a6.5 3 0 0 0 13 0 V26" fill="url(#g-cap)" opacity=".92"/>
+    <circle cx="20" cy="24.5" r="1.4" fill="#0891B2"/>
+    <path d="M33 20 l1.6 3.2 l3.2 1.6 l-3.2 1.6 L33 29.6 l-1.6-3.2 L28.2 24.8 l3.2-1.6 Z" fill="#fff" opacity=".85"/>
+  </symbol>
+  <symbol id="s-ai" viewBox="0 0 40 40">
+    <rect width="40" height="40" rx="12" fill="url(#g-ai)"/>
+    <path d="M20 8 L22.4 16 L30 18.4 L22.4 20.8 L20 29 L17.6 20.8 L10 18.4 L17.6 16 Z" fill="#fff" opacity=".95"/>
+    <circle cx="20" cy="18.4" r="2.2" fill="#fff"/>
+  </symbol>
+  <symbol id="s-mascot" viewBox="0 0 120 120">
+    <defs><radialGradient id="m-glow" cx=".5" cy=".4" r=".55"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+    <ellipse cx="60" cy="105" rx="42" ry="6" fill="#0891B2" opacity=".15"/>
+    <path d="M60 22 C36 22 24 40 24 62 C24 86 40 100 60 100 C80 100 96 86 96 62 C96 40 84 22 60 22 Z" fill="#fff" stroke="url(#g-mascot)" stroke-width="2"/>
+    <path d="M24 62 C24 40 36 22 60 22 C48 26 40 40 40 62 C40 84 48 98 60 100 C40 100 24 86 24 62 Z" fill="#E0F2FE" opacity=".5"/>
+    <circle cx="46" cy="58" r="8" fill="#0A1220"/><circle cx="74" cy="58" r="8" fill="#0A1220"/>
+    <circle cx="47.5" cy="56" r="2.4" fill="#fff"/><circle cx="75.5" cy="56" r="2.4" fill="#fff"/>
+    <path d="M57 76 L60 82 L63 76 Z" fill="#F59E0B"/>
+    <path d="M52 84 Q60 90 68 84" stroke="#0891B2" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".6"/>
+    <path d="M46 32 L50 22 L56 32 Z" fill="url(#g-mascot)"/><path d="M64 32 L70 22 L74 32 Z" fill="url(#g-mascot)"/>
+    <path d="M38 22 L60 12 L82 22 L82 26 L60 16 L38 26 Z" fill="#0891B2"/>
+    <path d="M38 22 L60 12 L82 22" stroke="#06B6D4" stroke-width="1.2" fill="none"/>
+    <circle cx="82" cy="24" r="2" fill="#F59E0B"/><path d="M82 24 L82 34" stroke="#F59E0B" stroke-width="1.2" stroke-linecap="round"/><circle cx="82" cy="34" r="1.8" fill="#F59E0B"/>
+  </symbol>
+</svg>
+
+<div id="loader" aria-hidden="true">
+  <div class="loader-stack">
+    <div class="loader-orbit">
+      <div class="loader-orbit__ring"></div><div class="loader-orbit__ring"></div><div class="loader-orbit__ring"></div>
+      <div class="loader-logo"><svg viewBox="0 0 40 40"><use href="#s-logo"/></svg></div>
+    </div>
+    <div class="loader-title" data-i18n="app.name">سوپر همراه دانشجو</div>
+    <div class="loader-bar"><div class="loader-bar__fill"></div></div>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite" aria-atomic="true"></div>
+
+<!-- SETTINGS MODAL (Accent & Font Family removed) -->
+<div id="m-settings" class="modal-backdrop" data-modal>
+  <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1" data-modal-panel>
+    <div class="modal-head">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="modal-icon" style="background:linear-gradient(135deg,#06B6D4,#8B5CF6)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+        <div class="min-w-0"><div class="modal-title" data-i18n="settings.title">تنظیمات</div><div class="modal-subtitle" data-i18n="settings.subtitle">شخصی‌سازی تجربه</div></div>
+      </div>
+      <button class="modal-close" data-close="m-settings" aria-label="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-row" data-open="m-lang">
+        <div class="setting-icon" style="background:linear-gradient(135deg,#38BDF8,#2563EB)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20"/></svg></div>
+        <div class="setting-content"><div class="setting-title" data-i18n="settings.language">زبان</div><div class="setting-desc" data-i18n="settings.language.desc">زبان رابط کاربری</div></div>
+        <span id="current-lang-display" class="setting-value">فارسی</span>
+      </div>
+      <div class="setting-row">
+        <div class="setting-icon" style="background:linear-gradient(135deg,#A78BFA,#7C3AED)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36-.7-.7M6.34 6.34l-.7-.7m12.72 0-.7.7M6.34 17.66l-.7.7M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/></svg></div>
+        <div class="setting-content"><div class="setting-title" data-i18n="settings.theme">حالت نمایش</div><div class="setting-desc" data-i18n="settings.theme.desc">تم رنگی برنامه</div></div>
+        <div class="theme-switch"><button class="theme-btn" data-theme="light">☀️</button><button class="theme-btn" data-theme="dark">🌙</button></div>
+      </div>
+      <div class="setting-row has-slider">
+        <div class="setting-icon" style="background:linear-gradient(135deg,#FBBF24,#F59E0B)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div>
+        <div class="setting-content"><div class="setting-title" data-i18n="settings.font">اندازه فونت</div><div class="setting-desc" data-i18n="settings.font.desc">اندازه متن برنامه</div></div>
+        <span id="font-label" class="setting-value">متوسط</span>
+        <input type="range" id="font-size" class="slider" min="12" max="22" step="1" value="15" aria-label="font size">
+      </div>
+      <div class="setting-row">
+        <div class="setting-icon" style="background:linear-gradient(135deg,#34D399,#059669)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.54 8.46a5 5 0 0 1 0 7.07M18.36 5.64a9 9 0 0 1 0 12.73M6 18v-2a2 2 0 0 1 2-2h1l3 3V9l-3 3H8a2 2 0 0 0-2 2z"/></svg></div>
+        <div class="setting-content"><div class="setting-title" data-i18n="settings.sound">صدای اعلان</div><div class="setting-desc" data-i18n="settings.sound.desc">هنگام دریافت پاسخ</div></div>
+        <label class="toggle"><input type="checkbox" id="sound-toggle" checked><span class="toggle__track"></span></label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-icon" style="background:linear-gradient(135deg,#A78BFA,#7C3AED)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+        <div class="setting-content"><div class="setting-title" data-i18n="settings.autoSend">ارسال خودکار صوتی</div><div class="setting-desc" data-i18n="settings.autoSend.desc">پس از ضبط، خودکار ارسال شود</div></div>
+        <label class="toggle"><input type="checkbox" id="autosend-toggle"><span class="toggle__track"></span></label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button id="clear-all-chats" class="btn-ghost" data-i18n="settings.clearAll">پاک‌کردن همهٔ گفتگوها</button>
+      <button id="reset-defaults" class="btn-ghost" data-i18n="settings.reset">بازنشانی</button>
+      <button data-close="m-settings" class="btn-primary" data-i18n="settings.save">ذخیره و بستن</button>
+    </div>
+  </div>
+</div>
+
+<!-- LANGUAGE MODAL -->
+<div id="m-lang" class="modal-backdrop" data-modal>
+  <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1" data-modal-panel style="max-width:420px">
+    <div class="modal-head">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="modal-icon" style="background:linear-gradient(135deg,#38BDF8,#2563EB)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20"/></svg></div>
+        <div class="min-w-0"><div class="modal-title" data-i18n="lang.title">انتخاب زبان</div><div class="modal-subtitle" data-i18n="lang.subtitle">زبان مورد نظر</div></div>
+      </div>
+      <button class="modal-close" data-close="m-lang" aria-label="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="lang-options">
+      <button class="lang-option" data-lang="fa" data-lang-pick="fa"><span class="lang-flag">🇮🇷</span><div class="flex-1 min-w-0"><div class="lang-name">فارسی</div><div class="lang-sub">Persian</div></div><span class="lang-check">✓</span></button>
+      <button class="lang-option" data-lang="ar" data-lang-pick="ar"><span class="lang-flag">🇸🇦</span><div class="flex-1 min-w-0"><div class="lang-name">العربية</div><div class="lang-sub">Arabic</div></div><span class="lang-check">✓</span></button>
+      <button class="lang-option" data-lang="en" data-lang-pick="en"><span class="lang-flag">🇬🇧</span><div class="flex-1 min-w-0"><div class="lang-name">English</div><div class="lang-sub">انگلیسی</div></div><span class="lang-check">✓</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- SUPPORT MODAL -->
+<div id="m-support" class="modal-backdrop" data-modal>
+  <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1" data-modal-panel>
+    <div class="modal-head">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="modal-icon" style="background:linear-gradient(135deg,#34D399,#059669)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.42-4.03 8-9 8a9.86 9.86 0 0 1-4.26-.95L3 20l1.4-3.72C3.51 15.04 3 13.57 3 12c0-4.42 4.03-8 9-8s9 3.58 9 8z"/></svg></div>
+        <div class="min-w-0"><div class="modal-title" data-i18n="support.title">پشتیبانی</div><div class="modal-subtitle" data-i18n="support.subtitle">در خدمت شما</div></div>
+      </div>
+      <button class="modal-close" data-close="m-support" aria-label="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-row"><div class="setting-icon" style="background:linear-gradient(135deg,#38BDF8,#0891B2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.42-4.03 8-9 8a9.86 9.86 0 0 1-4.26-.95L3 20l1.4-3.72C3.51 15.04 3 13.57 3 12c0-4.42 4.03-8 9-8s9 3.58 9 8z"/></svg></div><div class="setting-content"><div class="setting-title" data-i18n="support.chat">گفتگوی آنلاین</div><div class="setting-desc" data-i18n="support.chat.desc">پاسخ سریع در ساعات کاری</div></div></div>
+      <div class="setting-row"><div class="setting-icon" style="background:linear-gradient(135deg,#818CF8,#4F46E5)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg></div><div class="setting-content"><div class="setting-title" data-i18n="support.email">ایمیل</div><div class="setting-desc" style="direction:ltr;text-align:start">support@superhamrah.ir</div></div></div>
+      <div class="setting-row"><div class="setting-icon" style="background:linear-gradient(135deg,#FBBF24,#EA580C)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><div class="setting-content"><div class="setting-title" data-i18n="support.phone">تلفن</div><div class="setting-desc">۰۲۱-۹۱۰۰۰۰۰۰</div></div></div>
+    </div>
+    <div class="modal-foot"><button data-close="m-support" class="btn-primary" data-i18n="settings.close">بستن</button></div>
+  </div>
+</div>
+
+<!-- ABOUT MODAL -->
+<div id="m-about" class="modal-backdrop" data-modal>
+  <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1" data-modal-panel>
+    <div class="modal-head">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="modal-icon" style="background:linear-gradient(135deg,#A78BFA,#4F46E5)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
+        <div class="min-w-0"><div class="modal-title" data-i18n="about.title">درباره ما</div><div class="modal-subtitle" data-i18n="about.subtitle">با ما آشنا شوید</div></div>
+      </div>
+      <button class="modal-close" data-close="m-about" aria-label="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" style="text-align:center;padding:24px 20px">
+      <div style="width:88px;height:88px;margin:0 auto 16px;border-radius:22px;overflow:hidden;box-shadow:0 16px 32px -12px rgba(6,182,212,.5)"><svg viewBox="0 0 40 40" style="width:100%;height:100%"><use href="#s-logo"/></svg></div>
+      <div class="about-name" data-i18n="app.name">سوپر همراه دانشجو</div>
+      <div class="about-ver"><span data-i18n="about.version">نسخه</span> <span style="direction:ltr">1.0.0</span></div>
+      <p class="about-desc" data-i18n="about.desc">سوپر همراه دانشجو یک دستیار هوشمند تحصیلی است که با هدف کمک به دانشجویان در مسیر تحصیلی طراحی شده.</p>
+    </div>
+    <div class="modal-foot"><button data-close="m-about" class="btn-primary" data-i18n="settings.close">بستن</button></div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="m-confirm" class="modal-backdrop" data-modal>
+  <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1" data-modal-panel style="max-width:400px">
+    <div class="modal-body" style="padding:24px">
+      <div id="cf-icon" style="width:56px;height:56px;border-radius:18px;background:rgba(244,63,94,.1);display:flex;align-items:center;justify-content:center;font-size:1.75rem;margin-bottom:14px">⚠️</div>
+      <div id="cf-title" class="modal-title mb-2"></div>
+      <p id="cf-msg" class="setting-desc" style="font-size:.8125rem;line-height:1.7;margin:0"></p>
+    </div>
+    <div class="modal-foot"><button data-close="m-confirm" class="btn-ghost" data-i18n="confirm.cancel">لغو</button><button id="cf-ok" class="btn-danger">تأیید</button></div>
+  </div>
+</div>
+
+<!-- FILE MODAL -->
+<div id="m-file" class="modal-backdrop" data-modal>
+  <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1" data-modal-panel style="max-width:420px">
+    <div class="modal-head">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="modal-icon" style="background:linear-gradient(135deg,#06B6D4,#8B5CF6)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
+        <div class="min-w-0"><div class="modal-title" data-i18n="file.title">ارسال فایل</div><div class="modal-subtitle" data-i18n="file.desc">نوع فایل مورد نظر را انتخاب کنید</div></div>
+      </div>
+      <button class="modal-close" data-close="m-file" aria-label="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <button class="setting-row" data-pick="image" style="width:100%">
+        <div class="setting-icon" style="background:linear-gradient(135deg,#38BDF8,#2563EB)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+        <div class="setting-content"><div class="setting-title" data-i18n="file.image">تصویر</div><div class="setting-desc" data-i18n="file.image.desc">عکس، اسکرین‌شات، کارنامه</div></div>
+      </button>
+      <button class="setting-row" data-pick="document" style="width:100%">
+        <div class="setting-icon" style="background:linear-gradient(135deg,#34D399,#059669)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></div>
+        <div class="setting-content"><div class="setting-title" data-i18n="file.doc">فایل و سند</div><div class="setting-desc" data-i18n="file.doc.desc">PDF، TXT، CSV</div></div>
+      </button>
+    </div>
+    <div class="modal-foot"><button data-close="m-file" class="btn-ghost" data-i18n="file.cancel">انصراف</button></div>
+  </div>
+</div>
+
+<div id="sb-overlay"></div>
+
+<header class="hdr">
+  <div class="hdr-bar">
+    <button id="sb-toggle" class="icon-btn md:hidden hdr-menu" aria-label="menu" aria-expanded="false"><span class="hamburger"><span></span><span></span><span></span></span></button>
+    <div class="hdr-brand">
+      <div class="hdr-logo-wrap"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#s-logo"/></svg></div>
+      <h1 class="hdr-title" data-i18n="app.name">سوپر همراه دانشجو</h1>
+      <span id="platform-badge" class="platform-badge hidden sm:inline-flex"></span>
+    </div>
+    <div class="hdr-actions">
+      <button id="theme-toggle" class="icon-btn" aria-label="theme"><span id="theme-icon">🌙</span></button>
+      <button class="icon-btn" data-open="m-settings" aria-label="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<div style="flex:1;display:flex;overflow:hidden;position:relative;min-height:0">
+  <aside id="sidebar">
+    <button id="sb-close" class="icon-btn md:hidden" style="align-self:flex-start;margin-bottom:8px" aria-label="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <button id="new-chat" class="btn-new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="sidebar.newChat">مشاوره جدید</span></button>
+    <div class="tabs">
+      <button class="tab active" data-chat-view="active"><span data-i18n="sidebar.tab.active">مشاوره‌ها</span><span class="tab__badge" id="badge-active">0</span></button>
+      <button class="tab" data-chat-view="archived"><span data-i18n="sidebar.tab.archived">آرشیو</span><span class="tab__badge" id="badge-archived">0</span></button>
+    </div>
+    <div class="search-wrap">
+      <input id="search-chats" type="text" class="search-input" placeholder="جستجو در مشاوره‌ها..." data-i18n-placeholder="sidebar.search">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </div>
+    <div id="chat-list"></div>
+    <div class="sidebar-tools">
+      <button class="sidebar-tool" data-open="m-settings" data-no-ripple aria-label="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="sidebar-tooltip" data-i18n="sidebar.settings">تنظیمات</span></button>
+      <button class="sidebar-tool" data-open="m-support" data-no-ripple aria-label="support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.42-4.03 8-9 8a9.86 9.86 0 0 1-4.26-.95L3 20l1.4-3.72C3.51 15.04 3 13.57 3 12c0-4.42 4.03-8 9-8s9 3.58 9 8z"/></svg><span class="sidebar-tooltip" data-i18n="sidebar.support">پشتیبانی</span></button>
+      <button class="sidebar-tool" data-open="m-about" data-no-ripple aria-label="about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span class="sidebar-tooltip" data-i18n="sidebar.about">درباره ما</span></button>
+    </div>
+    <div class="guest-card">
+      <div class="guest-avatar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+      <div class="guest-info"><span class="guest-name" data-i18n="sidebar.guest">کاربر مهمان</span><span class="guest-sub" data-i18n="sidebar.free">مشاوره رایگان</span></div>
+      <span class="pulse-dot"></span>
+    </div>
+  </aside>
+
+  <main>
+    <div id="chat" role="log" aria-live="off" aria-atomic="false"></div>
+    <div id="typing" hidden>
+      <svg class="msg-avatar msg-avatar--ai" viewBox="0 0 40 40" style="width:34px;height:34px"><use href="#s-ai"/></svg>
+      <div class="typing-bubble"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="typing-label" id="typing-text" data-i18n="typing.thinking">در حال بررسی...</span>
+    </div>
+    <button id="scroll-btn" class="scroll-btn" aria-label="scroll"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>
+    <div id="rec-panel"><div class="rec-inner"><div class="rec-dot"><div class="rec-dot__inner"></div></div><div class="rec-info"><div class="rec-status"><span class="rec-label" data-i18n="rec.recording">در حال ضبط</span><span id="rec-timer" class="rec-timer">00:00</span></div><div class="wave"><span></span><span></span><span></span><span></span><span></span></div></div><button id="rec-cancel" class="rec-btn rec-btn--ghost" data-i18n="rec.cancel">لغو</button><button id="rec-done" class="rec-btn rec-btn--primary" data-i18n="rec.done">پایان</button></div></div>
+
+    <footer class="composer-footer">
+      <div id="attach" class="attach-preview">
+        <div id="att-icon" class="attach-icon">📎</div><span id="att-name" class="attach-name"></span><span id="att-size" class="attach-size"></span>
+        <button id="att-remove" class="attach-remove" aria-label="remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <form id="chat-form">
+        <div class="composer">
+          <div class="quick-row" id="quick-row">
+            <button type="button" class="quick-chip" data-quick="short"><span>⚡</span><span data-i18n="quick.short">پاسخ سریع</span></button>
+            <button type="button" class="quick-chip" data-quick="explain"><span>📖</span><span data-i18n="quick.explain">توضیح کامل</span></button>
+            <button type="button" class="quick-chip" data-quick="examples"><span>💡</span><span data-i18n="quick.examples">با مثال</span></button>
+            <button type="button" class="quick-chip" data-quick="steps"><span>📋</span><span data-i18n="quick.steps">مرحله‌به‌مرحله</span></button>
+          </div>
+          <div class="composer-row">
+            <button type="button" class="composer-btn" data-open="m-file" aria-label="attach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
+            <input type="file" id="fi-image" hidden accept="image/*">
+            <input type="file" id="fi-doc" hidden accept=".pdf,.txt,.md,.csv">
+            <div class="composer-input-wrap"><span id="char-count" class="char-count"></span><textarea id="input" class="composer-textarea" rows="1" placeholder="سوال خود را بپرسید..." data-i18n-placeholder="input.placeholder" maxlength="4000"></textarea></div>
+            <button type="button" id="voice-btn" class="composer-btn" aria-label="voice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg></button>
+            <button type="submit" id="send-btn" class="send-btn" disabled aria-label="send" data-no-ripple><svg class="icon-send" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style="position:absolute"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/></svg><svg class="icon-stop" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style="position:absolute"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg></button>
+          </div>
+        </div>
+      </form>
+    </footer>
+  </main>
+</div>
+
+<nav class="bottom-nav" aria-label="primary">
+  <button class="bottom-item" data-bottom="chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.42-4.03 8-9 8a9.86 9.86 0 0 1-4.26-.95L3 20l1.4-3.72C3.51 15.04 3 13.57 3 12c0-4.42 4.03-8 9-8s9 3.58 9 8z"/></svg><span data-i18n="bottom.chats">مشاوره‌ها</span></button>
+  <button class="bottom-item" data-bottom="archive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 1 1 0-4h14a2 2 0 1 1 0 4M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8m-9 4h4"/></svg><span data-i18n="bottom.archive">آرشیو</span></button>
+  <button class="bottom-center" data-bottom="new" aria-label="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button class="bottom-item" data-bottom="about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="bottom.about">درباره ما</span></button>
+  <button class="bottom-item" data-bottom="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span data-i18n="bottom.settings">تنظیمات</span></button>
+</nav>
+
+<script src="script.js"></script>
+</body>
+</html>
