@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>مدیریت پایگاه دانش دانشگاه</title>
+  <style>
+    :root{color-scheme:light dark;font-family:Tahoma,Arial,sans-serif}*{box-sizing:border-box}body{margin:0;background:Canvas;color:CanvasText}main{max-width:1050px;margin:auto;padding:24px 16px 60px}h1{font-size:1.45rem}p,.muted{line-height:1.8;color:GrayText}.panel,.record{border:1px solid color-mix(in srgb,CanvasText 18%,transparent);border-radius:14px;padding:16px;margin:14px 0}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:180px}input,select,textarea,button{font:inherit;border:1px solid color-mix(in srgb,CanvasText 25%,transparent);border-radius:9px;padding:10px;background:Canvas;color:CanvasText}button{cursor:pointer}button.primary{background:#2563eb;color:white;border-color:#2563eb}button.danger{border-color:#dc2626;color:#dc2626}.record h2{font-size:1.05rem;line-height:1.7}.content{white-space:pre-wrap;line-height:1.9;max-height:220px;overflow:auto;background:color-mix(in srgb,CanvasText 5%,Canvas);padding:12px;border-radius:8px}.status{padding:10px;border-radius:8px;background:color-mix(in srgb,#2563eb 12%,Canvas)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.check{display:flex;gap:8px;align-items:center}.check input{width:auto}.small{font-size:.86rem}.hidden{display:none!important}
+  </style>
+</head>
+<body>
+<main>
+  <h1>مدیریت پایگاه دانش چت‌بات دانشگاه</h1>
+  <p>این صفحه برای بازبینی رکوردهای واردشده از پیام‌های قدیمی است. فقط پس از بررسی منبع معتبر، رکورد را برای ادعاهای رسمی فعال کنید. این صفحه جایگزین تأیید منبع دانشگاهی نیست.</p>
+  <section class="panel">
+    <div class="row">
+      <label class="field">توکن مدیریت (ADMIN_TOKEN)<input id="token" type="password" autocomplete="current-password" placeholder="توکن مدیریت را وارد کنید"></label>
+      <button id="load" class="primary">بارگذاری رکوردها</button>
+      <button id="stats">آمار پایگاه دانش</button>
+    </div>
+    <p class="muted small">توکن در حافظه همین صفحه نگهداری می‌شود و در localStorage ذخیره نمی‌شود. برای این صفحه باید Supabase و متغیرهای سرور پیکربندی شده باشند.</p>
+    <div id="status" class="status" role="status">آماده</div>
+  </section>
+  <section id="records"></section>
+  <div class="row"><button id="more" class="hidden">بارگذاری دسته بعدی</button></div>
+  <pre id="statsOutput" class="panel hidden"></pre>
+</main>
+<script src="/admin.js" defer></script>
+</body>
+</html>

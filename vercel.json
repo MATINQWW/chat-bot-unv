@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/*.js": { "includeFiles": "knowledge.txt", "maxDuration": 30 }
+    "api/*.js": { "includeFiles": "data/knowledge_records_v1.jsonl", "maxDuration": 30 }
   },
   "headers": [
     {

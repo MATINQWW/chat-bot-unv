@@ -585,12 +585,18 @@ function userBubbleHTML(text){
       <div class="msg-avatar msg-avatar--user"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
     </div>`;
 }
-function aiBubbleHTML(text,cid){
+function aiBubbleHTML(text,cid,sources,knowledgeStatus){
+  const srcs=Array.isArray(sources)?sources.slice(0,6):[];
+  const sourceLabel=S.lang==='ar'?'المصادر المرتبطة':S.lang==='en'?'Related sources':'منابع مرتبط';
+  const unverifiedLabel=S.lang==='ar'?'غير موثّق':S.lang==='en'?'Unverified':'تأییدنشده';
+  const verifiedLabel=S.lang==='ar'?'موثّق للاستخدام الرسمي':S.lang==='en'?'Verified for official use':'تأییدشده برای استفاده رسمی';
+  const sourceHtml=srcs.length?`<div class="answer-sources"><div class="answer-sources__title">${esc(sourceLabel)}</div><ul>${srcs.map(s=>`<li><span class="answer-sources__id">${esc(s.id||'')}</span> <span>${esc(s.title||s.category||'')}</span><span class="answer-sources__status ${s.authority_status==='verified'&&s.use_for_official_claims?'is-verified':''}">${esc(s.authority_status==='verified'&&s.use_for_official_claims?verifiedLabel:unverifiedLabel)}</span></li>`).join('')}</ul></div>`:'';
   return `
     <div class="msg-group" data-cid="${escAttr(cid||'')}">
       <svg class="msg-avatar msg-avatar--ai" viewBox="0 0 40 40" aria-hidden="true"><use href="#s-ai"/></svg>
       <div class="msg-body">
         <div data-role="ai" class="bubble-ai">${md(text)}</div>
+        ${sourceHtml}
         <div class="msg-actions">
           <button class="msg-action" data-action="copy">${esc(t('msg.copy'))}</button>
           <button class="msg-action" data-action="regen">${esc(t('msg.regen'))}</button>
@@ -632,8 +638,8 @@ function stopTypingStages(){
    TYPEWRITER (parse-once + clip reveal)
    ═══════════════════════════════════════════════════════════ */
 const TYPE_CPS=55, TYPE_MAX_MS=14000;
-function appendAITyped(fullText,cid){
-  el.chat.insertAdjacentHTML('beforeend',aiBubbleHTML('',cid));
+function appendAITyped(fullText,cid,sources,knowledgeStatus){
+  el.chat.insertAdjacentHTML('beforeend',aiBubbleHTML('',cid,sources,knowledgeStatus));
   const groups=el.chat.querySelectorAll('.msg-group');
   const group=groups[groups.length-1];
   const bubble=group.querySelector('[data-role="ai"]');
@@ -993,7 +999,7 @@ function renderMessages(msgs){
       frag.appendChild(div);
     }
     const tmp=document.createElement('div');
-    tmp.innerHTML=m.role==='user'?userBubbleHTML(m.content):aiBubbleHTML(m.content,m.cid);
+    tmp.innerHTML=m.role==='user'?userBubbleHTML(m.content):aiBubbleHTML(m.content,m.cid,m.sources,m.knowledgeStatus);
     while(tmp.firstChild)frag.appendChild(tmp.firstChild);
   });
   el.chat.appendChild(frag);
@@ -1186,7 +1192,7 @@ async function callAPI(att){
     if(!res.ok){const d=await res.text().catch(()=>'');console.error('API Error:',res.status);let sm='';try{sm=(JSON.parse(d).message||'').slice(0,200);}catch{}throw new Error(sm||`Server error (${res.status})`);}
     const data=await res.json();
     if(!data.reply)throw new Error('Empty reply');
-    return {reply:data.reply,sig:data.sig||'',cid:data.cid||''};
+    return {reply:data.reply,sig:data.sig||'',cid:data.cid||'',sources:Array.isArray(data.sources)?data.sources:[],knowledgeStatus:data.knowledgeStatus||''};
   }catch(err){
     if(timedOut){const e=new Error('timeout');e.name='TimeoutError';throw e;}
     throw err;
@@ -1203,9 +1209,9 @@ async function runCompletion(att){
     const _r=await callAPI(att);const reply=_r.reply;
     if(stale())return;
     stopTypingStages();el.typing.hidden=true;
-    await appendAITyped(reply,_r.cid);
+    await appendAITyped(reply,_r.cid,_r.sources,_r.knowledgeStatus);
     if(stale())return;
-    S.messages.push({role:'assistant',content:reply,sig:_r.sig,cid:_r.cid||'',date:Date.now()});
+    S.messages.push({role:'assistant',content:reply,sig:_r.sig,cid:_r.cid||'',sources:_r.sources||[],knowledgeStatus:_r.knowledgeStatus||'',date:Date.now()});
     persistCurrentChat();
     if(S.sound)playSound();
   }catch(err){

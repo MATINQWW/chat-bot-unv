@@ -5,6 +5,10 @@
   "engines": {
     "node": ">=18"
   },
+  "scripts": {
+    "check": "node --check api/chat.js && node --check api/admin.js && node --check lib/knowledge.js && node --check lib/prompt.js && node --check scripts/import-knowledge-supabase.js && node scripts/check-knowledge.js",
+    "import:knowledge": "node scripts/import-knowledge-supabase.js"
+  },
   "dependencies": {
     "openai": "4.104.0",
     "pdf-parse": "1.1.1"

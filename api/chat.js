@@ -109,7 +109,7 @@ module.exports = async (req, res) => {
     }
 
     // ─── ۲) پاسخ مدل ───
-    let knowledge = '', topScore = 0;
+    let knowledge = '', topScore = 0, knowledgeSources = [], verifiedSourceCount = 0;
     const model = att && att.kind === 'image'
       ? (process.env.ICP_VISION_MODEL || 'icp-chat')
       : (process.env.ICP_MODEL || 'icp-chat');
@@ -127,8 +127,10 @@ module.exports = async (req, res) => {
     const baseMessages = messages;
     try {
       for (let b = 0; b < BUDGETS.length; b++) {
-        const r = retrieveKnowledge(question, BUDGETS[b].knowledge);
+        const r = await retrieveKnowledge(question, BUDGETS[b].knowledge);
         knowledge = r.text; topScore = r.topScore;
+        knowledgeSources = r.sources || [];
+        verifiedSourceCount = r.verifiedCount || 0;
         try {
           completion = await retryWithBackoff(() =>
             client.chat.completions.create(
@@ -183,12 +185,13 @@ module.exports = async (req, res) => {
       try {
         const state = await L.observe({
           info, answer: reply, ipHash: ipHash(req), usedTokens: used,
-          retrievalScore: topScore, eligibleToStore: firstTurn,
+          // Automatic answer promotion stays disabled until cache invalidation is tied to live knowledge revisions.
+          retrievalScore: topScore, eligibleToStore: false,
         });
         if (info.ok && firstTurn && state !== 'banned') cid = info.key;
       } catch (e) { console.warn('learn failed', e && e.message); }
     }
-    return res.status(200).json({ reply, sig: reply ? sign(reply) : '', cid });
+    return res.status(200).json({ reply, sig: reply ? sign(reply) : '', cid, sources: knowledgeSources, knowledgeStatus: verifiedSourceCount > 0 ? 'verified_sources_found' : 'no_verified_official_sources' });
   } catch (e) {
     console.error('server error', e);
     return res.status(500).json({ error: 'server_error', message: 'خطای داخلی سرور.' });
