@@ -15,11 +15,18 @@ const LIMITS = {
   maxBodyBytesWithAttachment: 4 * 1024 * 1024,
   maxRawMessages: 12,
   maxContentChars: 20000,
-  sendHistory: 4,
-  sendChars: 600,
+  sendHistory: 2,
+  sendChars: 500,
   perMinute: 8, perHour: 60,
   attPerMinute: 3, attPerHour: 15,
 };
+
+// بودجهٔ توکن: اگر سرویس بالادستی 413 (جا نشدن ورودی + خروجی) داد، با بودجهٔ کوچک‌تر دوباره تلاش می‌کنیم
+const BUDGETS = [
+  { knowledge: parseInt(process.env.ICP_KNOWLEDGE_CHARS || '1800', 10), maxTokens: parseInt(process.env.ICP_MAX_TOKENS || '800', 10) },
+  { knowledge: 1000, maxTokens: 600 },
+  { knowledge: 500,  maxTokens: 450 },
+];
 
 async function retryWithBackoff(fn, maxRetries = 2) {
   let lastError;
@@ -102,7 +109,7 @@ module.exports = async (req, res) => {
     }
 
     // ─── ۲) پاسخ مدل ───
-    const { text: knowledge, topScore } = retrieveKnowledge(question, 2800);
+    let knowledge = '', topScore = 0;
     const model = att && att.kind === 'image'
       ? (process.env.ICP_VISION_MODEL || 'icp-chat')
       : (process.env.ICP_MODEL || 'icp-chat');
@@ -117,29 +124,46 @@ module.exports = async (req, res) => {
     }
 
     let completion;
+    const baseMessages = messages;
     try {
-      completion = await retryWithBackoff(() =>
-        client.chat.completions.create(
-          {
-            model,
-            messages: [
-              { role: 'system', content: RULES },
-              { role: 'system', content: 'اطلاعات مرجع:\n' + knowledge },
-            ].concat(messages, [{ role: 'system', content: REMINDER }]),
-            temperature: 0.2,
-            max_tokens: 1200,
-            stream: false,
-          },
-          {
-            headers: { 'Idempotency-Key': idempotencyKey },
+      for (let b = 0; b < BUDGETS.length; b++) {
+        const r = retrieveKnowledge(question, BUDGETS[b].knowledge);
+        knowledge = r.text; topScore = r.topScore;
+        try {
+          completion = await retryWithBackoff(() =>
+            client.chat.completions.create(
+              {
+                model,
+                messages: [
+                  { role: 'system', content: RULES },
+                  { role: 'system', content: 'اطلاعات مرجع:\n' + knowledge },
+                ].concat(baseMessages, [{ role: 'system', content: REMINDER }]),
+                temperature: 0.2,
+                max_tokens: BUDGETS[b].maxTokens,
+                stream: false,
+              },
+              { headers: { 'Idempotency-Key': idempotencyKey } }
+            )
+          );
+          break;
+        } catch (e) {
+          const st = e && (e.status || (e.response && e.response.status));
+          const tooBig = st === 413 || /context|413/i.test(String(e && e.message));
+          if (tooBig && b < BUDGETS.length - 1) {
+            console.warn(`upstream 413 — retry with smaller budget #${b + 1}`);
+            continue;
           }
-        )
-      );
+          throw e;
+        }
+      }
     } catch (apiErr) {
       console.error('upstream error', apiErr && apiErr.status, apiErr && apiErr.message);
       const status = apiErr && apiErr.status;
       if (status === 429 || status === 503) {
         return res.status(503).json({ error: 'model_overloaded', message: 'سرویس هوش مصنوعی در این لحظه شلوغ است. لطفاً چند لحظه دیگر دوباره تلاش کنید.' });
+      }
+      if (status === 413) {
+        return res.status(413).json({ error: 'context_too_large', message: 'پیام یا پیوست برای مدل بیش از حد بزرگ است. لطفاً کوتاه‌تر بنویسید یا پیوست را کوچک‌تر کنید.' });
       }
       if (att && att.kind === 'image' && (status === 400 || status === 422)) {
         return res.status(422).json({ error: 'vision_unsupported', message: 'مدل فعلی تحلیل تصویر را پشتیبانی نمی‌کند. متن تصویر را تایپ کنید.' });
