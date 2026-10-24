@@ -1,28 +1,26 @@
 const OpenAI = require('openai');
+const crypto = require('crypto');
 const { sign, validSig, ipHash, originAllowed, rateLimited, baseHeaders } = require('../lib/common');
 const { describe } = require('../lib/learn');
 const { retrieveKnowledge, RULES, REMINDER, getLearner } = require('../lib/prompt');
 const { parseAttachment, AttError } = require('../lib/attachments');
 
 const client = new OpenAI({
-  apiKey: process.env.OLLAMA_API_KEY,
-  baseURL: 'https://ollama.com/v1/',
+  apiKey: process.env.ICP_API_KEY,
+  baseURL: 'https://irancopilot.com/studio/pro/v1/',
 });
 
 const LIMITS = {
-  maxBodyBytes: 60 * 1024,          // بدون پیوست
+  maxBodyBytes: 60 * 1024,
   maxBodyBytesWithAttachment: 4 * 1024 * 1024,
   maxRawMessages: 12,
   maxContentChars: 20000,
   sendHistory: 4,
   sendChars: 600,
-  perMinute: 8, perHour: 60,        // پیام متنی
-  attPerMinute: 3, attPerHour: 15,  // پیوست (گران‌تر است)
+  perMinute: 8, perHour: 60,
+  attPerMinute: 3, attPerHour: 15,
 };
 
-// ═══════════════════════════════════════
-// RETRY — فقط روی خطاهای موقتی، با سقف زمانی کوتاه
-// ═══════════════════════════════════════
 async function retryWithBackoff(fn, maxRetries = 2) {
   let lastError;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -62,10 +60,13 @@ module.exports = async (req, res) => {
   }
 
   try {
-    if (!process.env.OLLAMA_API_KEY) {
-      console.error('OLLAMA_API_KEY is not set');
+    if (!process.env.ICP_API_KEY) {
+      console.error('ICP_API_KEY is not set');
       return res.status(500).json({ error: 'server_error', message: 'سرویس در حال حاضر در دسترس نیست.' });
     }
+
+    // ─── کلید یکتا برای هر درخواست کاربر (بین retryها ثابت می‌ماند) ───
+    const idempotencyKey = crypto.randomUUID();
 
     const input = Array.isArray(body.messages) ? body.messages.slice(-LIMITS.maxRawMessages) : [];
     let messages = input.filter(m =>
@@ -91,7 +92,7 @@ module.exports = async (req, res) => {
     const L = getLearner();
     const info = describe(question);
 
-    // ─── ۱) حافظه: پرسش تکراری → پاسخ بدون مصرف توکن ───
+    // ─── ۱) حافظه ───
     if (!att && info.ok && (firstTurn || !info.deictic)) {
       const hit = await L.lookup(info);
       if (hit) {
@@ -102,8 +103,9 @@ module.exports = async (req, res) => {
 
     // ─── ۲) پاسخ مدل ───
     const { text: knowledge, topScore } = retrieveKnowledge(question, 2800);
-    const model = att && att.kind === 'image' ? (process.env.VISION_MODEL || process.env.GEMINI_MODEL || 'gemma4:31b')
-                                                : (process.env.GEMINI_MODEL || 'gemma4:31b');
+    const model = att && att.kind === 'image'
+      ? (process.env.ICP_VISION_MODEL || 'icp-chat')
+      : (process.env.ICP_MODEL || 'icp-chat');
     const last = messages.length - 1;
     if (att && att.kind === 'text') {
       messages[last].content += `\n\n<attachment name="${att.name}">\n${att.text}\n</attachment>`;
@@ -117,16 +119,21 @@ module.exports = async (req, res) => {
     let completion;
     try {
       completion = await retryWithBackoff(() =>
-        client.chat.completions.create({
-          model,
-          messages: [
-            { role: 'system', content: RULES },
-            { role: 'system', content: 'اطلاعات مرجع:\n' + knowledge },
-          ].concat(messages, [{ role: 'system', content: REMINDER }]),
-          temperature: 0.2,
-          max_tokens: 1200,
-          stream: false,
-        })
+        client.chat.completions.create(
+          {
+            model,
+            messages: [
+              { role: 'system', content: RULES },
+              { role: 'system', content: 'اطلاعات مرجع:\n' + knowledge },
+            ].concat(messages, [{ role: 'system', content: REMINDER }]),
+            temperature: 0.2,
+            max_tokens: 1200,
+            stream: false,
+          },
+          {
+            headers: { 'Idempotency-Key': idempotencyKey },
+          }
+        )
       );
     } catch (apiErr) {
       console.error('upstream error', apiErr && apiErr.status, apiErr && apiErr.message);
@@ -146,7 +153,7 @@ module.exports = async (req, res) => {
     const used = (u.prompt_tokens || 0) + (u.completion_tokens || 0) ||
       Math.ceil((RULES.length + knowledge.length + question.length + reply.length) / 3);
 
-    // ─── ۳) یادگیری (best-effort؛ هیچ‌وقت پاسخ را خراب نمی‌کند) ───
+    // ─── ۳) یادگیری ───
     let cid = '';
     if (reply && !att) {
       try {
@@ -163,4 +170,3 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'server_error', message: 'خطای داخلی سرور.' });
   }
 };
-
