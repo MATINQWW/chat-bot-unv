@@ -1,23 +1,23 @@
 const OpenAI = require('openai');
-const { sign, signCid, validSig, ipHash, originAllowed, rateLimited, baseHeaders } = require('../lib/common');
+const crypto = require('crypto');
+const { sign, signCid, validSig, ipHash, originAllowed, rateLimited, baseHeaders, llmConfig } = require('../lib/common');
 const { describe } = require('../lib/learn');
 const { retrieveKnowledge, RULES, REMINDER, getLearner } = require('../lib/prompt');
 const { parseAttachment, AttError } = require('../lib/attachments');
 
-// ─── Ollama Cloud (OpenAI-compatible) ───
-// env: OLLAMA_API_KEY (الزامی) · OLLAMA_MODEL (پیش‌فرض gemma4:31b) · OLLAMA_BASE_URL (پیش‌فرض https://ollama.com/v1)
-const MODEL = () => process.env.OLLAMA_MODEL || 'gemma4:31b';
-const VISION_MODEL = () => process.env.OLLAMA_VISION_MODEL || MODEL();
-
-// ساخت کلاینت به‌صورت lazy: اگر کلید تنظیم نباشد، SDK هنگام import خطا می‌دهد و تابع کلاً می‌خوابید.
+// ─── IranCopilot (OpenAI-compatible) ───
+// env: ICP_API_KEY (الزامی) · ICP_MODEL (پیش‌فرض icp-chat) · ICP_VISION_MODEL · ICP_BASE_URL
+// (برای سرویس دیگر، مثلاً Ollama: ICP_BASE_URL=https://ollama.com/v1 و ICP_MODEL=gemma4:31b)
 let _client = null;
 function getClient() {
   if (_client) return _client;
+  const c = llmConfig();
+  // ساخت lazy: اگر کلید نباشد، SDK هنگام import خطا می‌دهد و تابع کلاً می‌خوابید
   _client = new OpenAI({
-    apiKey: process.env.OLLAMA_API_KEY,
-    baseURL: (process.env.OLLAMA_BASE_URL || 'https://ollama.com/v1').replace(/\/+$/, '') + '/',
-    maxRetries: 0,      // retry را خودمان کنترل می‌کنیم (SDK پیش‌فرض ۲ بار تکرار می‌کرد و با retry دستی ضرب می‌شد)
-    timeout: 40000,     // سقف انتظار برای مدل؛ باید کمتر از maxDuration تابع (۶۰ ثانیه) باشد
+    apiKey: c.key,
+    baseURL: c.baseURL,
+    maxRetries: 0,      // retry را خودمان کنترل می‌کنیم (SDK پیش‌فرض ۲ بار تکرار می‌کرد)
+    timeout: 40000,     // کمتر از maxDuration تابع (۶۰ ثانیه)
   });
   return _client;
 }
@@ -27,17 +27,16 @@ const LIMITS = {
   maxBodyBytesWithAttachment: 4 * 1024 * 1024,
   maxRawMessages: 12,
   maxContentChars: 20000,
-  sendHistory: 8,          // آخرین ۸ پیام به مدل می‌رود (قبلاً فقط ۲)
-  sendCharsUser: 4000,     // هم‌سقف با maxlength فیلد ورودی
-  sendCharsAssistant: 3000,
   perMinute: 8, perHour: 60,
   attPerMinute: 3, attPerHour: 15,
 };
 
-// اگر سرویس بالادستی ورودی را زیادی بزرگ دانست، با دانش کمتر دوباره تلاش می‌کنیم
+// سرویس بالادستی context کوچکی دارد و گاهی 413 می‌دهد (ورودی + خروجی جا نمی‌شود).
+// پس از هر 413 با بودجهٔ کوچک‌تر (دانش، تاریخچه، خروجی) دوباره تلاش می‌کنیم.
 const BUDGETS = [
-  { knowledge: parseInt(process.env.OLLAMA_KNOWLEDGE_CHARS || '6000', 10), maxTokens: parseInt(process.env.OLLAMA_MAX_TOKENS || '2048', 10) },
-  { knowledge: 2500, maxTokens: 1200 },
+  { knowledge: parseInt(process.env.ICP_KNOWLEDGE_CHARS || '1800', 10), maxTokens: parseInt(process.env.ICP_MAX_TOKENS || '800', 10), history: 4, chars: 800 },
+  { knowledge: 1000, maxTokens: 600, history: 2, chars: 500 },
+  { knowledge: 500,  maxTokens: 450, history: 1, chars: 500 },
 ];
 
 const LANG_NAMES = { fa: 'فارسی', en: 'English', ar: 'العربية' };
@@ -77,8 +76,8 @@ module.exports = async (req, res) => {
   }
 
   // پیش از هر کاری: کلید API و کلید امضا
-  if (!process.env.OLLAMA_API_KEY) {
-    console.error('OLLAMA_API_KEY is not set');
+  if (!llmConfig().key) {
+    console.error('ICP_API_KEY is not set');
     return res.status(500).json({ error: 'server_error', message: 'سرویس در حال حاضر در دسترس نیست.' });
   }
 
@@ -103,12 +102,14 @@ module.exports = async (req, res) => {
     // «نوبت اول» را باید قبل از بریدن تاریخچه تعیین کرد؛ قبلاً بعد از برش به ۲ پیام محاسبه می‌شد
     // و از نوبت سوم به بعد هر سؤال اشتباهاً «اولین سؤال» حساب می‌شد (آلودگی حافظه + پاسخ کش‌شدهٔ نامربوط).
     const firstTurn = messages.length === 1;
-    messages = messages.slice(-LIMITS.sendHistory);
-    while (messages.length && messages[0].role !== 'user') messages.shift();
-    messages = messages.map(m => ({
-      role: m.role,
-      content: m.content.slice(0, m.role === 'user' ? LIMITS.sendCharsUser : LIMITS.sendCharsAssistant),
-    }));
+    const fullMessages = messages;
+    // آخرین پیام کاربر برای سؤال/کش: با سقف هم‌اندازهٔ ورودی (نه سقف کوچک بودجه)
+    const question = fullMessages[fullMessages.length - 1].content.slice(0, 500);
+    const shape = (b) => {
+      let m = fullMessages.slice(-BUDGETS[b].history);
+      while (m.length && m[0].role !== 'user') m.shift();
+      return m.map(x => ({ role: x.role, content: x.content.slice(0, BUDGETS[b].chars) }));
+    };
 
     let att = null;
     try { att = await parseAttachment(body.attachment); }
@@ -117,7 +118,6 @@ module.exports = async (req, res) => {
       throw e;
     }
 
-    const question = messages[messages.length - 1].content;
     const L = getLearner();
     const info = describe(question);
 
@@ -132,16 +132,21 @@ module.exports = async (req, res) => {
 
     // ─── ۲) پاسخ مدل ───
     let knowledge = '', topScore = 0;
-    const model = att && att.kind === 'image' ? VISION_MODEL() : MODEL();
-    const last = messages.length - 1;
-    if (att && att.kind === 'text') {
-      messages[last].content += `\n\n<attachment name="${att.name}">\n${att.text}\n</attachment>`;
-    } else if (att && att.kind === 'image') {
-      messages[last].content = [
-        { type: 'text', text: messages[last].content },
-        { type: 'image_url', image_url: { url: `data:${att.mime};base64,${att.b64}` } },
-      ];
-    }
+    const cfg = llmConfig();
+    const model = att && att.kind === 'image' ? cfg.visionModel : cfg.model;
+    const withAtt = (msgs) => {
+      const m = msgs.map(x => ({ ...x })), last = m.length - 1;
+      if (att && att.kind === 'text') {
+        m[last].content += `\n\n<attachment name="${att.name}">\n${att.text}\n</attachment>`;
+      } else if (att && att.kind === 'image') {
+        m[last].content = [
+          { type: 'text', text: m[last].content },
+          { type: 'image_url', image_url: { url: `data:${att.mime};base64,${att.b64}` } },
+        ];
+      }
+      return m;
+    };
+    const idempotencyKey = crypto.randomUUID();
     const langName = LANG_NAMES[String(body.lang || '')];
     const langHint = langName
       ? `زبان رابط کاربر: ${langName}. اگر کاربر به زبان دیگری نوشت، به همان زبان پاسخ بده.`
@@ -152,17 +157,17 @@ module.exports = async (req, res) => {
       for (let b = 0; b < BUDGETS.length; b++) {
         const r = retrieveKnowledge(question, BUDGETS[b].knowledge);
         knowledge = r.text; topScore = r.topScore;
-        // یک پیام system واحد در ابتدا (چند پیام system و system در انتها روی قالب‌های Gemma/Ollama مطمئن نیست)
+        // یک پیام system واحد در ابتدا (چند پیام system و system در انتها روی همهٔ مدل‌ها مطمئن نیست)
         const system = [RULES, langHint, 'اطلاعات مرجع:\n' + knowledge, REMINDER].join('\n\n');
         try {
           completion = await retryWithBackoff(() =>
             getClient().chat.completions.create({
               model,
-              messages: [{ role: 'system', content: system }].concat(messages),
+              messages: [{ role: 'system', content: system }].concat(withAtt(shape(b))),
               temperature: 0.2,
               max_tokens: BUDGETS[b].maxTokens,
               stream: false,
-            })
+            }, { headers: { 'Idempotency-Key': `${idempotencyKey}-${b}` } })
           );
           break;
         } catch (e) {
@@ -183,10 +188,10 @@ module.exports = async (req, res) => {
         return res.status(503).json({ error: 'model_overloaded', message: 'سرویس هوش مصنوعی در این لحظه شلوغ است. لطفاً چند لحظه دیگر دوباره تلاش کنید.' });
       }
       if (status === 401 || status === 403) {
-        console.error('Ollama rejected the API key (check OLLAMA_API_KEY)');
+        console.error('Upstream rejected the API key (check ICP_API_KEY)');
         return res.status(500).json({ error: 'server_error', message: 'سرویس در حال حاضر در دسترس نیست.' });
       }
-      if (status === 404) console.error('Model not found — check OLLAMA_MODEL:', model);
+      if (status === 404) console.error('Model not found — check ICP_MODEL:', model);
       if (status === 413) {
         return res.status(413).json({ error: 'context_too_large', message: 'پیام یا پیوست برای مدل بیش از حد بزرگ است. لطفاً کوتاه‌تر بنویسید یا پیوست را کوچک‌تر کنید.' });
       }
