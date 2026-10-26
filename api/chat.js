@@ -18,8 +18,8 @@ let _client = null;
 function getClient() {
   if (_client) return _client;
   const Ctor = OpenAI.OpenAI || OpenAI;
-  const opts = { apiKey: process.env.ICP_API_KEY, timeout: 25000, maxRetries: 0 };
-  if (process.env.ICP_BASE_URL) opts.baseURL = process.env.ICP_BASE_URL;
+  const opts = { apiKey: process.env.OLLAMA_API_KEY, timeout: 25000, maxRetries: 0 };
+  if (process.env.OLLAMA_BASE_URL) opts.baseURL = process.env.OLLAMA_BASE_URL;
   _client = new Ctor(opts);
   return _client;
 }
@@ -44,7 +44,7 @@ module.exports = async (req, res) => {
   baseHeaders(res);
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   if (!originAllowed(req)) return res.status(403).json({ error: 'forbidden' });
-  if (!process.env.ICP_API_KEY) {
+  if (!process.env.OLLAMA_API_KEY) {
     return res.status(503).json({ error: 'not_configured', message: 'کلید سرویس هوش مصنوعی روی سرور تنظیم نشده است.' });
   }
   if (await rateLimited(req, 'chat', 8, 60)) {
@@ -101,7 +101,7 @@ module.exports = async (req, res) => {
   }
 
   const client = getClient();
-  const model = process.env.ICP_MODEL || 'icp-chat';
+  const model = process.env.OLLAMA_MODEL || 'gemma4:31b';
   let topScore = 0;
   let knowledgeSources = [];
   let verifiedSourceCount = 0;
