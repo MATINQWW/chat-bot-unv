@@ -1,14 +1,14 @@
 # چت‌بات هدایت تحصیلی (دانشگاه آزاد اصفهان)
 
-فرانت‌اند ساده (HTML/CSS/JS) + توابع Serverless روی Vercel + مدل `gemma4:31b` از Ollama Cloud.
+فرانت‌اند ساده (HTML/CSS/JS) + توابع Serverless روی Vercel + مدل `icp-chat` از IranCopilot (قابل تغییر با env).
 
 ## متغیرهای محیطی (Vercel → Project → Settings → Environment Variables)
 
 | نام | الزامی | توضیح |
 |---|---|---|
-| `OLLAMA_API_KEY` | ✅ | کلید از https://ollama.com/settings/keys |
+| `ICP_API_KEY` | ✅ | کلید API سرویس IranCopilot |
 | `CHAT_SIGNING_SECRET` | ✅ توصیه‌شده | رشتهٔ تصادفی ≥۱۶ نویسه؛ یک‌بار بسازید و عوض نکنید |
-| `OLLAMA_MODEL` | ❌ | پیش‌فرض `gemma4:31b` |
+| `ICP_MODEL` / `ICP_BASE_URL` | ❌ | پیش‌فرض `icp-chat` و `https://irancopilot.com/studio/pro/v1` (برای Ollama: `https://ollama.com/v1` و `gemma4:31b`) |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | ⚠️ بسیار توصیه‌شده | Upstash Redis (Vercel → Storage/Marketplace). بدون آن rate-limit و یادگیری روی هر instance جدا و عملاً بی‌اثر است |
 | `ADMIN_TOKEN` | ❌ | برای `/api/admin` (≥۱۶ نویسه) |
 
