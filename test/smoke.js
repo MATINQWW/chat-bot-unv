@@ -75,11 +75,12 @@ function call(handler, { body, headers = {}, method = 'POST' }) {
   await new Promise(r => server.listen(0, r));
   process.chdir(path.join(__dirname, '..'));
   const base = `http://127.0.0.1:${server.address().port}`;
-  // llm.config.js در تست با سرور جعلی جایگزین می‌شود
+  // بخش llm در config.js در تست با سرور جعلی جایگزین می‌شود
   const llm = require('../lib/llm');
   const testCfg = { use: 'test', providers: { test: { url: base + '/v1', model: 'icp-chat', key: 'TEST_LLM_KEY', vision: true } } };
   llm._setConfig(testCfg);
-  delete process.env.TEST_LLM_KEY; delete process.env.LLM_USE;
+  delete process.env.TEST_LLM_KEY;
+  const CFG = require('../config');
   delete process.env.UPSTASH_VECTOR_REST_URL; delete process.env.UPSTASH_VECTOR_REST_TOKEN;
   const chat = require('../api/chat.js');
   const feedback = require('../api/feedback.js');
@@ -166,7 +167,7 @@ function call(handler, { body, headers = {}, method = 'POST' }) {
   vecMode = '500'; vector._reset();
   r = await call(chat, { body: { messages: [{ role: 'user', content: 'ترمیم معدل کی انجام میشه' }] } });
   assert.strictEqual(r.code, 200);
-  vecMode = 'slow'; vector._reset(); process.env.VECTOR_TIMEOUT_MS = '300'; seen = [];
+  vecMode = 'slow'; vector._reset(); CFG.search.vectorTimeoutMs = 300; seen = [];
   const t0 = Date.now();
   r = await call(chat, { body: { messages: [{ role: 'user', content: 'مصاحبه دکتری چه سوالاتی داره' }] } });
   assert.strictEqual(r.code, 200); assert.ok(Date.now() - t0 < 2000);
@@ -275,13 +276,14 @@ function call(handler, { body, headers = {}, method = 'POST' }) {
   const codes = [x1.code, x2.code].sort();
   assert.deepStrictEqual(codes, [200, 503]); assert.strictEqual((x1.code === 503 ? x1 : x2).json.error, 'busy');
   assert.deepStrictEqual(llm.stats()[0].active, 0, 'شمارندهٔ هم‌زمانی باید آزاد شود');
-  // LLM_USE بدون ویرایش فایل، سرویس فعال را عوض می‌کند؛ extra به بدنه اضافه می‌شود
-  llm._setConfig({ use: 'a', providers: { a: { url: base + '/bad/v1', key: 'BACKUP_KEY', model: 'ma' }, b: { url: base + '/v1', key: 'BACKUP_KEY', model: 'mb', extra: { think: false } } } });
-  process.env.LLM_USE = 'b'; seen = [];
+  // extra به بدنه اضافه می‌شود؛ maxTokens از config
+  llm._setConfig({ use: 'b', providers: { b: { url: base + '/v1', key: 'BACKUP_KEY', model: 'mb', extra: { think: false } } } });
+  const mt = CFG.llm.maxTokens; CFG.llm.maxTokens = 321; seen = [];
   r = await call(chat, { body: { messages: [{ role: 'user', content: 'رشته علوم تربیتی' }] } });
   assert.strictEqual(seen[0].body.model, 'mb'); assert.strictEqual(seen[0].body.think, false);
-  delete process.env.LLM_USE; llm._setConfig(testCfg);
-  console.log('✓ llm.config.js: fallback خودکار، قطع موقت سرویس خراب، رد سرویس بدون vision، سقف هم‌زمانی → «شلوغ»، LLM_USE، extra');
+  assert.strictEqual(seen[0].body.max_tokens, 321); CFG.llm.maxTokens = mt;
+  llm._setConfig(testCfg);
+  console.log('✓ config.js: fallback خودکار، قطع موقت سرویس خراب، رد سرویس بدون vision، سقف هم‌زمانی → «شلوغ»، extra، maxTokens');
 
   // ۱۵) server.js (اجرا بدون Vercel): صفحه، فونت، مسدودسازی فایل‌های داخلی، API و SSE
   const app = require('../server.js');
@@ -291,7 +293,7 @@ function call(handler, { body, headers = {}, method = 'POST' }) {
   assert.ok(/cdn\.jsdelivr\.net/.test(h.headers.get('content-security-policy'))); // فونت IRANYekan از CDN (مثل قبل)
   for (const bad of ['/knowledge/chunks.json', '/.env', '/package.json', '/lib/llm.js', '/scripts/ingest.js', '/eval/questions.json'])
     { h = await fetch(A + bad, { redirect: 'manual' }); assert.ok([302, 404].includes(h.status), bad + ' → ' + h.status); }
-  for (const bad of ['/server.js', '/api/chat.js', '/README.md', '/../package.json']) { h = await fetch(A + bad, { redirect: 'manual' }); assert.ok([302, 404].includes(h.status), bad); }
+  for (const bad of ['/server.js', '/config.js', '/api/chat.js', '/README.md', '/../package.json']) { h = await fetch(A + bad, { redirect: 'manual' }); assert.ok([302, 404].includes(h.status), bad); }
   h = await fetch(A + '/api/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content: 'شهریه قسطی داره؟' }] }) });
   assert.strictEqual((await h.json()).cached, 'faq');
   h = await fetch(A + '/api/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ stream: true, messages: [{ role: 'user', content: 'رشته طراحی صنعتی چه دروسی داره' }] }) });

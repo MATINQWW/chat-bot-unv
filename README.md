@@ -9,32 +9,39 @@
 | جست‌وجوی دانش | کلمه‌ای محلی + گروه‌های هم‌معنی (`lib/synonyms.js`) | Upstash Vector (جست‌وجوی معنایی + کش معنایی) |
 | rate-limit و حافظهٔ یادگیری | حافظهٔ داخل همان instance | Upstash Redis (مشترک بین instanceها) |
 | درخواست تماس | **غیرفعال** (جایی برای نگه‌داری نیست، پس دکمه نشان داده نمی‌شود) | `LEAD_WEBHOOK_URL` یا Upstash Redis |
-| مدل زبانی | یک سرویس (`llm.config.js`) | چند سرویس پشت سر هم (`fallback` در همان فایل) |
+| مدل زبانی | یک سرویس (`config.js`) | چند سرویس پشت سر هم (`fallback` در همان فایل) |
 
-## مدل زبانی: فقط `llm.config.js`
-سرویس فعال، آدرس و مدل در فایل `llm.config.js` (ریشهٔ پروژه) است. الان: **Ollama Cloud، مدل `gemma4:31b`**.
+## تنظیمات: فقط `config.js`
+همهٔ تنظیمات در فایل `config.js` (ریشهٔ پروژه) است. در Vercel فقط کلیدها و رمزها.
 
 ```js
-use: 'ollama',               // سرویس فعال
-fallback: [],                // مثلاً ['irancopilot'] → اگر فعال خطا داد یا پر بود
-providers: {
-  ollama:      { url: 'https://ollama.com/v1',                 model: 'gemma4:31b', key: 'OLLAMA_API_KEY', vision: true },
-  irancopilot: { url: 'https://irancopilot.com/studio/pro/v1', model: 'icp-chat',   key: 'ICP_API_KEY' },
-}
+llm: {
+  use: 'ollama',               // سرویس فعال
+  fallback: [],                // مثلاً ['irancopilot'] → اگر فعال خطا داد یا پر بود
+  providers: {
+    ollama:      { url: 'https://ollama.com/v1',                 model: 'gemma4:31b', key: 'OLLAMA_API_KEY', vision: true },
+    irancopilot: { url: 'https://irancopilot.com/studio/pro/v1', model: 'icp-chat',   key: 'ICP_API_KEY' },
+  },
+  maxTokens: 800,              // سقف طول پاسخ
+  knowledgeChars: 1800,        // سقف متن دانش در هر درخواست
+  stream: true,                // پاسخ کلمه‌به‌کلمه
+  ...
+},
+search: { ... }, learn: { ... }, allowedOrigins: [], ...
 ```
-- **عوض کردن مدل یا آدرس:** همان خط را ویرایش و commit کنید.
-- **عوض کردن سرویس:** `use` را عوض کنید، یا بدون ویرایش فایل، در Vercel متغیر `LLM_USE` را بگذارید.
+- **عوض کردن سرویس، مدل یا آدرس:** همان فایل را در گیت‌هاب ویرایش و commit کنید؛ Vercel خودکار deploy می‌کند.
 - **سرویس جدید:** یک خط به `providers` اضافه کنید (هر API سازگار با OpenAI).
 - `key` **اسم** متغیر کلید است، نه خود کلید. خود کلید فقط در Vercel → Environment Variables.
+- این فایل در گیت‌هاب دیده می‌شود (روی سایت مسدود است)؛ هیچ کلیدی داخلش ننویسید.
 
 با `fallback`، اگر سرویس فعال محدود (429)، خراب (5xx) یا کند بود یا ظرفیتش (`maxConcurrent`) پر بود، درخواست به بعدی می‌رود؛ سرویسی که پشت سر هم خطا بدهد یک دقیقه کنار گذاشته می‌شود؛ اگر همه پر باشند کاربر پیام «شلوغ است» می‌بیند.
 
 ## متغیرهای محیطی
-فهرست کامل در `.env.example`. حداقل لازم:
+فقط کلیدها و رمزها؛ فهرست کامل در `.env.example`. حداقل لازم:
 
 | نام | توضیح |
 |---|---|
-| `OLLAMA_API_KEY` | کلید سرویس فعال (اسمش همان `key` در `llm.config.js`) |
+| `OLLAMA_API_KEY` | کلید سرویس فعال (اسمش همان `key` در `config.js`) |
 | `CHAT_SIGNING_SECRET` | رشتهٔ تصادفی ≥ ۱۶ نویسه؛ یک‌بار بسازید و عوض نکنید |
 | `ADMIN_TOKEN` | اختیاری، برای `/api/admin` (≥ ۱۶ نویسه) |
 

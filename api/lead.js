@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
   if (await rateLimited(req, 'lead', 2, 5)) return res.status(429).json({ error: 'rate_limited', message: 'درخواست شما قبلاً ثبت شده است.' });
   const hook = process.env.LEAD_WEBHOOK_URL;
   // بدون Redis یا webhook، درخواست فقط در حافظهٔ همین instance می‌ماند و گم می‌شود → قبول نکن
-  if (!kv.remote && !hook && process.env.LEAD_ALLOW_MEMORY !== '1') {
+  if (!kv.remote && !hook && !require('../config').leadAllowMemory) {
     return res.status(503).json({ error: 'lead_unavailable', message: 'ثبت درخواست تماس فعلاً فعال نیست؛ لطفاً با ۰۳۱-۳۵۳۵۴۰۴۹ تماس بگیرید.' });
   }
   const b = (req.body && typeof req.body === 'object') ? req.body : {};
@@ -51,7 +51,7 @@ module.exports = async (req, res) => {
     } catch (e) { console.warn('lead webhook failed', e && e.message); }
   }
   // حداقل یکی از دو مقصد ماندگار باید موفق شده باشد
-  if (!((r && kv.remote) || hooked || (r && process.env.LEAD_ALLOW_MEMORY === '1'))) {
+  if (!((r && kv.remote) || hooked || (r && require('../config').leadAllowMemory))) {
     return res.status(503).json({ error: 'store_unavailable', message: 'ثبت درخواست ممکن نشد؛ لطفاً با ۰۳۱-۳۵۳۵۴۰۴۹ تماس بگیرید.' });
   }
   return res.status(200).json({ ok: true, id: lead.id, message: 'درخواست شما ثبت شد؛ همکاران مرکز هدایت تحصیلی با شما تماس می‌گیرند.' });

@@ -8,7 +8,7 @@ const { retrieve, faqAnswer, smallTalk } = require('../lib/knowledge');
 const { cases } = require(path.join(__dirname, '..', 'eval', 'questions.json'));
 const V = process.argv.includes('-v');
 const mi = process.argv.indexOf('--min'); const MIN = mi > 0 ? parseFloat(process.argv[mi + 1]) : 0; // CI: زیر این درصد → خطا
-const LIMIT = parseInt(process.env.ICP_KNOWLEDGE_CHARS || '1800', 10);
+const LIMIT = require('../config').llm.knowledgeChars || 1800;
 
 (async () => {
   let pass = 0, chars = 0, modelCalls = 0, source = 'keyword';

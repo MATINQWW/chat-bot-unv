@@ -2,10 +2,9 @@ const { originAllowed, rateLimited, baseHeaders } = require('../lib/common');
 
 // تبدیل گفتار به متن برای مرورگرهایی که SpeechRecognition ندارند (مثل iOS Safari).
 // به یک سرویس سازگار با OpenAI (/audio/transcriptions) وصل می‌شود؛ تنظیم env:
-//   TRANSCRIBE_API_URL  مثلاً https://api.groq.com/openai/v1/audio/transcriptions
+//   آدرس و مدل: بخش transcribe در config.js
 //                       یا https://api.openai.com/v1/audio/transcriptions
 //   TRANSCRIBE_API_KEY  کلید همان سرویس
-//   TRANSCRIBE_MODEL    مثلاً whisper-large-v3 (Groq) یا whisper-1 (OpenAI)
 const MAX_BYTES = 2.5 * 1024 * 1024;
 const LANGS = new Set(['fa', 'ar', 'en']);
 
@@ -26,7 +25,8 @@ module.exports = async (req, res) => {
   baseHeaders(res);
   if (req.method !== 'POST') return res.status(405).end();
   if (!originAllowed(req)) return res.status(403).json({ error: 'forbidden' });
-  if (!process.env.TRANSCRIBE_API_URL || !process.env.TRANSCRIBE_API_KEY) {
+  const T = require('../config').transcribe || {};
+  if (!T.url || !process.env.TRANSCRIBE_API_KEY) {
     return res.status(501).json({ error: 'not_configured', message: 'تبدیل گفتار به متن روی سرور تنظیم نشده است.' });
   }
   if (await rateLimited(req, 'stt', 6, 30)) return res.status(429).json({ error: 'rate_limited', message: 'تعداد درخواست‌ها زیاد است.' });
@@ -40,10 +40,10 @@ module.exports = async (req, res) => {
     const lang = String((req.query && req.query.lang) || 'fa').slice(0, 2);
     const fd = new FormData();
     fd.append('file', new Blob([buf], { type: kind[1] }), `voice.${kind[0]}`);
-    fd.append('model', process.env.TRANSCRIBE_MODEL || 'whisper-1');
+    fd.append('model', T.model || 'whisper-1');
     if (LANGS.has(lang)) fd.append('language', lang);
     fd.append('response_format', 'json');
-    const r = await fetch(process.env.TRANSCRIBE_API_URL, {
+    const r = await fetch(T.url, {
       method: 'POST', headers: { Authorization: 'Bearer ' + process.env.TRANSCRIBE_API_KEY },
       body: fd, signal: AbortSignal.timeout(20000),
     });

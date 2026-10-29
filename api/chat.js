@@ -19,8 +19,9 @@ const LIMITS = {
 // پس از هر 413 با بودجهٔ کوچک‌تر (دانش، تاریخچه، خروجی) دوباره تلاش می‌کنیم.
 // تاریخچه: فقط سؤال‌های قبلی کاربر (prevQ تا، هرکدام qChars) + آخرین پاسخ بات بریده‌شده (aChars).
 // پاسخ‌های بلند قبلی بات بیشترین سهم توکن تاریخچه را داشتند و برای فهم سؤال بعدی لازم نیستند.
+const C = require('../config');
 const BUDGETS = [
-  { knowledge: parseInt(process.env.ICP_KNOWLEDGE_CHARS || '1800', 10), maxTokens: parseInt(process.env.ICP_MAX_TOKENS || '800', 10), prevQ: 3, qChars: 200, aChars: 300, chars: 800 },
+  { knowledge: 0, maxTokens: 0, prevQ: 3, qChars: 200, aChars: 300, chars: 800 },   // ← از config.js (llm.maxTokens، llm.knowledgeChars)
   { knowledge: 1000, maxTokens: 600, prevQ: 2, qChars: 150, aChars: 200, chars: 500 },
   { knowledge: 500,  maxTokens: 450, prevQ: 1, qChars: 150, aChars: 0,   chars: 500 },
 ];
@@ -48,7 +49,7 @@ module.exports = async (req, res) => {
 
   // پیش از هر کاری: کلید API و کلید امضا
   if (!llm.configured()) {
-    console.error('no LLM provider configured — check llm.config.js and its key variable in Environment Variables');
+    console.error('no LLM provider configured — check config.js (llm) and its key variable in Environment Variables');
     return res.status(500).json({ error: 'server_error', message: 'سرویس در حال حاضر در دسترس نیست.' });
   }
 
@@ -77,7 +78,8 @@ module.exports = async (req, res) => {
     // آخرین پیام کاربر برای سؤال/کش: با سقف هم‌اندازهٔ ورودی (نه سقف کوچک بودجه)
     const question0 = fullMessages[fullMessages.length - 1].content;
     const question = question0.slice(0, 500);
-    const wantStream = body.stream === true && process.env.LLM_STREAM !== '0';
+    const wantStream = body.stream === true && C.llm.stream !== false;
+    BUDGETS[0].knowledge = C.llm.knowledgeChars || 1800; BUDGETS[0].maxTokens = C.llm.maxTokens || 800;
     const shape = (b) => {
       const B = BUDGETS[b];
       const prior = fullMessages.slice(0, -1);
