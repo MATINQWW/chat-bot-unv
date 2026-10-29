@@ -3,7 +3,7 @@
     "api/*.js": { "includeFiles": "knowledge/chunks.json", "maxDuration": 60 }
   },
   "redirects": [
-    { "source": "/(knowledge/.*|scripts/.*|eval/.*|test/.*|package\\.json|package-lock\\.json|vercel\\.json|README\\.md|\\.env.*|lib/.*)", "destination": "/", "permanent": false }
+    { "source": "/(knowledge/.*|scripts/.*|eval/.*|test/.*|server\\.js|llm\\.config\\.js|ROADMAP\\.md|DATA_ISSUES\\.md|\\.github/.*|package\\.json|package-lock\\.json|vercel\\.json|README\\.md|\\.env.*|lib/.*)", "destination": "/", "permanent": false }
   ],
   "headers": [
     {

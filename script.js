@@ -1268,7 +1268,8 @@ async function callAPI(att){
       body:JSON.stringify(payload),
       signal:S.abort.signal
     });
-    if(!res.ok){const d=await res.text().catch(()=>'');console.error('API Error:',res.status);let sm='';try{sm=(JSON.parse(d).message||'').slice(0,200);}catch{}throw new Error(sm||`Server error (${res.status})`);}
+    if(!res.ok){const d=await res.text().catch(()=>'');console.error('API Error:',res.status);let sm='',j={};try{j=JSON.parse(d);sm=(j.message||'').slice(0,300);}catch{}
+      const e=new Error(sm||`Server error (${res.status})`);if(j.error==='busy'){e.name='BusyError';e.lead=!!j.lead;}throw e;}
     // پاسخ جریانی (SSE) فقط وقتی مدل صدا زده شده؛ کش/FAQ همان JSON است
     if((res.headers.get('content-type')||'').includes('text/event-stream')&&res.body){
       return {stream:res.body,clear:()=>clearTimeout(timer)};
@@ -1354,6 +1355,11 @@ async function runCompletion(att){
     if(stale())return;
     stopTypingStages();el.typing.hidden=true;
     if(err.name!=='AbortError'){
+      if(err.name==='BusyError'){ // همهٔ سرویس‌های مدل پر: پیام دوستانه + دکمهٔ تماس (بدون «خطا»)
+        el.chat.insertAdjacentHTML('beforeend',aiBubbleHTML(`⏳ ${err.message}`));
+        if(err.lead)addLeadButton(el.chat.querySelector('.msg-group:last-child'));
+        scrollToBottom(true);return;
+      }
       const isTimeout=err.name==='TimeoutError'||String(err.message||'').toLowerCase().includes('timeout');
       const msg=isTimeout?t('error.timeout'):`${t('error.serverGeneric')}: ${err.message}`;
       el.chat.insertAdjacentHTML('beforeend',aiBubbleHTML(`⚠️ ${msg}\n${t('error.tryAgain')}`));

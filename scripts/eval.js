@@ -7,6 +7,7 @@ const path = require('path');
 const { retrieve, faqAnswer, smallTalk } = require('../lib/knowledge');
 const { cases } = require(path.join(__dirname, '..', 'eval', 'questions.json'));
 const V = process.argv.includes('-v');
+const mi = process.argv.indexOf('--min'); const MIN = mi > 0 ? parseFloat(process.argv[mi + 1]) : 0; // CI: زیر این درصد → خطا
 const LIMIT = parseInt(process.env.ICP_KNOWLEDGE_CHARS || '1800', 10);
 
 (async () => {
@@ -27,5 +28,6 @@ const LIMIT = parseInt(process.env.ICP_KNOWLEDGE_CHARS || '1800', 10);
   console.log(`درست: ${pass}/${cases.length} (${Math.round(100 * pass / cases.length)}%)`);
   console.log(`بدون مدل: ${cases.length - modelCalls}/${cases.length} · میانگین نویسهٔ دانش برای هر فراخوانی مدل: ${Math.round(chars / Math.max(1, modelCalls))}`);
   for (const f of fails) console.log(`  ✗ ${f.q}  (انتظار: ${f.route}${f.expect ? ' ' + f.expect.join('|') : ''} · دریافت: ${f.got} ${f.ids.join(', ')})${f.note ? '  — ' + f.note : ''}`);
-  process.exitCode = 0;
+  const pct = 100 * pass / cases.length;
+  if (pct < MIN) { console.error(`✗ درصد درستی ${pct.toFixed(0)}٪ کمتر از حداقل ${MIN}٪`); process.exitCode = 1; }
 })();

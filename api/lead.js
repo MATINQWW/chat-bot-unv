@@ -23,6 +23,11 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
   if (!originAllowed(req)) return res.status(403).json({ error: 'forbidden' });
   if (await rateLimited(req, 'lead', 2, 5)) return res.status(429).json({ error: 'rate_limited', message: 'درخواست شما قبلاً ثبت شده است.' });
+  const hook = process.env.LEAD_WEBHOOK_URL;
+  // بدون Redis یا webhook، درخواست فقط در حافظهٔ همین instance می‌ماند و گم می‌شود → قبول نکن
+  if (!kv.remote && !hook && process.env.LEAD_ALLOW_MEMORY !== '1') {
+    return res.status(503).json({ error: 'lead_unavailable', message: 'ثبت درخواست تماس فعلاً فعال نیست؛ لطفاً با ۰۳۱-۳۵۳۵۴۰۴۹ تماس بگیرید.' });
+  }
   const b = (req.body && typeof req.body === 'object') ? req.body : {};
   const phone = normPhone(b.phone);
   if (!phone) return res.status(400).json({ error: 'bad_phone', message: 'شمارهٔ تماس معتبر نیست.' });
@@ -38,12 +43,16 @@ module.exports = async (req, res) => {
     ip: ipHash(req),
   };
   const r = await kv.exec([['LPUSH', 'leads', JSON.stringify(lead)], ['LTRIM', 'leads', 0, 999], ['HINCRBY', 'stats', 'leads', 1]]);
-  if (!r) return res.status(503).json({ error: 'store_unavailable', message: 'ثبت درخواست ممکن نشد؛ لطفاً با ۰۳۱-۳۵۳۵۴۰۴۹ تماس بگیرید.' });
-  const hook = process.env.LEAD_WEBHOOK_URL;
+  let hooked = false;
   if (hook) {
     try {
-      await fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'lead', ...lead, ip: undefined }), signal: AbortSignal.timeout(3000) });
+      const hr = await fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'lead', ...lead, ip: undefined }), signal: AbortSignal.timeout(3000) });
+      hooked = hr.ok;
     } catch (e) { console.warn('lead webhook failed', e && e.message); }
+  }
+  // حداقل یکی از دو مقصد ماندگار باید موفق شده باشد
+  if (!((r && kv.remote) || hooked || (r && process.env.LEAD_ALLOW_MEMORY === '1'))) {
+    return res.status(503).json({ error: 'store_unavailable', message: 'ثبت درخواست ممکن نشد؛ لطفاً با ۰۳۱-۳۵۳۵۴۰۴۹ تماس بگیرید.' });
   }
   return res.status(200).json({ ok: true, id: lead.id, message: 'درخواست شما ثبت شد؛ همکاران مرکز هدایت تحصیلی با شما تماس می‌گیرند.' });
 };

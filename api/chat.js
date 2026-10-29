@@ -1,27 +1,10 @@
-const OpenAI = require('openai');
 const crypto = require('crypto');
-const { sign, signCid, validSig, ipHash, originAllowed, rateLimited, baseHeaders, llmConfig } = require('../lib/common');
+const { sign, signCid, validSig, ipHash, originAllowed, rateLimited, baseHeaders, kv } = require('../lib/common');
 const { describe } = require('../lib/learn');
 const { retrieveKnowledge, RULES, REMINDER, getLearner } = require('../lib/prompt');
 const { faqAnswer, smallTalk } = require('../lib/knowledge');
 const { parseAttachment, AttError } = require('../lib/attachments');
-
-// ─── IranCopilot (OpenAI-compatible) ───
-// env: ICP_API_KEY (الزامی) · ICP_MODEL (پیش‌فرض icp-chat) · ICP_VISION_MODEL · ICP_BASE_URL
-// (برای سرویس دیگر، مثلاً Ollama: ICP_BASE_URL=https://ollama.com/v1 و ICP_MODEL=gemma4:31b)
-let _client = null;
-function getClient() {
-  if (_client) return _client;
-  const c = llmConfig();
-  // ساخت lazy: اگر کلید نباشد، SDK هنگام import خطا می‌دهد و تابع کلاً می‌خوابید
-  _client = new OpenAI({
-    apiKey: c.key,
-    baseURL: c.baseURL,
-    maxRetries: 0,      // retry را خودمان کنترل می‌کنیم (SDK پیش‌فرض ۲ بار تکرار می‌کرد)
-    timeout: 40000,     // کمتر از maxDuration تابع (۶۰ ثانیه)
-  });
-  return _client;
-}
+const llm = require('../lib/llm');   // یک یا چند سرویس مدل (OpenAI-compatible) — تنظیمات در lib/llm.js
 
 const LIMITS = {
   maxBodyBytes: 60 * 1024,
@@ -42,30 +25,12 @@ const BUDGETS = [
   { knowledge: 500,  maxTokens: 450, prevQ: 1, qChars: 150, aChars: 0,   chars: 500 },
 ];
 
-// پیشنهاد «درخواست تماس» وقتی پاسخ به مرکز هدایت تحصیلی ارجاع می‌دهد
-const offerLead = (t) => /35354049|۳۵۳۵۴۰۴۹|ندارم/.test(String(t || ''));
+// پیشنهاد «درخواست تماس» وقتی پاسخ به مرکز هدایت تحصیلی ارجاع می‌دهد —
+// فقط اگر جای ماندگاری برای ثبت هست (Redis یا webhook)؛ وگرنه درخواست‌ها گم می‌شوند و دکمه نشان داده نمی‌شود
+const leadAvailable = () => !!(kv.remote || process.env.LEAD_WEBHOOK_URL);
+const offerLead = (t) => leadAvailable() && /35354049|۳۵۳۵۴۰۴۹|ندارم/.test(String(t || ''));
 
 const LANG_NAMES = { fa: 'فارسی', en: 'English', ar: 'العربية' };
-
-async function retryWithBackoff(fn, maxRetries = 2) {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      const status = err && (err.status || (err.response && err.response.status));
-      const retryable = status === 429 || status === 502 || status === 503 || status === 504;
-      if (!retryable || attempt >= maxRetries) throw err;
-      const waitMs = Math.min(Math.pow(2, attempt) * 1000 + Math.random() * 500, 3000);
-      console.warn(`upstream ${status} — retry ${attempt + 1}/${maxRetries} after ${Math.round(waitMs)}ms`);
-      await new Promise(r => setTimeout(r, waitMs));
-    }
-  }
-}
-
-function isTooBig(e) {
-  const st = e && (e.status || (e.response && e.response.status));
-  return st === 413 || (st === 400 && /context|too (long|large)|token/i.test(String(e && e.message)));
-}
 
 module.exports = async (req, res) => {
   baseHeaders(res);
@@ -82,8 +47,8 @@ module.exports = async (req, res) => {
   }
 
   // پیش از هر کاری: کلید API و کلید امضا
-  if (!llmConfig().key) {
-    console.error('ICP_API_KEY is not set');
+  if (!llm.configured()) {
+    console.error('no LLM provider configured — check llm.config.js and its key variable in Environment Variables');
     return res.status(500).json({ error: 'server_error', message: 'سرویس در حال حاضر در دسترس نیست.' });
   }
 
@@ -112,7 +77,7 @@ module.exports = async (req, res) => {
     // آخرین پیام کاربر برای سؤال/کش: با سقف هم‌اندازهٔ ورودی (نه سقف کوچک بودجه)
     const question0 = fullMessages[fullMessages.length - 1].content;
     const question = question0.slice(0, 500);
-    const wantStream = body.stream === true && process.env.ICP_STREAM !== '0';
+    const wantStream = body.stream === true && process.env.LLM_STREAM !== '0';
     const shape = (b) => {
       const B = BUDGETS[b];
       const prior = fullMessages.slice(0, -1);
@@ -159,8 +124,6 @@ module.exports = async (req, res) => {
 
     // ─── ۲) پاسخ مدل ───
     let knowledge = '', topScore = 0;
-    const cfg = llmConfig();
-    const model = att && att.kind === 'image' ? cfg.visionModel : cfg.model;
     const withAtt = (msgs) => {
       const m = msgs.map(x => ({ ...x })), last = m.length - 1;
       if (att && att.kind === 'text') {
@@ -192,25 +155,22 @@ module.exports = async (req, res) => {
       return out.join('\n\n---\n\n');
     };
 
-    let completion;
+    let completion, streamed = false, release = () => {};
     try {
       for (let b = 0; b < BUDGETS.length; b++) {
         knowledge = b === 0 ? r0.text : cut(BUDGETS[b].knowledge);
         // یک پیام system واحد در ابتدا (چند پیام system و system در انتها روی همهٔ مدل‌ها مطمئن نیست)
         const system = [RULES, langHint, 'اطلاعات مرجع:\n' + (knowledge || '(موردی یافت نشد)'), REMINDER].join('\n\n');
         try {
-          completion = await retryWithBackoff(() =>
-            getClient().chat.completions.create({
-              model,
-              messages: [{ role: 'system', content: system }].concat(withAtt(shape(b))),
-              temperature: 0.2,
-              max_tokens: BUDGETS[b].maxTokens,
-              stream: wantStream,
-            }, { headers: { 'Idempotency-Key': `${idempotencyKey}-${b}` } })
-          );
+          const r = await llm.complete({
+            messages: [{ role: 'system', content: system }].concat(withAtt(shape(b))),
+            maxTokens: BUDGETS[b].maxTokens, stream: wantStream, vision: !!(att && att.kind === 'image'),
+            idempotencyKey: `${idempotencyKey}-${b}`,
+          });
+          completion = r.result; streamed = r.streamed; release = r.release;
           break;
         } catch (e) {
-          if (isTooBig(e) && b < BUDGETS.length - 1) {
+          if (llm.kind(e) === 'too_big' && b < BUDGETS.length - 1) {
             console.warn(`upstream too big — retry with smaller budget #${b + 1}`);
             continue;
           }
@@ -220,6 +180,11 @@ module.exports = async (req, res) => {
     } catch (apiErr) {
       const status = apiErr && apiErr.status;
       console.error('upstream error', status, apiErr && apiErr.name, apiErr && apiErr.message);
+      if (apiErr && apiErr.busy) {
+        // همهٔ سرویس‌ها پر/خراب: به‌جای خطای خشک، پیشنهاد تماس
+        res.setHeader('Retry-After', '20');
+        return res.status(503).json({ error: 'busy', lead: leadAvailable(), message: 'الان تعداد پرسش‌ها خیلی زیاد است. چند لحظهٔ دیگر دوباره بپرسید' + (leadAvailable() ? ' یا شماره‌تان را بگذارید تا مشاور با شما تماس بگیرد.' : ' یا با ۰۳۱-۳۵۳۵۴۰۴۹ تماس بگیرید.') });
+      }
       if (apiErr && /timeout|timed out/i.test(`${apiErr.name} ${apiErr.message}`)) {
         return res.status(504).json({ error: 'model_timeout', message: 'پاسخ مدل بیش از حد طول کشید. لطفاً دوباره تلاش کنید.' });
       }
@@ -227,10 +192,10 @@ module.exports = async (req, res) => {
         return res.status(503).json({ error: 'model_overloaded', message: 'سرویس هوش مصنوعی در این لحظه شلوغ است. لطفاً چند لحظه دیگر دوباره تلاش کنید.' });
       }
       if (status === 401 || status === 403) {
-        console.error('Upstream rejected the API key (check ICP_API_KEY)');
+        console.error('Upstream rejected the API key');
         return res.status(500).json({ error: 'server_error', message: 'سرویس در حال حاضر در دسترس نیست.' });
       }
-      if (status === 404) console.error('Model not found — check ICP_MODEL:', model);
+      if (status === 404) console.error('Model not found — check model name');
       if (status === 413) {
         return res.status(413).json({ error: 'context_too_large', message: 'پیام یا پیوست برای مدل بیش از حد بزرگ است. لطفاً کوتاه‌تر بنویسید یا پیوست را کوچک‌تر کنید.' });
       }
@@ -250,7 +215,9 @@ module.exports = async (req, res) => {
       res.setHeader('X-Accel-Buffering', 'no');
       if (res.flushHeaders) res.flushHeaders();
       try {
-        for await (const ch of completion) {
+        // سرویسی که stream ندارد: پاسخ کامل را یک‌جا به‌عنوان یک تکه بفرست
+        const chunks = streamed ? completion : [{ choices: [{ delta: { content: completion.choices && completion.choices[0] && completion.choices[0].message && completion.choices[0].message.content }, finish_reason: completion.choices && completion.choices[0] && completion.choices[0].finish_reason }], usage: completion.usage }];
+        for await (const ch of chunks) {
           const c = ch && ch.choices && ch.choices[0];
           const d = c && c.delta && c.delta.content;
           if (d) { reply += d; sse({ d }); }
@@ -261,10 +228,11 @@ module.exports = async (req, res) => {
         console.error('stream broke', e && e.message);
         if (!reply) { sse({ error: 'model_error', message: 'خطایی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.' }); return res.end(); }
         finish = 'length'; // پاسخ ناقص: نمایش داده می‌شود ولی در حافظه ذخیره نمی‌شود
-      }
+      } finally { release(); }
       reply = reply.trim();
       if (!reply) { console.error('empty reply from model (stream)', finish); sse({ error: 'empty_reply', message: EMPTY }); return res.end(); }
     } else {
+      release();
       const choice = completion.choices && completion.choices[0];
       reply = ((choice && choice.message && choice.message.content) || '').trim();
       finish = choice && choice.finish_reason;

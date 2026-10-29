@@ -22,6 +22,7 @@ try { require.resolve('openai'); } catch {
   };
 }
 
+let badHits = 0, hooks = [];
 let mode = 'ok', seen = [], vecMode = 'ok', vecSeen = [], semHit = null, semUpserts = [];
 const server = http.createServer((rq, rs) => {
   let b = ''; rq.on('data', c => b += c); rq.on('end', () => {
@@ -35,7 +36,10 @@ const server = http.createServer((rq, rs) => {
       if (rq.url.startsWith('/vec/delete')) return rs.end('{"result":{"deleted":1}}');
       return rs.end(JSON.stringify({ result: [{ id: 'pooyesh-work-study', score: 0.9 }, { id: 'stale-id', score: 0.5 }] }));
     }
+    if (rq.url.startsWith('/bad/')) { badHits++; rs.statusCode = 429; return rs.end('{}'); }   // سرویس همیشه محدود
+    if (rq.url === '/hook') { hooks.push(JSON.parse(b)); return rs.end('{"ok":true}'); }
     seen.push({ url: rq.url, auth: rq.headers.authorization, body: JSON.parse(b || '{}') });
+    if (rq.url.startsWith('/slow/')) return setTimeout(() => { rs.setHeader('content-type', 'application/json'); rs.end(JSON.stringify({ choices: [{ message: { content: 'پاسخ کند' }, finish_reason: 'stop' }] })); }, 400);
     if (mode === '401') { rs.statusCode = 401; return rs.end('{}'); }
     if (mode === '429once' && seen.filter(s => s.url.includes('chat')).length === 1) { rs.statusCode = 429; return rs.end('{}'); }
     const content = mode === 'empty' ? '' : 'پاسخ آزمایشی: با مرکز هدایت تحصیلی تماس بگیرید ☎️ ۰۳۱-۳۵۳۵۴۰۴۹';
@@ -71,8 +75,11 @@ function call(handler, { body, headers = {}, method = 'POST' }) {
   await new Promise(r => server.listen(0, r));
   process.chdir(path.join(__dirname, '..'));
   const base = `http://127.0.0.1:${server.address().port}`;
-  process.env.ICP_BASE_URL = base + '/v1';
-  delete process.env.ICP_API_KEY; delete process.env.ICP_MODEL;
+  // llm.config.js در تست با سرور جعلی جایگزین می‌شود
+  const llm = require('../lib/llm');
+  const testCfg = { use: 'test', providers: { test: { url: base + '/v1', model: 'icp-chat', key: 'TEST_LLM_KEY', vision: true } } };
+  llm._setConfig(testCfg);
+  delete process.env.TEST_LLM_KEY; delete process.env.LLM_USE;
   delete process.env.UPSTASH_VECTOR_REST_URL; delete process.env.UPSTASH_VECTOR_REST_TOKEN;
   const chat = require('../api/chat.js');
   const feedback = require('../api/feedback.js');
@@ -81,9 +88,9 @@ function call(handler, { body, headers = {}, method = 'POST' }) {
 
   // ۱) بدون کلید → ۵۰۰ تمیز (نه crash)
   let r = await call(chat, { body: { messages: [{ role: 'user', content: 'سلام' }] } });
-  assert.strictEqual(r.code, 500); console.log('✓ بدون ICP_API_KEY خطای تمیز ۵۰۰ می‌دهد');
+  assert.strictEqual(r.code, 500); console.log('✓ بدون کلید مدل خطای تمیز ۵۰۰ می‌دهد');
 
-  process.env.ICP_API_KEY = 'test-key-1234567890abcdef';
+  process.env.TEST_LLM_KEY = 'test-key-1234567890abcdef';
   process.env.CHAT_SIGNING_SECRET = 'a'.repeat(32);
 
   // ۲) درخواست عادی
@@ -189,7 +196,12 @@ function call(handler, { body, headers = {}, method = 'POST' }) {
   const fin = r.events[r.events.length - 1];
   assert.ok(fin.done && fin.reply === 'پاسخ آزمایشی جریانی' && fin.sig === sign(fin.reply));
   r = await call(chat, { body: { stream: true, messages: [{ role: 'user', content: 'شهریه قسطی داره؟' }] } });
-  assert.strictEqual(r.json.cached, 'faq'); assert.strictEqual(r.json.lead, true); // کش/FAQ همان JSON می‌ماند
+  assert.strictEqual(r.json.cached, 'faq'); // کش/FAQ همان JSON می‌ماند
+  assert.strictEqual(r.json.lead, false);    // بدون Redis/webhook جایی برای ثبت تماس نیست → دکمه نشان داده نمی‌شود
+  process.env.LEAD_WEBHOOK_URL = base + '/hook';
+  r = await call(chat, { body: { messages: [{ role: 'user', content: 'شهریه قسطی داره؟' }] } });
+  assert.strictEqual(r.json.lead, true);
+  delete process.env.LEAD_WEBHOOK_URL;
   mode = 'empty'; r = await call(chat, { body: { stream: true, messages: [{ role: 'user', content: 'مصاحبه دکتری انگلیسی هم هست' }] } });
   assert.strictEqual(r.events[0].error, 'empty_reply'); mode = 'ok';
   console.log('✓ Streaming (SSE): تکه‌ها، رویداد پایانی امضاشده، خطای پاسخ خالی؛ FAQ همچنان JSON');
@@ -218,15 +230,76 @@ function call(handler, { body, headers = {}, method = 'POST' }) {
 
   // ۱۳) درخواست تماس
   const lead = require('../api/lead.js'), admin = require('../api/admin.js');
+  r = await call(lead, { body: { phone: '09123456789', consent: true } });
+  assert.strictEqual(r.json.error, 'lead_unavailable'); // بدون Redis/webhook: قبول نمی‌کند تا گم نشود
+  process.env.LEAD_WEBHOOK_URL = base + '/hook';
   r = await call(lead, { body: { phone: '123', consent: true } }); assert.strictEqual(r.code, 400);
   r = await call(lead, { body: { phone: '09123456789' } }); assert.strictEqual(r.json.error, 'no_consent');
   r = await call(lead, { body: { phone: '۰۹۱۲ ۳۴۵ ۶۷۸۹', consent: true, major: 'مهندسی کامپیوتر', question: 'شهریه <b>چنده</b>' } });
   assert.strictEqual(r.code, 200); assert.ok(r.json.ok);
+  assert.strictEqual(hooks.length, 1); assert.strictEqual(hooks[0].phone, '09123456789'); assert.ok(!('ip' in hooks[0]));
   process.env.ADMIN_TOKEN = 'z'.repeat(20);
   r = await call(admin, { method: 'GET', headers: { authorization: 'Bearer ' + 'z'.repeat(20) } });
   assert.strictEqual(r.json.leads[0].phone, '09123456789'); assert.ok(!r.json.leads[0].ip && !/</.test(r.json.leads[0].question));
   r = await call(admin, { method: 'GET', headers: { authorization: 'Bearer wrong-token-xxxxxxxx' } }); assert.strictEqual(r.code, 401);
   console.log('✓ درخواست تماس: اعتبارسنجی شماره (ارقام فارسی)، رضایت، پاکسازی متن، نمایش در پنل مدیر');
+
+  delete process.env.LEAD_WEBHOOK_URL;
+
+  // ۱۴) چند سرویس مدل: سرویس اول محدود (429) → دومی؛ سقف هم‌زمانی پر → 503 «شلوغ»
+  process.env.BACKUP_KEY = 'backup-key-123'; process.env.BAD_KEY = 'k1';
+  llm._setConfig({ use: 'bad', fallback: ['good'], providers: {
+    bad: { url: base + '/bad/v1', key: 'BAD_KEY', model: 'm-bad' },
+    good: { url: base + '/v1', key: 'BACKUP_KEY', model: 'm-good' },
+  } });
+  seen = []; badHits = 0;
+  r = await call(chat, { body: { messages: [{ role: 'user', content: 'رشته مهندسی نفت چطوره' }] } });
+  assert.strictEqual(r.code, 200); assert.strictEqual(badHits, 1);
+  assert.strictEqual(seen[0].body.model, 'm-good'); assert.strictEqual(seen[0].auth, 'Bearer backup-key-123');
+  // پس از ۳ خطای پیاپی، سرویس بد کنار گذاشته می‌شود و دیگر صدا زده نمی‌شود
+  for (let i = 0; i < 3; i++) await call(chat, { body: { messages: [{ role: 'user', content: 'مهندسی عمران بازار کار ' + i } ] } });
+  const before = badHits;
+  await call(chat, { body: { messages: [{ role: 'user', content: 'معماری داخلی چیه' }] } });
+  assert.strictEqual(badHits, before, 'سرویس قطع‌شده نباید دوباره صدا زده شود');
+  // تصویر: سرویسی که vision ندارد رد می‌شود
+  llm._setConfig({ use: 'good', providers: { good: { url: base + '/v1', key: 'BACKUP_KEY', model: 'm' } } }); // vision تعریف نشده
+  const png = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0, 0, 0, 0]).toString('base64');
+  r = await call(chat, { body: { messages: [{ role: 'user', content: 'این عکس چیه' }], attachment: { type: 'image', mime: 'image/png', name: 'a.png', data: png } } });
+  assert.strictEqual(r.code, 422);
+  // سقف هم‌زمانی ۱ و دو درخواست هم‌زمان → یکی موفق، یکی 503 busy
+  llm._setConfig({ use: 'slow', providers: { slow: { url: base + '/slow/v1', key: 'BACKUP_KEY', model: 'm', maxConcurrent: 1 } } });
+  const [x1, x2] = await Promise.all([
+    call(chat, { body: { messages: [{ role: 'user', content: 'شرایط دکتری بدون آزمون' }] } }),
+    call(chat, { body: { messages: [{ role: 'user', content: 'مصاحبه دکتری چطوره' }] } }),
+  ]);
+  const codes = [x1.code, x2.code].sort();
+  assert.deepStrictEqual(codes, [200, 503]); assert.strictEqual((x1.code === 503 ? x1 : x2).json.error, 'busy');
+  assert.deepStrictEqual(llm.stats()[0].active, 0, 'شمارندهٔ هم‌زمانی باید آزاد شود');
+  // LLM_USE بدون ویرایش فایل، سرویس فعال را عوض می‌کند؛ extra به بدنه اضافه می‌شود
+  llm._setConfig({ use: 'a', providers: { a: { url: base + '/bad/v1', key: 'BACKUP_KEY', model: 'ma' }, b: { url: base + '/v1', key: 'BACKUP_KEY', model: 'mb', extra: { think: false } } } });
+  process.env.LLM_USE = 'b'; seen = [];
+  r = await call(chat, { body: { messages: [{ role: 'user', content: 'رشته علوم تربیتی' }] } });
+  assert.strictEqual(seen[0].body.model, 'mb'); assert.strictEqual(seen[0].body.think, false);
+  delete process.env.LLM_USE; llm._setConfig(testCfg);
+  console.log('✓ llm.config.js: fallback خودکار، قطع موقت سرویس خراب، رد سرویس بدون vision، سقف هم‌زمانی → «شلوغ»، LLM_USE، extra');
+
+  // ۱۵) server.js (اجرا بدون Vercel): صفحه، فونت، مسدودسازی فایل‌های داخلی، API و SSE
+  const app = require('../server.js');
+  await new Promise(r => app.listen(0, r));
+  const A = `http://127.0.0.1:${app.address().port}`;
+  let h = await fetch(A + '/'); assert.strictEqual(h.status, 200); assert.ok(/text\/html/.test(h.headers.get('content-type')));
+  assert.ok(/cdn\.jsdelivr\.net/.test(h.headers.get('content-security-policy'))); // فونت IRANYekan از CDN (مثل قبل)
+  for (const bad of ['/knowledge/chunks.json', '/.env', '/package.json', '/lib/llm.js', '/scripts/ingest.js', '/eval/questions.json'])
+    { h = await fetch(A + bad, { redirect: 'manual' }); assert.ok([302, 404].includes(h.status), bad + ' → ' + h.status); }
+  for (const bad of ['/server.js', '/api/chat.js', '/README.md', '/../package.json']) { h = await fetch(A + bad, { redirect: 'manual' }); assert.ok([302, 404].includes(h.status), bad); }
+  h = await fetch(A + '/api/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content: 'شهریه قسطی داره؟' }] }) });
+  assert.strictEqual((await h.json()).cached, 'faq');
+  h = await fetch(A + '/api/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ stream: true, messages: [{ role: 'user', content: 'رشته طراحی صنعتی چه دروسی داره' }] }) });
+  assert.ok(/event-stream/.test(h.headers.get('content-type'))); assert.ok((await h.text()).includes('"done":true'));
+  h = await fetch(A + '/api/nope', { method: 'POST' }); assert.strictEqual(h.status, 404);
+  h = await fetch(A + '/api/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{bad' }); assert.strictEqual(h.status, 400);
+  app.close();
+  console.log('✓ server.js: صفحه، هدرهای امنیتی، فایل‌های داخلی مسدود، API عادی و جریانی بدون Vercel');
 
   server.close(); console.log('\nهمهٔ تست‌ها گذشت.'); process.exit(0);
 })().catch(e => { console.error('✗ FAIL', e); process.exit(1); });
