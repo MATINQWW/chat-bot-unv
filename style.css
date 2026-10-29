@@ -278,7 +278,7 @@ body.sb-open .hamburger span:nth-child(3){ top:6px; transform:rotate(-45deg); wi
 @media (min-width:768px){
   #sidebar{
     position:static; transform:none !important; z-index:0; width:19rem;
-    overflow:visible; box-shadow:none !important; height:auto; padding-bottom:14px; border-radius:0;
+    overflow:hidden; box-shadow:none !important; height:100%; align-self:stretch; min-height:0; padding-bottom:14px; border-radius:0;
   }
 }
 @media (min-width:1024px){ #sidebar{ width:21rem; } }
@@ -364,7 +364,7 @@ body.sb-open .hamburger span:nth-child(3){ top:6px; transform:rotate(-45deg); wi
 .dark .search-input:focus{ background:rgba(17,28,48,.95); border-color:rgba(0,229,255,.5); box-shadow:0 0 0 4px rgba(0,229,255,.08); }
 .search-icon{ position:absolute; top:50%; inset-inline-end:12px; transform:translateY(-50%); width:16px; height:16px; color:#94a3b8; pointer-events:none; }
 
-#chat-list{ flex:1; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; display:flex; flex-direction:column; gap:4px; margin-inline:-6px; padding-inline:6px; min-height:0; }
+#chat-list{ flex:1 1 0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-width:thin; scrollbar-color:rgba(148,163,184,.45) transparent; display:flex; flex-direction:column; gap:4px; margin-inline:-6px; padding-inline:6px; min-height:0; }
 
 .list-header{ font-size:.625rem; font-weight:800; color:#94A3B8; text-transform:uppercase; letter-spacing:.08em; padding:12px 10px 6px; }
 .dark .list-header{ color:#64748b; }
@@ -1369,3 +1369,27 @@ html[lang="fa"] *, html[lang="ar"] *{ letter-spacing:normal !important; text-tra
 .bubble-ai tr:last-child td{ border-bottom:0; }
 .bubble-ai blockquote{ margin:.6em 0; padding:.3em 1em; border-inline-start:3px solid var(--brand-500); background:rgba(6,182,212,.06); border-radius:8px; }
 .bubble-ai hr{ border:0; height:1px; background:rgba(148,163,184,.3); margin:.8em 0; }
+
+/* ---------- Fix: chat history list (scroll + no overlap) ---------- */
+#sidebar > *{ flex-shrink:0; }
+#sidebar > #chat-list{ flex:1 1 0; min-height:0; }
+#sidebar > .sidebar-tools{ margin-top:0; }
+.chat-item{ flex:0 0 auto; min-height:62px; }
+.list-header,.list-empty{ flex:0 0 auto; }
+#chat-list::-webkit-scrollbar{ width:6px; }
+#chat-list::-webkit-scrollbar-thumb{ background:rgba(148,163,184,.4); border-radius:99px; }
+#chat-list::-webkit-scrollbar-track{ background:transparent; }
+@media (max-width:767px){
+  #sidebar{ overflow:hidden; }
+}
+
+/* ---------- Fix: send icon direction in RTL (fa / ar) ---------- */
+[dir="rtl"] .send-btn .icon-send{ transform:scale(-1,1); }
+[dir="rtl"] .send-btn.is-stop .icon-send{ transform:scale(-.5,.5); }
+
+/* ---------- Feedback (one vote per message) ---------- */
+.msg-action.voted{ cursor:default; }
+.msg-action.like.voted{ background:rgba(16,185,129,.14); color:var(--emerald,#10B981); }
+.msg-action.dislike.voted{ background:rgba(244,63,94,.14); color:var(--rose,#F43F5E); }
+.msg-action:disabled:not(.voted){ opacity:.35; cursor:not-allowed; pointer-events:none; }
+.msg-action.voted:hover{ transform:none; }

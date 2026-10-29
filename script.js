@@ -3,7 +3,7 @@
 /* ═══════════════════════════════════════════════════════════
    CONSTANTS + STATE
    ═══════════════════════════════════════════════════════════ */
-const MAX_HISTORY=20, MAX_ARCHIVED=30, MAX_CTX=12, FETCH_TIMEOUT=65000, MAX_FILE_MB=10;
+const MAX_HISTORY=15, MAX_CTX=12, FETCH_TIMEOUT=65000, MAX_FILE_MB=10;
 const DEFAULTS={lang:'fa',theme:'light',fontSize:15,sound:true,autoSendVoice:false};
 const DIRS={fa:'rtl',ar:'rtl',en:'ltr'};
 const LANG_CODES={fa:'fa-IR',ar:'ar-SA',en:'en-US'};
@@ -512,9 +512,8 @@ window.addEventListener('resize',debounce(()=>{
    CHATS
    ═══════════════════════════════════════════════════════════ */
 function trimChats(){
-  const active=S.chats.filter(c=>!c.archived).sort((a,b)=>(b.date||0)-(a.date||0));
-  const archived=S.chats.filter(c=>c.archived).sort((a,b)=>(b.date||0)-(a.date||0));
-  S.chats=[...active.slice(0,MAX_HISTORY),...archived.slice(0,MAX_ARCHIVED)];
+  // حداکثر MAX_HISTORY گفتگو (فعال + آرشیو) نگه داشته می‌شود؛ قدیمی‌ترها حذف می‌شوند
+  S.chats=S.chats.slice().sort((a,b)=>(b.date||0)-(a.date||0)).slice(0,MAX_HISTORY);
 }
 function loadChats(){
   try{S.chats=JSON.parse(localStorage.getItem('n_chats')||'[]');}catch{S.chats=[];}
@@ -585,9 +584,12 @@ function userBubbleHTML(text){
       <div class="msg-avatar msg-avatar--user"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
     </div>`;
 }
-function aiBubbleHTML(text,cid){
+function aiBubbleHTML(text,cid,mid,vote){
+  const fbOn=!!cid;
+  const fbCls=v=>'msg-action '+v+(vote===v?' voted':'');
+  const fbDis=vote?' disabled aria-disabled="true"':'';
   return `
-    <div class="msg-group" data-cid="${escAttr(cid||'')}">
+    <div class="msg-group" data-cid="${escAttr(cid||'')}" data-mid="${escAttr(mid||'')}"${vote?` data-voted="${escAttr(vote)}"`:''}>
       <svg class="msg-avatar msg-avatar--ai" viewBox="0 0 40 40" aria-hidden="true"><use href="#s-ai"/></svg>
       <div class="msg-body">
         <div data-role="ai" class="bubble-ai">${md(text)}</div>
@@ -596,8 +598,8 @@ function aiBubbleHTML(text,cid){
           <button class="msg-action" data-action="regen">${esc(t('msg.regen'))}</button>
           <button class="msg-action" data-action="speak">${esc(t('msg.speak'))}</button>
           <button class="msg-action stop" data-action="stop-speak">${esc(t('msg.stopSpeak'))}</button>
-          <button class="msg-action like" data-action="like">👍</button>
-          <button class="msg-action dislike" data-action="dislike">👎</button>
+          ${fbOn?`<button class="${fbCls('like')}" data-action="like" aria-pressed="${vote==='like'}"${fbDis}>👍</button>
+          <button class="${fbCls('dislike')}" data-action="dislike" aria-pressed="${vote==='dislike'}"${fbDis}>👎</button>`:''}
           <button class="msg-action" data-action="share">${esc(t('msg.share'))}</button>
         </div>
       </div>
@@ -632,8 +634,8 @@ function stopTypingStages(){
    TYPEWRITER (parse-once + clip reveal)
    ═══════════════════════════════════════════════════════════ */
 const TYPE_CPS=55, TYPE_MAX_MS=14000;
-function appendAITyped(fullText,cid){
-  el.chat.insertAdjacentHTML('beforeend',aiBubbleHTML('',cid));
+function appendAITyped(fullText,cid,mid){
+  el.chat.insertAdjacentHTML('beforeend',aiBubbleHTML('',cid,mid));
   const groups=el.chat.querySelectorAll('.msg-group');
   const group=groups[groups.length-1];
   const bubble=group.querySelector('[data-role="ai"]');
@@ -728,10 +730,26 @@ el.chat.addEventListener('click',async e=>{
     case'stop-speak':TTS.stop();toast(t('toast.speakStop'),'info');break;
     case'share':await shareText(text);break;
     case'regen':regenerate();break;
-    case'like':btn.style.color='#10B981';sendFeedback(group,'up');toast(t('toast.thanks'),'success');break;
-    case'dislike':btn.style.color='#F43F5E';sendFeedback(group,'down');toast(t('toast.feedback'),'info');break;
+    case'like':case'dislike':submitVote(group,btn.dataset.action);break;
   }
 });
+// هر پیام فقط یک‌بار بازخورد می‌گیرد؛ وضعیت در خود پیام ذخیره می‌شود و بعد از رفرش هم می‌ماند
+function submitVote(group,vote){
+  if(!group||group.dataset.voted)return;
+  const cid=group.dataset.cid,mid=group.dataset.mid;
+  if(!cid)return;
+  const msg=S.messages.find(m=>m.role==='assistant'&&((mid&&m.mid===mid)||(!mid&&m.cid===cid)));
+  if(msg&&msg.vote)return;
+  group.dataset.voted=vote;
+  group.querySelectorAll('[data-action="like"],[data-action="dislike"]').forEach(b=>{
+    b.disabled=true;b.setAttribute('aria-disabled','true');
+    const on=b.dataset.action===vote;
+    b.classList.toggle('voted',on);b.setAttribute('aria-pressed',String(on));
+  });
+  if(msg){msg.vote=vote;persistCurrentChat();}
+  sendFeedback(group,vote==='like'?'up':'down');
+  toast(vote==='like'?t('toast.thanks'):t('toast.feedback'),vote==='like'?'success':'info');
+}
 function sendFeedback(group,vote){
   const cid=group&&group.dataset?group.dataset.cid:'';
   if(!cid)return;
@@ -993,7 +1011,7 @@ function renderMessages(msgs){
       frag.appendChild(div);
     }
     const tmp=document.createElement('div');
-    tmp.innerHTML=m.role==='user'?userBubbleHTML(m.content):aiBubbleHTML(m.content,m.cid);
+    tmp.innerHTML=m.role==='user'?userBubbleHTML(m.content):aiBubbleHTML(m.content,m.cid,m.mid,m.vote);
     while(tmp.firstChild)frag.appendChild(tmp.firstChild);
   });
   el.chat.appendChild(frag);
@@ -1203,9 +1221,10 @@ async function runCompletion(att){
     const _r=await callAPI(att);const reply=_r.reply;
     if(stale())return;
     stopTypingStages();el.typing.hidden=true;
-    await appendAITyped(reply,_r.cid);
+    const mid=uid();
+    await appendAITyped(reply,_r.cid,mid);
     if(stale())return;
-    S.messages.push({role:'assistant',content:reply,sig:_r.sig,cid:_r.cid||'',date:Date.now()});
+    S.messages.push({role:'assistant',content:reply,sig:_r.sig,cid:_r.cid||'',mid,vote:'',date:Date.now()});
     persistCurrentChat();
     if(S.sound)playSound();
   }catch(err){
