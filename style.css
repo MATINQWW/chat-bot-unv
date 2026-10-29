@@ -1398,3 +1398,15 @@ html[lang="fa"] *, html[lang="ar"] *{ letter-spacing:normal !important; text-tra
 .msg-action.stop{ display:none; }
 .msg-group.speaking .msg-action.stop{ display:inline-flex; color:var(--rose,#F43F5E); background:rgba(244,63,94,.1); }
 .msg-group.speaking .msg-action[data-action="speak"]{ display:none; }
+
+/* ─── درخواست تماس با مشاور ─── */
+.msg-action.lead-cta{ color:var(--brand-600); font-weight:600; }
+.lead-form{ margin-top:8px; padding:12px; border:1px solid rgba(6,182,212,.25); border-radius:12px;
+  background:rgba(6,182,212,.05); display:flex; flex-direction:column; gap:8px; max-width:420px; }
+.lead-form__hint{ margin:0; font-size:.88em; opacity:.85; }
+.lead-form__in{ font:inherit; padding:8px 10px; border-radius:8px; border:1px solid rgba(127,127,127,.35);
+  background:transparent; color:inherit; width:100%; box-sizing:border-box; }
+.lead-form__in:focus{ outline:2px solid var(--brand-600); outline-offset:1px; }
+.lead-form__consent{ font-size:.85em; display:flex; gap:6px; align-items:flex-start; }
+.lead-form__row{ display:flex; gap:8px; }
+.lead-form__done{ margin:8px 0 0; font-size:.9em; color:var(--brand-600); }

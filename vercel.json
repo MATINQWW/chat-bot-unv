@@ -1,9 +1,9 @@
 {
   "functions": {
-    "api/*.js": { "includeFiles": "knowledge.txt", "maxDuration": 60 }
+    "api/*.js": { "includeFiles": "knowledge/chunks.json", "maxDuration": 60 }
   },
   "redirects": [
-    { "source": "/(knowledge\\.txt|package\\.json|package-lock\\.json|vercel\\.json|README\\.md|\\.env.*|lib/.*)", "destination": "/", "permanent": false }
+    { "source": "/(knowledge/.*|scripts/.*|eval/.*|test/.*|package\\.json|package-lock\\.json|vercel\\.json|README\\.md|\\.env.*|lib/.*)", "destination": "/", "permanent": false }
   ],
   "headers": [
     {

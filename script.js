@@ -64,6 +64,10 @@ const I18N={
     'toast.startRecFailed':'شروع ضبط ناموفق','toast.setupRecFailed':'راه‌اندازی ضبط ناموفق','toast.recNotSupported':'ضبط پشتیبانی نمی‌شود',
     'toast.storageFull':'حافظه پر شد','toast.leaveConfirm':'مطمئنید؟ پاسخ در حال تولید است',
     'error.serverGeneric':'مشکلی پیش آمد','error.tryAgain':'دوباره تلاش کنید.','error.timeout':'سرور پاسخ نداد.',
+    'lead.cta':'📞 مشاور با من تماس بگیرد','lead.hint':'شماره‌تان را بگذارید تا همکاران مرکز هدایت تحصیلی با شما تماس بگیرند.',
+    'lead.phone':'شماره موبایل (مثلاً ۰۹۱۲...)','lead.name':'نام (اختیاری)','lead.major':'رشتهٔ مورد علاقه (اختیاری)',
+    'lead.consent':'موافقم مرکز هدایت تحصیلی با این شماره با من تماس بگیرد.','lead.send':'ثبت درخواست','lead.cancel':'انصراف',
+    'lead.needConsent':'لطفاً گزینهٔ موافقت با تماس را تیک بزنید','lead.done':'درخواست شما ثبت شد؛ به‌زودی با شما تماس می‌گیریم.',
     'lang.title':'انتخاب زبان','lang.subtitle':'زبان مورد نظر',
     'support.title':'پشتیبانی','support.subtitle':'در خدمت شما','support.chat':'گفتگوی آنلاین','support.chat.desc':'پاسخ سریع در ساعات کاری','support.email':'ایمیل','support.phone':'تلفن',
     'about.title':'درباره ما','about.subtitle':'با ما آشنا شوید','about.version':'نسخه',
@@ -98,6 +102,9 @@ const I18N={
     'toast.voiceNotInstalled':'غير مثبت','toast.voiceFallbackArabic':'صوت عربي','toast.ttsNotSupported':'غير مدعوم','toast.transcribing':'تحويل...',
     'toast.shareCopied':'تم','toast.serverModeActive':'خادم','toast.startRecFailed':'فشل','toast.setupRecFailed':'فشل','toast.recNotSupported':'غير مدعوم',
     'toast.storageFull':'ممتلئ','toast.leaveConfirm':'مطمئن؟','error.serverGeneric':'خطأ','error.tryAgain':'حاول مجدداً','error.timeout':'لا استجابة',
+    'lead.cta':'📞 اطلب اتصال مستشار','lead.hint':'اترك رقمك وسيتصل بك مركز الإرشاد الأكاديمي.','lead.phone':'رقم الهاتف','lead.name':'الاسم (اختياري)',
+    'lead.major':'التخصص المطلوب (اختياري)','lead.consent':'أوافق على أن يتصل بي المركز على هذا الرقم.','lead.send':'إرسال','lead.cancel':'إلغاء',
+    'lead.needConsent':'يرجى الموافقة على الاتصال','lead.done':'تم تسجيل طلبك وسنتصل بك قريباً.',
     'lang.title':'اللغة','lang.subtitle':'اختر','support.title':'الدعم','support.subtitle':'في خدمتك','support.chat':'محادثة','support.chat.desc':'رد سريع','support.email':'البريد','support.phone':'الهاتف',
     'about.title':'من نحن','about.subtitle':'تعرف','about.version':'الإصدار','about.desc':'المستشار الخارق مساعد أكاديمي ذكي.',
   },
@@ -130,6 +137,9 @@ const I18N={
     'toast.voiceNotInstalled':'Not installed','toast.voiceFallbackArabic':'Arabic voice','toast.ttsNotSupported':'Unsupported','toast.transcribing':'Transcribing...',
     'toast.shareCopied':'Copied','toast.serverModeActive':'Server','toast.startRecFailed':'Failed','toast.setupRecFailed':'Failed','toast.recNotSupported':'Unsupported',
     'toast.storageFull':'Full','toast.leaveConfirm':'Are you sure?','error.serverGeneric':'Error','error.tryAgain':'Try again','error.timeout':'No response',
+    'lead.cta':'📞 Have an advisor call me','lead.hint':'Leave your number and the academic guidance center will call you.','lead.phone':'Phone number','lead.name':'Name (optional)',
+    'lead.major':'Field of interest (optional)','lead.consent':'I agree to be contacted at this number.','lead.send':'Submit','lead.cancel':'Cancel',
+    'lead.needConsent':'Please tick the consent box','lead.done':'Request received — we will call you soon.',
     'lang.title':'Choose Language','lang.subtitle':'Select','support.title':'Support','support.subtitle':'We help','support.chat':'Live chat','support.chat.desc':'Quick reply','support.email':'Email','support.phone':'Phone',
     'about.title':'About Us','about.subtitle':'Get to know','about.version':'Version','about.desc':'Super Advisor is an intelligent academic assistant.',
   },
@@ -741,8 +751,53 @@ el.chat.addEventListener('click',async e=>{
     case'share':await shareText(text);break;
     case'regen':regenerate();break;
     case'like':case'dislike':submitVote(group,btn.dataset.action);break;
+    case'lead':openLeadForm(group);break;
+    case'lead-cancel':group.querySelector('.lead-form')?.remove();break;
+    case'lead-send':sendLead(group);break;
   }
 });
+/* ─── درخواست تماس با مشاور ─── */
+function addLeadButton(group){
+  if(!group||group.querySelector('[data-action="lead"]'))return;
+  const actions=group.querySelector('.msg-actions');if(!actions)return;
+  actions.insertAdjacentHTML('afterbegin',`<button class="msg-action lead-cta" data-action="lead">${esc(t('lead.cta'))}</button>`);
+}
+function openLeadForm(group){
+  if(group.querySelector('.lead-form'))return;
+  const body=group.querySelector('.msg-body');
+  body.insertAdjacentHTML('beforeend',`
+    <div class="lead-form" role="form" aria-label="${escAttr(t('lead.cta'))}">
+      <p class="lead-form__hint">${esc(t('lead.hint'))}</p>
+      <input class="lead-form__in" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="${escAttr(t('lead.phone'))}" maxlength="20" dir="ltr">
+      <input class="lead-form__in" name="name" type="text" autocomplete="name" placeholder="${escAttr(t('lead.name'))}" maxlength="60">
+      <input class="lead-form__in" name="major" type="text" placeholder="${escAttr(t('lead.major'))}" maxlength="80">
+      <label class="lead-form__consent"><input type="checkbox" name="consent"> ${esc(t('lead.consent'))}</label>
+      <div class="lead-form__row">
+        <button class="msg-action lead-cta" data-action="lead-send">${esc(t('lead.send'))}</button>
+        <button class="msg-action" data-action="lead-cancel">${esc(t('lead.cancel'))}</button>
+      </div>
+    </div>`);
+  const lf=body.querySelector('.lead-form');lf.scrollIntoView({block:'nearest',behavior:'smooth'});
+  lf.querySelector('[name="phone"]').focus({preventScroll:true});
+}
+async function sendLead(group){
+  const f=group.querySelector('.lead-form');if(!f||f.dataset.busy)return;
+  const v=n=>f.querySelector(`[name="${n}"]`);
+  if(!v('consent').checked){toast(t('lead.needConsent'),'error');return;}
+  // آخرین سؤال کاربر پیش از این پاسخ
+  const mid=group.dataset.mid,i=S.messages.findIndex(m=>m.mid===mid);
+  const q=(S.messages.slice(0,i<0?S.messages.length:i).reverse().find(m=>m.role==='user')||{}).content||'';
+  f.dataset.busy='1';
+  try{
+    const res=await fetch('/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({phone:v('phone').value,name:v('name').value,major:v('major').value,question:q.slice(0,300),consent:true,lang:S.lang})});
+    const d=await res.json().catch(()=>({}));
+    if(!res.ok){toast(d.message||t('toast.serverError'),'error');return;}
+    f.outerHTML=`<p class="lead-form__done">✅ ${esc(t('lead.done'))}</p>`;
+    group.querySelector('[data-action="lead"]')?.remove();
+  }catch{toast(t('toast.serverError'),'error');}
+  finally{delete f.dataset.busy;}
+}
 // هر پیام فقط یک‌بار بازخورد می‌گیرد؛ وضعیت در خود پیام ذخیره می‌شود و بعد از رفرش هم می‌ماند
 function submitVote(group,vote){
   if(!group||group.dataset.voted)return;
@@ -1021,6 +1076,7 @@ function renderMessages(msgs){
     }
     const tmp=document.createElement('div');
     tmp.innerHTML=m.role==='user'?userBubbleHTML(m.content):aiBubbleHTML(m.content,m.cid,(m.mid||(m.mid=uid())),m.vote);
+    if(m.role!=='user'&&m.lead)addLeadButton(tmp.querySelector('.msg-group'));
     while(tmp.firstChild)frag.appendChild(tmp.firstChild);
   });
   el.chat.appendChild(frag);
@@ -1203,7 +1259,7 @@ async function callAPI(att){
     else messages.push({role,content:m.content,sig:role==='assistant'?m.sig:undefined});
   }
   while(messages.length&&messages[0].role!=='user')messages.shift();
-  const payload={messages,lang:S.lang};
+  const payload={messages,lang:S.lang,stream:STREAM_OK};
   if(att)payload.attachment={name:att.name,mime:att.mime,data:att.data,type:att.type};
   try{
     const res=await fetch('/api/chat',{
@@ -1213,13 +1269,61 @@ async function callAPI(att){
       signal:S.abort.signal
     });
     if(!res.ok){const d=await res.text().catch(()=>'');console.error('API Error:',res.status);let sm='';try{sm=(JSON.parse(d).message||'').slice(0,200);}catch{}throw new Error(sm||`Server error (${res.status})`);}
+    // پاسخ جریانی (SSE) فقط وقتی مدل صدا زده شده؛ کش/FAQ همان JSON است
+    if((res.headers.get('content-type')||'').includes('text/event-stream')&&res.body){
+      return {stream:res.body,clear:()=>clearTimeout(timer)};
+    }
     const data=await res.json();
     if(!data.reply)throw new Error('Empty reply');
-    return {reply:data.reply,sig:data.sig||'',cid:data.cid||''};
+    return {reply:data.reply,sig:data.sig||'',cid:data.cid||'',lead:!!data.lead};
   }catch(err){
     if(timedOut){const e=new Error('timeout');e.name='TimeoutError';throw e;}
     throw err;
   }finally{clearTimeout(timer);}
+}
+const STREAM_OK=typeof ReadableStream!=='undefined'&&typeof TextDecoder!=='undefined';
+// خواندن SSE و نمایش تدریجی در یک حباب تازه؛ خروجی: {reply,sig,cid,lead}
+async function consumeStream(body,mid,stale){
+  el.chat.insertAdjacentHTML('beforeend',aiBubbleHTML('','',mid));
+  const groups=el.chat.querySelectorAll('.msg-group');
+  const group=groups[groups.length-1];
+  const bubble=group.querySelector('[data-role="ai"]');
+  const actions=group.querySelector('.msg-actions');
+  if(actions)actions.style.opacity='0';
+  const cursor=document.createElement('span');cursor.className='typewriter-cursor';
+  const reader=body.getReader(),dec=new TextDecoder();
+  let buf='',text='',final=null,lastRender=0,pending=false;
+  const render=(force)=>{
+    const now=performance.now();
+    if(!force&&now-lastRender<60){if(!pending){pending=true;setTimeout(()=>{pending=false;render(true);},60);}return;}
+    lastRender=now;
+    let t=text;if((t.match(/```/g)||[]).length%2)t+='\n```';
+    bubble.innerHTML=md(t);bubble.appendChild(cursor);
+    if(S.autoScroll)el.chat.scrollTop=el.chat.scrollHeight;
+  };
+  try{
+    for(;;){
+      const {value,done}=await reader.read();
+      if(done)break;
+      if(stale()){try{reader.cancel();}catch{}return null;}
+      buf+=dec.decode(value,{stream:true});
+      let i;
+      while((i=buf.indexOf('\n\n'))>=0){
+        const line=buf.slice(0,i).trim();buf=buf.slice(i+2);
+        if(!line.startsWith('data:'))continue;
+        let ev;try{ev=JSON.parse(line.slice(5));}catch{continue;}
+        if(ev.d){text+=ev.d;render(false);}
+        else if(ev.done)final=ev;
+        else if(ev.error){group.remove();throw new Error(ev.message||ev.error);}
+      }
+    }
+  }catch(e){if(e.name==='AbortError'&&text){final={reply:text,sig:'',cid:''};}else{group.remove();throw e;}}
+  if(!final){if(!text){group.remove();throw new Error('Empty reply');}final={reply:text,sig:'',cid:''};}
+  bubble.innerHTML=md(final.reply);
+  group.dataset.cid=final.cid||'';
+  if(actions)actions.style.opacity='';
+  if(S.autoScroll)el.chat.scrollTop=el.chat.scrollHeight;
+  return {reply:final.reply,sig:final.sig||'',cid:final.cid||'',lead:!!final.lead,group};
 }
 let _runId=0;
 async function runCompletion(att){
@@ -1229,13 +1333,21 @@ async function runCompletion(att){
   el.typing.hidden=false;
   startTypingStages();updateSend();scrollToBottom(true);
   try{
-    const _r=await callAPI(att);const reply=_r.reply;
+    let _r=await callAPI(att);
     if(stale())return;
     stopTypingStages();el.typing.hidden=true;
     const mid=uid();
-    await appendAITyped(reply,_r.cid,mid);
-    if(stale())return;
-    S.messages.push({role:'assistant',content:reply,sig:_r.sig,cid:_r.cid||'',mid,vote:'',date:Date.now()});
+    if(_r.stream){
+      const cl=_r.clear;
+      try{_r=await consumeStream(_r.stream,mid,stale);}finally{cl&&cl();}
+      if(!_r||stale())return;
+    }else{
+      await appendAITyped(_r.reply,_r.cid,mid);
+      if(stale())return;
+    }
+    const reply=_r.reply;
+    if(_r.lead)addLeadButton(el.chat.querySelector(`.msg-group[data-mid="${CSS.escape(mid)}"]`));
+    S.messages.push({role:'assistant',content:reply,sig:_r.sig,cid:_r.cid||'',mid,vote:'',date:Date.now(),lead:!!_r.lead});
     persistCurrentChat();
     if(S.sound)playSound();
   }catch(err){

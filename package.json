@@ -1,14 +1,18 @@
 {
   "name": "chat-bot-unv",
-  "version": "1.3.0",
+  "version": "1.5.0",
   "private": true,
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "test": "node test/smoke.js"
+    "test": "node test/smoke.js",
+    "ingest": "node scripts/ingest.js",
+    "search": "node scripts/search.js",
+    "eval": "node scripts/eval.js"
   },
   "dependencies": {
+    "@upstash/vector": "1.2.3",
     "openai": "4.104.0",
     "pdf-parse": "1.1.1"
   }
