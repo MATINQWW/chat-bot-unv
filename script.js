@@ -46,7 +46,7 @@ const I18N={
     'confirm.unarchiveTitle':'بازگردانی','confirm.unarchiveMsg':'آیا از بازگرداندن این مشاوره مطمئن هستید؟','confirm.unarchiveOk':'بله، بازگردان',
     'confirm.resetTitle':'بازگردانی به پیش‌فرض','confirm.resetMsg':'تمام تنظیمات به حالت اولیه برمی‌گردد. مشاوره‌ها حذف نمی‌شوند.','confirm.resetOk':'بله، بازنشانی کن',
     'file.title':'ارسال فایل','file.desc':'نوع فایل مورد نظر را انتخاب کنید','file.image':'تصویر','file.image.desc':'عکس، اسکرین‌شات، کارنامه','file.doc':'فایل و سند','file.doc.desc':'PDF، TXT، CSV','file.cancel':'انصراف',
-    'msg.copy':'📋 کپی','msg.regen':'🔄 مجدد','msg.speak':'🔊 خوانش','msg.stopSpeak':'⏹ صدا','msg.share':'↗ اشتراک',
+    'msg.copy':'📋 کپی','msg.regen':'🔄 مجدد','msg.speak':'🔊 خوانش','msg.stopSpeak':'⏹ توقف','msg.share':'↗ اشتراک',
     'toast.copied':'متن کپی شد','toast.copyError':'خطا در کپی','toast.speakStop':'خوانش متوقف شد','toast.reading':'در حال خواندن...',
     'toast.thanks':'ممنون از بازخوردتون','toast.fileType':'فقط تصویر، PDF، TXT، MD و CSV پشتیبانی می‌شود','toast.feedback':'بازخورد ثبت شد','toast.newChat':'مشاوره جدید آغاز شد',
     'toast.chatDeleted':'مشاوره حذف شد','toast.chatArchived':'به آرشیو منتقل شد','toast.chatUnarchived':'از آرشیو بازگردانده شد',
@@ -259,7 +259,13 @@ document.addEventListener('pointerdown',e=>{
    TTS
    ═══════════════════════════════════════════════════════════ */
 const TTS={
-  voices:[],currentVoice:null,ready:false,warned:false,
+  voices:[],currentVoice:null,ready:false,warned:false,_tok:0,_group:null,
+  _ui(group){
+    if(this._group&&this._group!==group)this._group.classList.remove('speaking');
+    this._group=group||null;
+    if(group)group.classList.add('speaking');
+  },
+  _clearUI(){if(this._group){this._group.classList.remove('speaking');this._group=null;}},
   init(){
     if(!('speechSynthesis' in window))return;
     const load=()=>{this.voices=speechSynthesis.getVoices()||[];this.currentVoice=this.pickBest(this.voices);this.ready=this.voices.length>0;};
@@ -296,24 +302,28 @@ const TTS={
     if(cur.trim())parts.push(cur.trim());
     return parts;
   },
-  speak(text){
+  speak(text,group){
     if(!('speechSynthesis' in window)){toast(t('toast.ttsNotSupported'),'warning');return false;}
     if(!this.ready){this.voices=speechSynthesis.getVoices()||[];this.currentVoice=this.pickBest(this.voices);this.ready=this.voices.length>0;}
     if(!this.currentVoice)toast(t('toast.voiceNotInstalled'),'warning');
     else if(!this.warned&&getLangCode().startsWith('fa')&&/^ar/i.test(this.currentVoice.lang)){this.warned=true;toast(t('toast.voiceFallbackArabic'),'warning');}
     try{speechSynthesis.cancel();}catch{}
-    const parts=this.chunk(text);if(!parts.length)return false;
+    const parts=this.chunk(text);if(!parts.length){this._clearUI();return false;}
     const useVoice=this.currentVoice;
-    parts.forEach(part=>{
+    const tok=++this._tok;
+    this._ui(group);
+    parts.forEach((part,i)=>{
       const u=new SpeechSynthesisUtterance(part);
       if(useVoice){u.voice=useVoice;u.lang=useVoice.lang;}else u.lang=getLangCode();
       u.rate=0.95;u.pitch=1;u.volume=1;
+      // فقط آخرین تکه (و فقط برای همین نوبت) دکمهٔ توقف را برمی‌گرداند
+      if(i===parts.length-1){const done=()=>{if(tok===this._tok)this._clearUI();};u.onend=done;u.onerror=done;}
       speechSynthesis.speak(u);
     });
     if(isIOS)setTimeout(()=>{try{speechSynthesis.resume();}catch{}},100);
     return true;
   },
-  stop(){try{speechSynthesis.cancel();}catch{}},
+  stop(){this._tok++;try{speechSynthesis.cancel();}catch{}this._clearUI();},
 };
 TTS.init();
 
@@ -585,7 +595,7 @@ function userBubbleHTML(text){
     </div>`;
 }
 function aiBubbleHTML(text,cid,mid,vote){
-  const fbOn=!!cid;
+  const fbOn=!!mid;
   const fbCls=v=>'msg-action '+v+(vote===v?' voted':'');
   const fbDis=vote?' disabled aria-disabled="true"':'';
   return `
@@ -726,7 +736,7 @@ el.chat.addEventListener('click',async e=>{
   const text=bubbleText(bubble,btn.dataset.action==='speak');
   switch(btn.dataset.action){
     case'copy':await copyText(text);break;
-    case'speak':{const ok=TTS.speak(text);if(ok)toast(t('toast.reading'),'info');break;}
+    case'speak':{const ok=TTS.speak(text,group);if(ok)toast(t('toast.reading'),'info');break;}
     case'stop-speak':TTS.stop();toast(t('toast.speakStop'),'info');break;
     case'share':await shareText(text);break;
     case'regen':regenerate();break;
@@ -737,8 +747,7 @@ el.chat.addEventListener('click',async e=>{
 function submitVote(group,vote){
   if(!group||group.dataset.voted)return;
   const cid=group.dataset.cid,mid=group.dataset.mid;
-  if(!cid)return;
-  const msg=S.messages.find(m=>m.role==='assistant'&&((mid&&m.mid===mid)||(!mid&&m.cid===cid)));
+  const msg=S.messages.find(m=>m.role==='assistant'&&((mid&&m.mid===mid)||(!mid&&cid&&m.cid===cid)));
   if(msg&&msg.vote)return;
   group.dataset.voted=vote;
   group.querySelectorAll('[data-action="like"],[data-action="dislike"]').forEach(b=>{
@@ -1011,7 +1020,7 @@ function renderMessages(msgs){
       frag.appendChild(div);
     }
     const tmp=document.createElement('div');
-    tmp.innerHTML=m.role==='user'?userBubbleHTML(m.content):aiBubbleHTML(m.content,m.cid,m.mid,m.vote);
+    tmp.innerHTML=m.role==='user'?userBubbleHTML(m.content):aiBubbleHTML(m.content,m.cid,(m.mid||(m.mid=uid())),m.vote);
     while(tmp.firstChild)frag.appendChild(tmp.firstChild);
   });
   el.chat.appendChild(frag);
@@ -1021,6 +1030,7 @@ function renderMessages(msgs){
    CHAT LIFECYCLE
    ═══════════════════════════════════════════════════════════ */
 function newChat(silent){
+  TTS.stop();
   cancelGeneration();
   persistCurrentChat();
   S.messages=[];S.chatId=uid();
@@ -1043,6 +1053,7 @@ function cancelGeneration(){
 }
 function loadChat(id){
   if(id===S.chatId&&S.messages.length){if(window.innerWidth<768)toggleSidebar(false);return;}
+  TTS.stop();
   cancelGeneration();
   persistCurrentChat();
   const chat=S.chats.find(c=>c.id===id);if(!chat)return;

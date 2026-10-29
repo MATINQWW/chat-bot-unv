@@ -1393,3 +1393,8 @@ html[lang="fa"] *, html[lang="ar"] *{ letter-spacing:normal !important; text-tra
 .msg-action.dislike.voted{ background:rgba(244,63,94,.14); color:var(--rose,#F43F5E); }
 .msg-action:disabled:not(.voted){ opacity:.35; cursor:not-allowed; pointer-events:none; }
 .msg-action.voted:hover{ transform:none; }
+
+/* ---------- Read-aloud: stop button only while speaking ---------- */
+.msg-action.stop{ display:none; }
+.msg-group.speaking .msg-action.stop{ display:inline-flex; color:var(--rose,#F43F5E); background:rgba(244,63,94,.1); }
+.msg-group.speaking .msg-action[data-action="speak"]{ display:none; }
