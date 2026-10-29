@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const { sign, signCid, validSig, ipHash, originAllowed, rateLimited, baseHeaders, llmConfig } = require('../lib/common');
 const { describe } = require('../lib/learn');
 const { retrieveKnowledge, RULES, REMINDER, getLearner } = require('../lib/prompt');
+const { faqAnswer, smallTalk } = require('../lib/knowledge');
 const { parseAttachment, AttError } = require('../lib/attachments');
 
 // ─── IranCopilot (OpenAI-compatible) ───
@@ -33,11 +34,16 @@ const LIMITS = {
 
 // سرویس بالادستی context کوچکی دارد و گاهی 413 می‌دهد (ورودی + خروجی جا نمی‌شود).
 // پس از هر 413 با بودجهٔ کوچک‌تر (دانش، تاریخچه، خروجی) دوباره تلاش می‌کنیم.
+// تاریخچه: فقط سؤال‌های قبلی کاربر (prevQ تا، هرکدام qChars) + آخرین پاسخ بات بریده‌شده (aChars).
+// پاسخ‌های بلند قبلی بات بیشترین سهم توکن تاریخچه را داشتند و برای فهم سؤال بعدی لازم نیستند.
 const BUDGETS = [
-  { knowledge: parseInt(process.env.ICP_KNOWLEDGE_CHARS || '1800', 10), maxTokens: parseInt(process.env.ICP_MAX_TOKENS || '800', 10), history: 4, chars: 800 },
-  { knowledge: 1000, maxTokens: 600, history: 2, chars: 500 },
-  { knowledge: 500,  maxTokens: 450, history: 1, chars: 500 },
+  { knowledge: parseInt(process.env.ICP_KNOWLEDGE_CHARS || '1800', 10), maxTokens: parseInt(process.env.ICP_MAX_TOKENS || '800', 10), prevQ: 3, qChars: 200, aChars: 300, chars: 800 },
+  { knowledge: 1000, maxTokens: 600, prevQ: 2, qChars: 150, aChars: 200, chars: 500 },
+  { knowledge: 500,  maxTokens: 450, prevQ: 1, qChars: 150, aChars: 0,   chars: 500 },
 ];
+
+// پیشنهاد «درخواست تماس» وقتی پاسخ به مرکز هدایت تحصیلی ارجاع می‌دهد
+const offerLead = (t) => /35354049|۳۵۳۵۴۰۴۹|ندارم/.test(String(t || ''));
 
 const LANG_NAMES = { fa: 'فارسی', en: 'English', ar: 'العربية' };
 
@@ -104,11 +110,22 @@ module.exports = async (req, res) => {
     const firstTurn = messages.length === 1;
     const fullMessages = messages;
     // آخرین پیام کاربر برای سؤال/کش: با سقف هم‌اندازهٔ ورودی (نه سقف کوچک بودجه)
-    const question = fullMessages[fullMessages.length - 1].content.slice(0, 500);
+    const question0 = fullMessages[fullMessages.length - 1].content;
+    const question = question0.slice(0, 500);
+    const wantStream = body.stream === true && process.env.ICP_STREAM !== '0';
     const shape = (b) => {
-      let m = fullMessages.slice(-BUDGETS[b].history);
-      while (m.length && m[0].role !== 'user') m.shift();
-      return m.map(x => ({ role: x.role, content: x.content.slice(0, BUDGETS[b].chars) }));
+      const B = BUDGETS[b];
+      const prior = fullMessages.slice(0, -1);
+      const prevQs = prior.filter(m => m.role === 'user').slice(-B.prevQ).map(m => m.content.slice(0, B.qChars).replace(/\s+/g, ' '));
+      const last = prior[prior.length - 1];
+      const out = [];
+      if (prevQs.length) {
+        out.push({ role: 'user', content: 'سؤال‌های قبلی من در این گفتگو:\n' + prevQs.map(q => '- ' + q).join('\n') });
+        const a = last && last.role === 'assistant' && B.aChars ? last.content.slice(0, B.aChars) : '';
+        out.push({ role: 'assistant', content: a ? a + (last.content.length > B.aChars ? ' …' : '') : '(پاسخ داده شد)' });
+      }
+      out.push({ role: 'user', content: question0.slice(0, B.chars) });
+      return out;
     };
 
     let att = null;
@@ -121,12 +138,22 @@ module.exports = async (req, res) => {
     const L = getLearner();
     const info = describe(question);
 
+    // ─── ۰) FAQ آماده: صفر توکن، بدون شبکه ───
+    if (!att) {
+      const st = smallTalk(question);
+      if (st) return res.status(200).json({ reply: st, sig: sign(st), cid: '', cached: 'smalltalk', lead: false });
+    }
+    if (!att && (firstTurn || !info.deictic)) {
+      const faq = faqAnswer(question);
+      if (faq) return res.status(200).json({ reply: faq.answer, sig: sign(faq.answer), cid: '', cached: 'faq', lead: offerLead(faq.answer) });
+    }
+
     // ─── ۱) حافظه ───
     if (!att && info.ok && (firstTurn || !info.deictic)) {
       const hit = await L.lookup(info);
       if (hit) {
         await L.recordHit(info, hit);
-        return res.status(200).json({ reply: hit.answer, sig: sign(hit.answer), cid: signCid(hit.key), cached: true });
+        return res.status(200).json({ reply: hit.answer, sig: sign(hit.answer), cid: signCid(hit.key), cached: hit.via || true, lead: offerLead(hit.answer) });
       }
     }
 
@@ -152,13 +179,25 @@ module.exports = async (req, res) => {
       ? `زبان رابط کاربر: ${langName}. اگر کاربر به زبان دیگری نوشت، به همان زبان پاسخ بده.`
       : 'به زبانی که کاربر نوشته پاسخ بده.';
 
+    // بازیابی یک‌بار (Vector یک درخواست شبکه است)؛ در بودجه‌های کوچک‌تر فقط برش داده می‌شود
+    // برای سؤال‌های پیگیری کوتاه («بازار کارش چطوره؟») سؤال قبلی کاربر هم به جست‌وجو اضافه می‌شود
+    const prevUser = fullMessages.length > 2 ? fullMessages[fullMessages.length - 3].content.slice(0, 200) : '';
+    const searchQ = (prevUser && (info.deictic || question.length < 40)) ? prevUser + '\n' + question : question;
+    const r0 = await retrieveKnowledge(searchQ, BUDGETS[0].knowledge);
+    topScore = r0.topScore;
+    const cut = (limit) => {
+      const parts = r0.text ? r0.text.split('\n\n---\n\n') : [];
+      const out = []; let n = 0;
+      for (const p of parts) { if (n + p.length > limit && out.length) break; out.push(p); n += p.length; }
+      return out.join('\n\n---\n\n');
+    };
+
     let completion;
     try {
       for (let b = 0; b < BUDGETS.length; b++) {
-        const r = retrieveKnowledge(question, BUDGETS[b].knowledge);
-        knowledge = r.text; topScore = r.topScore;
+        knowledge = b === 0 ? r0.text : cut(BUDGETS[b].knowledge);
         // یک پیام system واحد در ابتدا (چند پیام system و system در انتها روی همهٔ مدل‌ها مطمئن نیست)
-        const system = [RULES, langHint, 'اطلاعات مرجع:\n' + knowledge, REMINDER].join('\n\n');
+        const system = [RULES, langHint, 'اطلاعات مرجع:\n' + (knowledge || '(موردی یافت نشد)'), REMINDER].join('\n\n');
         try {
           completion = await retryWithBackoff(() =>
             getClient().chat.completions.create({
@@ -166,7 +205,7 @@ module.exports = async (req, res) => {
               messages: [{ role: 'system', content: system }].concat(withAtt(shape(b))),
               temperature: 0.2,
               max_tokens: BUDGETS[b].maxTokens,
-              stream: false,
+              stream: wantStream,
             }, { headers: { 'Idempotency-Key': `${idempotencyKey}-${b}` } })
           );
           break;
@@ -201,14 +240,42 @@ module.exports = async (req, res) => {
       return res.status(502).json({ error: 'model_error', message: 'خطایی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.' });
     }
 
-    const choice = completion.choices && completion.choices[0];
-    const reply = ((choice && choice.message && choice.message.content) || '').trim();
-    if (!reply) {
-      // مدل‌های «thinking» اگر توکن را صرف استدلال کنند ممکن است محتوای خالی بدهند
-      console.error('empty reply from model', choice && choice.finish_reason);
-      return res.status(502).json({ error: 'empty_reply', message: 'پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.' });
+    let reply = '', finish = null, usage = null;
+    const EMPTY = 'پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.';
+    // SSE: «data: {"d":"تکه"}» … و در پایان «data: {"done":true,reply,sig,cid,lead}» یا «data: {"error":..}»
+    const sse = (o) => res.write('data: ' + JSON.stringify(o) + '\n\n');
+    if (wantStream) {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+      res.setHeader('X-Accel-Buffering', 'no');
+      if (res.flushHeaders) res.flushHeaders();
+      try {
+        for await (const ch of completion) {
+          const c = ch && ch.choices && ch.choices[0];
+          const d = c && c.delta && c.delta.content;
+          if (d) { reply += d; sse({ d }); }
+          if (c && c.finish_reason) finish = c.finish_reason;
+          if (ch && ch.usage) usage = ch.usage;
+        }
+      } catch (e) {
+        console.error('stream broke', e && e.message);
+        if (!reply) { sse({ error: 'model_error', message: 'خطایی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.' }); return res.end(); }
+        finish = 'length'; // پاسخ ناقص: نمایش داده می‌شود ولی در حافظه ذخیره نمی‌شود
+      }
+      reply = reply.trim();
+      if (!reply) { console.error('empty reply from model (stream)', finish); sse({ error: 'empty_reply', message: EMPTY }); return res.end(); }
+    } else {
+      const choice = completion.choices && completion.choices[0];
+      reply = ((choice && choice.message && choice.message.content) || '').trim();
+      finish = choice && choice.finish_reason;
+      usage = completion.usage;
+      if (!reply) {
+        // مدل‌های «thinking» اگر توکن را صرف استدلال کنند ممکن است محتوای خالی بدهند
+        console.error('empty reply from model', finish);
+        return res.status(502).json({ error: 'empty_reply', message: EMPTY });
+      }
     }
-    const u = completion.usage || {};
+    const u = usage || {};
     const used = (u.prompt_tokens || 0) + (u.completion_tokens || 0) ||
       Math.ceil((RULES.length + knowledge.length + question.length + reply.length) / 3);
 
@@ -218,14 +285,17 @@ module.exports = async (req, res) => {
       try {
         const state = await L.observe({
           info, answer: reply, ipHash: ipHash(req), usedTokens: used,
-          retrievalScore: topScore, eligibleToStore: firstTurn && !(choice && choice.finish_reason === 'length'),
+          retrievalScore: topScore, eligibleToStore: firstTurn && finish !== 'length',
         });
         if (info.ok && firstTurn && state !== 'banned') cid = signCid(info.key);
       } catch (e) { console.warn('learn failed', e && e.message); }
     }
-    return res.status(200).json({ reply, sig: sign(reply), cid });
+    const out = { reply, sig: sign(reply), cid, lead: offerLead(reply) };
+    if (wantStream) { sse({ done: true, ...out }); return res.end(); }
+    return res.status(200).json(out);
   } catch (e) {
     console.error('server error', e);
+    if (res.headersSent) { try { res.write('data: ' + JSON.stringify({ error: 'server_error', message: 'خطای داخلی سرور.' }) + '\n\n'); } catch {} return res.end(); }
     return res.status(500).json({ error: 'server_error', message: 'خطای داخلی سرور.' });
   }
 };
