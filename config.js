@@ -8,7 +8,7 @@ module.exports = {
 
   // ─── مدل زبانی ───
   llm: {
-    use: 'ollama',           // سرویس فعال (یکی از providers)
+    use: 'irancopilot',           // سرویس فعال (یکی از providers)
     fallback: [],            // اختیاری: اگر فعال خطا داد یا پر بود، به ترتیب این‌ها؛ مثلاً ['irancopilot']
 
     providers: {
