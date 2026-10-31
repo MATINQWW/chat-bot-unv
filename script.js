@@ -412,7 +412,6 @@ $('#cf-ok').addEventListener('click',()=>{const cb=confirmCb;confirmCb=null;clos
 function applyTheme(theme){
   S.theme=theme;
   document.documentElement.classList.toggle('dark',theme==='dark');
-  if(el.themeIcon)el.themeIcon.textContent=theme==='dark'?'☀️':'🌙';
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#050A14':'#0EA5E9');
   try{localStorage.setItem('n_theme',theme);}catch{}
   $$('.theme-btn').forEach(b=>b.classList.toggle('active',b.dataset.theme===theme));
@@ -1410,7 +1409,6 @@ function playSound(){
   }catch{}
 },{once:true,passive:true}));
 $('#sound-toggle').addEventListener('change',e=>{S.sound=e.target.checked;try{localStorage.setItem('n_sound',S.sound?'1':'0');}catch{}});
-$('#autosend-toggle').addEventListener('change',e=>{S.autoSendVoice=e.target.checked;try{localStorage.setItem('n_autosend',S.autoSendVoice?'1':'0');}catch{}});
 
 /* ═══════════════════════════════════════════════════════════
    RESET
@@ -1419,8 +1417,6 @@ function resetToDefaults(){
   setLang(DEFAULTS.lang);
   applyTheme(DEFAULTS.theme);
   S.autoSendVoice=DEFAULTS.autoSendVoice;
-  $('#autosend-toggle').checked=DEFAULTS.autoSendVoice;
-  try{localStorage.setItem('n_autosend',DEFAULTS.autoSendVoice?'1':'0');}catch{}
   $('#font-size').value=DEFAULTS.fontSize;
   setFontSize(DEFAULTS.fontSize);
   S.sound=DEFAULTS.sound;
@@ -1428,12 +1424,6 @@ function resetToDefaults(){
   try{localStorage.setItem('n_sound',DEFAULTS.sound?'1':'0');}catch{}
   toast(t('toast.defaultsRestored'),'success');
 }
-$('#clear-all-chats').addEventListener('click',()=>{
-  confirmDialog({title:t('confirm.clearTitle'),msg:t('confirm.clearMsg'),okText:t('confirm.clearOk'),variant:'danger',onConfirm:()=>{
-    try{localStorage.removeItem('n_chats');}catch{}
-    location.reload();
-  }});
-});
 $('#reset-defaults').addEventListener('click',()=>{
   confirmDialog({title:t('confirm.resetTitle'),msg:t('confirm.resetMsg'),okText:t('confirm.resetOk'),variant:'danger',onConfirm:resetToDefaults});
 });
@@ -1694,9 +1684,6 @@ $$('[data-bottom]').forEach(btn=>{
 
   applyI18n();setPlatform();
 
-  let savedAutoSend=null;try{savedAutoSend=localStorage.getItem('n_autosend');}catch{}
-  S.autoSendVoice=savedAutoSend===null?DEFAULTS.autoSendVoice:savedAutoSend==='1';
-  $('#autosend-toggle').checked=S.autoSendVoice;
 
   let savedFontSize=null;try{savedFontSize=localStorage.getItem('n_fontsize');}catch{}
   const initFontSize=savedFontSize||DEFAULTS.fontSize;
