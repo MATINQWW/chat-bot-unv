@@ -21,7 +21,7 @@ module.exports = {
         vision: true,
       },
       irancopilot: {
-        url: 'https://irancopilot.com/studio/pro/v1',
+        url: 'https://irancopilot.com/studio/pro/v1/chat/completions',
         model: 'icp-chat',
         key: 'ICP_API_KEY',
       },
