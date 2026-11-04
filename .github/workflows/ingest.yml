@@ -1,0 +1,27 @@
+# تست‌ها روی هر push اجرا می‌شوند. اگر Upstash Vector استفاده می‌کنید (اختیاری)، Secrets زیر را بگذارید
+# تا ایندکس هم خودکار همگام شود؛ بدون آن‌ها این مرحله بی‌صدا رد می‌شود:
+#   GitHub → Settings → Secrets and variables → Actions: UPSTASH_VECTOR_REST_URL , UPSTASH_VECTOR_REST_TOKEN
+name: Test and sync knowledge
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+env:
+  HAS_VECTOR: ${{ secrets.UPSTASH_VECTOR_REST_URL != '' && secrets.UPSTASH_VECTOR_REST_TOKEN != '' }}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm test
+      - run: npm run eval -- --min 90
+      - name: Sync vector index (only if Upstash secrets are set)
+        if: ${{ env.HAS_VECTOR == 'true' }}
+        run: npm run ingest
+        env:
+          UPSTASH_VECTOR_REST_URL: ${{ secrets.UPSTASH_VECTOR_REST_URL }}
+          UPSTASH_VECTOR_REST_TOKEN: ${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}
