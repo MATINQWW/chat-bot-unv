@@ -9,10 +9,12 @@
     "test": "node test/smoke.js",
     "ingest": "node scripts/ingest.js",
     "search": "node scripts/search.js",
-    "eval": "node scripts/eval.js"
+    "eval": "node scripts/eval.js",
+    "test:mysql": "node test/mysql.js"
   },
   "dependencies": {
     "@upstash/vector": "1.2.3",
+    "mysql2": "3.11.3",
     "openai": "4.104.0",
     "pdf-parse": "1.1.1"
   }

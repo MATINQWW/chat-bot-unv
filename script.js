@@ -392,14 +392,14 @@ function confirmDialog({title,msg,okText,variant='danger',onConfirm}){
   const okBtn=$('#cf-ok');
   const icon=$('#cf-icon');
   if(variant==='archive'){
-    okBtn.className='btn-primary';okBtn.style.background='linear-gradient(135deg,#F59E0B,#D97706)';
-    icon.style.background='rgba(245,158,11,.1)';icon.textContent='📦';
+    okBtn.className='btn-primary';okBtn.style.background='var(--warning)';
+    icon.style.background='color-mix(in oklab,var(--warning) 14%,transparent)';icon.textContent='📦';
   }else if(variant==='unarchive'){
-    okBtn.className='btn-primary';okBtn.style.background='linear-gradient(135deg,#10B981,#059669)';
-    icon.style.background='rgba(16,185,129,.1)';icon.textContent='📤';
+    okBtn.className='btn-primary';okBtn.style.background='var(--success)';
+    icon.style.background='color-mix(in oklab,var(--success) 14%,transparent)';icon.textContent='📤';
   }else{
     okBtn.className='btn-danger';okBtn.style.background='';
-    icon.style.background='rgba(244,63,94,.1)';icon.textContent='⚠️';
+    icon.style.background='color-mix(in oklab,var(--destructive) 14%,transparent)';icon.textContent='⚠️';
   }
   okBtn.textContent=okText||t('confirm.deleteOk');
   confirmCb=onConfirm;openModal('m-confirm');
@@ -412,7 +412,7 @@ $('#cf-ok').addEventListener('click',()=>{const cb=confirmCb;confirmCb=null;clos
 function applyTheme(theme){
   S.theme=theme;
   document.documentElement.classList.toggle('dark',theme==='dark');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#050A14':'#0EA5E9');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#1B1C1E':'#F6F4EF');
   try{localStorage.setItem('n_theme',theme);}catch{}
   $$('.theme-btn').forEach(b=>b.classList.toggle('active',b.dataset.theme===theme));
 }
