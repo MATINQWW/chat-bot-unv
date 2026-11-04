@@ -46,7 +46,7 @@ const I18N={
     'confirm.unarchiveTitle':'بازگردانی','confirm.unarchiveMsg':'آیا از بازگرداندن این مشاوره مطمئن هستید؟','confirm.unarchiveOk':'بله، بازگردان',
     'confirm.resetTitle':'بازگردانی به پیش‌فرض','confirm.resetMsg':'تمام تنظیمات به حالت اولیه برمی‌گردد. مشاوره‌ها حذف نمی‌شوند.','confirm.resetOk':'بله، بازنشانی کن',
     'file.title':'ارسال فایل','file.desc':'نوع فایل مورد نظر را انتخاب کنید','file.image':'تصویر','file.image.desc':'عکس، اسکرین‌شات، کارنامه','file.doc':'فایل و سند','file.doc.desc':'PDF، TXT، CSV','file.cancel':'انصراف',
-    'msg.copy':'📋 کپی','msg.regen':'🔄 مجدد','msg.speak':'🔊 خوانش','msg.stopSpeak':'⏹ توقف','msg.share':'↗ اشتراک',
+    'msg.copy':'کپی','msg.regen':'پاسخ مجدد','msg.speak':'خواندن پاسخ','msg.stopSpeak':'توقف خواندن','msg.share':'اشتراک‌گذاری','msg.like':'پاسخ مفید بود','msg.dislike':'پاسخ مفید نبود',
     'toast.copied':'متن کپی شد','toast.copyError':'خطا در کپی','toast.speakStop':'خوانش متوقف شد','toast.reading':'در حال خواندن...',
     'toast.thanks':'ممنون از بازخوردتون','toast.fileType':'فقط تصویر، PDF، TXT، MD و CSV پشتیبانی می‌شود','toast.feedback':'بازخورد ثبت شد','toast.newChat':'مشاوره جدید آغاز شد',
     'toast.chatDeleted':'مشاوره حذف شد','toast.chatArchived':'به آرشیو منتقل شد','toast.chatUnarchived':'از آرشیو بازگردانده شد',
@@ -92,7 +92,7 @@ const I18N={
     'confirm.archiveTitle':'أرشفة','confirm.archiveMsg':'نقل للأرشيف؟','confirm.archiveOk':'نعم','confirm.unarchiveTitle':'استعادة','confirm.unarchiveMsg':'استعادة؟','confirm.unarchiveOk':'نعم',
     'confirm.resetTitle':'استعادة الإعدادات','confirm.resetMsg':'إعادة كل الإعدادات؟','confirm.resetOk':'نعم',
     'file.title':'إرسال ملف','file.desc':'اختر النوع','file.image':'صورة','file.image.desc':'صورة، لقطة','file.doc':'مستند','file.doc.desc':'PDF، TXT، CSV','file.cancel':'إلغاء',
-    'msg.copy':'📋 نسخ','msg.regen':'🔄 إعادة','msg.speak':'🔊 قراءة','msg.stopSpeak':'⏹ إيقاف','msg.share':'↗ مشاركة',
+    'msg.copy':'نسخ','msg.regen':'إعادة الإجابة','msg.speak':'قراءة الإجابة','msg.stopSpeak':'إيقاف القراءة','msg.share':'مشاركة','msg.like':'إجابة مفيدة','msg.dislike':'إجابة غير مفيدة',
     'toast.copied':'تم النسخ','toast.copyError':'فشل','toast.speakStop':'توقف','toast.reading':'قراءة...','toast.thanks':'شكراً','toast.fileType':'الصور وPDF وTXT وMD وCSV فقط','toast.feedback':'تم',
     'toast.newChat':'بدأت','toast.chatDeleted':'تم الحذف','toast.chatArchived':'تم النقل','toast.chatUnarchived':'تمت الاستعادة',
     'toast.defaultsRestored':'تم','toast.historyTrimmed':'حُذف','toast.fileReady':'جاهز','toast.fileTooBig':'الحد 10م','toast.docTooBig':'الحد الأقصى للملف 2.5 م.ب','toast.fileReadError':'خطأ',
@@ -127,7 +127,7 @@ const I18N={
     'confirm.archiveTitle':'Archive','confirm.archiveMsg':'Move to archive?','confirm.archiveOk':'Yes','confirm.unarchiveTitle':'Restore','confirm.unarchiveMsg':'Restore?','confirm.unarchiveOk':'Yes',
     'confirm.resetTitle':'Restore Defaults','confirm.resetMsg':'Reset all settings?','confirm.resetOk':'Yes',
     'file.title':'Send file','file.desc':'Choose type','file.image':'Image','file.image.desc':'Photo, screenshot','file.doc':'Document','file.doc.desc':'PDF, TXT, CSV','file.cancel':'Cancel',
-    'msg.copy':'📋 Copy','msg.regen':'🔄 Retry','msg.speak':'🔊 Read','msg.stopSpeak':'⏹ Stop','msg.share':'↗ Share',
+    'msg.copy':'Copy','msg.regen':'Regenerate','msg.speak':'Read aloud','msg.stopSpeak':'Stop reading','msg.share':'Share','msg.like':'Good response','msg.dislike':'Bad response',
     'toast.copied':'Copied','toast.copyError':'Failed','toast.speakStop':'Stopped','toast.reading':'Reading...','toast.thanks':'Thanks','toast.fileType':'Only images, PDF, TXT, MD and CSV are supported','toast.feedback':'Recorded',
     'toast.newChat':'Started','toast.chatDeleted':'Deleted','toast.chatArchived':'Archived','toast.chatUnarchived':'Restored',
     'toast.defaultsRestored':'Done','toast.historyTrimmed':'Trimmed','toast.fileReady':'Ready','toast.fileTooBig':'Max 10MB','toast.docTooBig':'PDF/text files must be under 2.5MB','toast.fileReadError':'Error',
@@ -233,13 +233,28 @@ function md(text){
    TOASTS
    ═══════════════════════════════════════════════════════════ */
 const TOAST_ICONS={success:'✓',error:'✕',info:'ℹ',warning:'⚠'};
+const TOAST_MAX=2;
 function toast(msg,type='info'){
+  const box=$('#toasts');
+  const live=()=>[...box.querySelectorAll('.toast:not(.out)')];
+  const dismiss=n=>{if(!n||n.classList.contains('out'))return;clearTimeout(n._t);n.classList.add('out');setTimeout(()=>n.remove(),250);};
+  // همان پیام تکراری: فقط زمان نمایش تمدید می‌شود
+  const dup=live().find(n=>n.dataset.msg===msg&&n.dataset.type===type);
+  if(dup){
+    clearTimeout(dup._t);dup._t=setTimeout(()=>dismiss(dup),3000);
+    dup.classList.remove('bump');void dup.offsetWidth;dup.classList.add('bump');
+    return;
+  }
+  // سقف تعداد: قدیمی‌ترین اعلان‌ها بسته می‌شوند
+  const cur=live();
+  while(cur.length>=TOAST_MAX)dismiss(cur.shift());
   const node=document.createElement('div');
   node.className=`toast ${type}`;
+  node.dataset.msg=msg;node.dataset.type=type;
   node.setAttribute('role','status');
   node.innerHTML=`<span class="toast__icon">${TOAST_ICONS[type]||TOAST_ICONS.info}</span><span style="flex:1;overflow-wrap:anywhere">${esc(msg)}</span>`;
-  $('#toasts').appendChild(node);
-  setTimeout(()=>{node.classList.add('out');setTimeout(()=>node.remove(),250);},3000);
+  box.appendChild(node);
+  node._t=setTimeout(()=>dismiss(node),3000);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -418,6 +433,11 @@ function applyTheme(theme){
 }
 function setThemeWithTransition(newTheme,e){
   if(newTheme===S.theme)return;
+  const root=document.documentElement;
+  root.classList.add('theme-switching');
+  const done=()=>{root.classList.remove('theme-switching');};
+  setTimeout(done,900);
+  try{document.activeElement&&document.activeElement.matches('.icon-btn,.theme-btn')&&document.activeElement.blur();}catch{}
   const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(!document.startViewTransition||reduce){applyTheme(newTheme);return;}
   let x=window.innerWidth/2,y=window.innerHeight/2;
@@ -591,13 +611,25 @@ function showWelcome(){
 /* ═══════════════════════════════════════════════════════════
    BUBBLES
    ═══════════════════════════════════════════════════════════ */
+const AI_ICON=(p)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const ICONS={
+  copy:AI_ICON('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>'),
+  check:AI_ICON('<path d="M20 6 9 17l-5-5"/>'),
+  regen:AI_ICON('<path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/>'),
+  speak:AI_ICON('<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>'),
+  stop:AI_ICON('<rect x="6" y="6" width="12" height="12" rx="2"/>'),
+  like:AI_ICON('<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88z"/>'),
+  dislike:AI_ICON('<path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88z"/>'),
+  share:AI_ICON('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/>')
+};
+const actBtn=(cls,action,icon,labelKey,extra='')=>`<button class="msg-action ic ${cls}" data-action="${action}" title="${escAttr(t(labelKey))}" aria-label="${escAttr(t(labelKey))}"${extra}>${ICONS[icon]}</button>`;
 function userBubbleHTML(text){
   return `
     <div class="msg-group mine">
       <div class="msg-body mine">
         <div data-role="user" class="bubble-user">${esc(text)}</div>
         <div class="msg-actions" style="justify-content:flex-end">
-          <button class="msg-action" data-action="copy">${esc(t('msg.copy'))}</button>
+          ${actBtn('','copy','copy','msg.copy')}
         </div>
       </div>
       <div class="msg-avatar msg-avatar--user"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
@@ -613,13 +645,13 @@ function aiBubbleHTML(text,cid,mid,vote){
       <div class="msg-body">
         <div data-role="ai" class="bubble-ai">${md(text)}</div>
         <div class="msg-actions">
-          <button class="msg-action" data-action="copy">${esc(t('msg.copy'))}</button>
-          <button class="msg-action" data-action="regen">${esc(t('msg.regen'))}</button>
-          <button class="msg-action" data-action="speak">${esc(t('msg.speak'))}</button>
-          <button class="msg-action stop" data-action="stop-speak">${esc(t('msg.stopSpeak'))}</button>
-          ${fbOn?`<button class="${fbCls('like')}" data-action="like" aria-pressed="${vote==='like'}"${fbDis}>👍</button>
-          <button class="${fbCls('dislike')}" data-action="dislike" aria-pressed="${vote==='dislike'}"${fbDis}>👎</button>`:''}
-          <button class="msg-action" data-action="share">${esc(t('msg.share'))}</button>
+          ${actBtn('','copy','copy','msg.copy')}
+          ${actBtn('','regen','regen','msg.regen')}
+          ${actBtn('','speak','speak','msg.speak')}
+          ${actBtn('stop','stop-speak','stop','msg.stopSpeak')}
+          ${fbOn?`${actBtn(fbCls('like').replace('msg-action ',''),'like','like','msg.like',` aria-pressed="${vote==='like'}"${fbDis}`)}
+          ${actBtn(fbCls('dislike').replace('msg-action ',''),'dislike','dislike','msg.dislike',` aria-pressed="${vote==='dislike'}"${fbDis}`)}`:''}
+          ${actBtn('','share','share','msg.share')}
         </div>
       </div>
     </div>`;
@@ -744,7 +776,7 @@ el.chat.addEventListener('click',async e=>{
   const bubble=group?.querySelector('[data-role]');if(!bubble)return;
   const text=bubbleText(bubble,btn.dataset.action==='speak');
   switch(btn.dataset.action){
-    case'copy':await copyText(text);break;
+    case'copy':{await copyText(text);if(btn.classList.contains('ic')){btn.innerHTML=ICONS.check;btn.classList.add('copied');setTimeout(()=>{btn.innerHTML=ICONS.copy;btn.classList.remove('copied');},1600);}break;}
     case'speak':{const ok=TTS.speak(text,group);if(ok)toast(t('toast.reading'),'info');break;}
     case'stop-speak':TTS.stop();toast(t('toast.speakStop'),'info');break;
     case'share':await shareText(text);break;

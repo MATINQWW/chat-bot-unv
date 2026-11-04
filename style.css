@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    سوپر همراه دانشجو — ظاهر آرام
    روشن: سفید گرم · تیره: زغالی عمیق
-   primary = سبزآبی ملایم (فقط اکشن‌ها) · glow = یاسی کم‌رنگ (فقط تأکیدهای کوچک)
+   primary = آبی روشن (فقط اکشن‌ها) · glow = یاسی کم‌رنگ (فقط تأکیدهای کوچک)
    دکمه‌ها رنگ یکدست · کارت کم و تخت · حرکت فقط وقتی معنا دارد
    ═══════════════════════════════════════════════════════════ */
 :root{
@@ -25,9 +25,9 @@
   --surface:#FDFCF9;
   --surface-2:#EFECE5;
   --popover:#FDFCF9;
-  --primary:#3E7C76;              /* سبزآبی ملایم */
-  --primary-hover:#346A65;
-  --primary-soft:#E1EDEB;
+  --primary:#2A7FC1;              /* آبی روشن سازمانی */
+  --primary-hover:#2169A1;
+  --primary-soft:#E1EEF8;
   --primary-foreground:#FFFFFF;
   --muted:#EFECE5;
   --muted-foreground:#76726A;
@@ -35,7 +35,7 @@
   --glow:#8F85B6;                 /* یاسی کم‌رنگ (رنگ دوم) */
   --glow-soft:#ECE9F4;
   --glow-ink:#5D5486;
-  --success:#4D8A5E;
+  --success:#2A7FC1;
   --destructive:#B05247;
   --warning:#B4823A;
   --border:rgba(36,35,31,.10);
@@ -55,17 +55,17 @@
   --surface:#232427;
   --surface-2:#2A2B2F;
   --popover:#26272A;
-  --primary:#6EA8A1;
-  --primary-hover:#80B6AF;
-  --primary-soft:rgba(110,168,161,.14);
-  --primary-foreground:#142220;
+  --primary:#6FB1E6;
+  --primary-hover:#86BFEC;
+  --primary-soft:rgba(111,177,230,.14);
+  --primary-foreground:#0F1E2B;
   --muted:#2A2B2F;
   --muted-foreground:#9B978F;
   --accent:#2E2F33;
   --glow:#A79FCB;
   --glow-soft:rgba(167,159,203,.14);
   --glow-ink:#C4BDE0;
-  --success:#80B18C;
+  --success:#6FB1E6;
   --destructive:#D07A70;
   --warning:#D1A35F;
   --border:rgba(255,255,255,.08);
@@ -281,10 +281,12 @@ body.sb-open .hamburger span:nth-child(3){ top:6px; transform:rotate(-45deg); wi
 .tab:active{ transform:scale(.97); }
 .tab.active{ background:var(--accent); color:var(--foreground); }
 .tab__badge{
-  display:inline-flex; align-items:center; justify-content:center;
-  min-width:18px; height:18px; padding:0 5px; border-radius:99px;
+  display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
+  min-width:20px; height:20px; padding:0 6px; border-radius:99px; flex-shrink:0;
   background:color-mix(in oklab,var(--muted-foreground) 22%,transparent); color:inherit;
-  font-size:.625rem; font-weight:700; line-height:1;
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  font-size:.6875rem; font-weight:700; line-height:1; text-align:center;
+  font-variant-numeric:tabular-nums; direction:ltr; unicode-bidi:isolate;
 }
 .tab.active .tab__badge{ background:var(--primary); color:var(--primary-foreground); }
 
@@ -1092,3 +1094,24 @@ header.hdr{ background:var(--background); backdrop-filter:none; -webkit-backdrop
 .modal-card{ animation-duration:.2s; }
 .welcome{ animation-duration:.3s; }
 
+
+
+/* ═══════════════ اصلاحات: تم، اعلان، آیکون پیام‌ها ═══════════════ */
+/* هنگام تغییر تم هیچ ترنزیشنی (بوردر/پس‌زمینه) نمایش داده نمی‌شود */
+html.theme-switching *,html.theme-switching *::before,html.theme-switching *::after{ transition:none !important; }
+.icon-btn:focus:not(:focus-visible),.theme-btn:focus:not(:focus-visible){ outline:none; box-shadow:none; }
+@media (hover:hover){ .icon-btn:hover{ background:var(--accent); color:var(--foreground); } }
+@media (hover:none){ .icon-btn:hover{ background:transparent; color:var(--muted-foreground); } .icon-btn:active{ background:var(--accent); color:var(--foreground); } }
+.hdr-actions,.hdr-actions .icon-btn{ border:0; box-shadow:none; }
+
+/* اعلان تکراری: یک ضربه‌ی کوتاه */
+.toast.bump{ animation:toastBump .25s ease-out; }
+@keyframes toastBump{ 50%{ transform:scale(1.04); } }
+
+/* دکمه‌های زیر پیام: آیکونی */
+.msg-action.ic{ width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:var(--r-md); }
+.msg-action.ic svg{ width:17px; height:17px; flex-shrink:0; }
+.msg-action.ic.voted svg{ fill:currentColor; fill-opacity:.18; }
+.msg-action.ic.copied{ color:var(--success); }
+.msg-action.ic.stop{ display:none; }
+.msg-group.speaking .msg-action.stop.ic{ display:inline-flex; }
