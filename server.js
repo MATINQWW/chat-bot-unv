@@ -63,7 +63,7 @@ const server = http.createServer(async (req, res) => {
     }
     const file = path.join(ROOT, rel);
     const ext = path.extname(file).toLowerCase();
-    if (!file.startsWith(ROOT + path.sep) || !MIME[ext] || ext === '.js' && rel !== 'script.js') return res.status(404).end();
+    if (!file.startsWith(ROOT + path.sep) || !MIME[ext] || ext === '.js' && rel !== 'script.js' && rel !== 'report.js') return res.status(404).end();
     fs.stat(file, (err, st) => {
       if (err || !st.isFile()) return res.status(404).end();
       res.setHeader('Content-Type', MIME[ext]);

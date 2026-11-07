@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>گزارش پرسش‌ها</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1d2433; --muted:#6b7385; --line:#e3e6ec; --acc:#2563eb;
+          --kb:#16a34a; --vec:#0891b2; --mem:#7c3aed; --gen:#d97706; --no:#dc2626; --off:#64748b; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.7 Vazirmatn, Tahoma, sans-serif; }
+  main { max-width:1200px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; margin:8px 0 16px; } h2 { font-size:16px; margin:24px 0 8px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  input, button, select { font:inherit; padding:7px 12px; border-radius:8px; border:1px solid var(--line); background:#fff; }
+  button { background:var(--acc); color:#fff; border:0; cursor:pointer; } button.ghost { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  button.danger { background:#fff; color:var(--no); border:1px solid var(--no); }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+  .tile b { display:block; font-size:22px; } .tile span { color:var(--muted); font-size:12px; }
+  table { width:100%; border-collapse:collapse; background:var(--card); }
+  th, td { padding:8px; border-bottom:1px solid var(--line); text-align:right; vertical-align:top; }
+  th { font-size:12px; color:var(--muted); font-weight:600; position:sticky; top:0; background:var(--card); }
+  .wrap { overflow-x:auto; border:1px solid var(--line); border-radius:12px; }
+  .bar { display:flex; height:8px; border-radius:4px; overflow:hidden; min-width:90px; background:var(--line); }
+  .tag { display:inline-block; padding:0 8px; border-radius:10px; font-size:12px; color:#fff; white-space:nowrap; }
+  details summary { cursor:pointer; color:var(--acc); font-size:12px; }
+  .muted { color:var(--muted); font-size:12px; } .err { color:var(--no); }
+  .legend span { margin-left:12px; font-size:12px; } .legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-left:4px; vertical-align:middle; }
+</style>
+</head>
+<body>
+<main>
+  <h1>گزارش پرسش‌های کاربران</h1>
+  <div class="card row" id="login">
+    <input id="token" type="password" placeholder="ADMIN_TOKEN" autocomplete="off" style="flex:1;min-width:200px">
+    <button id="load">نمایش گزارش</button>
+    <button class="ghost" id="csv">دانلود Excel (CSV)</button>
+    <button class="danger" id="reset">پاک کردن گزارش</button>
+  </div>
+  <p id="msg" class="muted"></p>
+  <div id="out" hidden>
+    <div class="tiles" id="tiles"></div>
+    <p class="legend" id="legend"></p>
+    <h2>همهٔ پرسش‌ها (پرسش‌های مشابه یک‌جا شمرده شده‌اند)</h2>
+    <div class="row" style="margin-bottom:8px">
+      <input id="filter" placeholder="جست‌وجو در پرسش‌ها" style="flex:1;min-width:180px">
+      <select id="src"><option value="">همهٔ منبع‌ها</option></select>
+    </div>
+    <div class="wrap"><table id="qt"></table></div>
+    <h2>پرسش‌هایی که در پایگاه دانش جواب نداشتند (برای افزودن به knowledge)</h2>
+    <div class="wrap"><table id="ut"></table></div>
+    <h2>روزانه</h2>
+    <div class="wrap"><table id="dt"></table></div>
+  </div>
+</main>
+<script src="report.js"></script>
+</body>
+</html>
