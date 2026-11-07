@@ -57,17 +57,18 @@ const server = http.createServer((rq, rs) => {
 });
 
 let ipN = 0; // هر فراخوانی IP جدا تا rate-limit (۸ در دقیقه) تست‌ها را نبندد
-function call(handler, { body, headers = {}, method = 'POST' }) {
+function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) {
   return new Promise(resolve => {
     const res = { code: 200, h: {}, out: '', headersSent: false, setHeader(k, v) { this.h[k] = v; }, status(c) { this.code = c; return this; },
       set statusCode(c) { this.code = c; }, get statusCode() { return this.code; },
       flushHeaders() { this.headersSent = true; }, write(x) { this.headersSent = true; this.out += x; return true; },
       json(o) { resolve({ code: this.code, json: o }); },
-      end() {
+      end(x) {
+        if (x != null) return resolve({ code: this.code, json: null, body: String(x), h: this.h });
         const events = this.out.split('\n\n').filter(Boolean).map(l => JSON.parse(l.replace(/^data: /, '')));
         resolve({ code: this.code, json: null, events, h: this.h });
       } };
-    Promise.resolve(handler({ method, body, headers: { host: 'x.test', 'content-length': '100', 'x-real-ip': '10.0.0.' + (++ipN), ...headers }, socket: {} }, res)).catch(e => resolve({ code: 'THROW', err: e }));
+    Promise.resolve(handler({ method, url, body, headers: { host: 'x.test', 'content-length': '100', 'x-real-ip': '10.0.0.' + (++ipN), ...headers }, socket: {} }, res)).catch(e => resolve({ code: 'THROW', err: e }));
   });
 }
 
@@ -203,6 +204,7 @@ function call(handler, { body, headers = {}, method = 'POST' }) {
   r = await call(chat, { body: { messages: [{ role: 'user', content: 'شهریه قسطی داره؟' }] } });
   assert.strictEqual(r.json.lead, true);
   delete process.env.LEAD_WEBHOOK_URL;
+
   mode = 'empty'; r = await call(chat, { body: { stream: true, messages: [{ role: 'user', content: 'مصاحبه دکتری انگلیسی هم هست' }] } });
   assert.strictEqual(r.events[0].error, 'empty_reply'); mode = 'ok';
   console.log('✓ Streaming (SSE): تکه‌ها، رویداد پایانی امضاشده، خطای پاسخ خالی؛ FAQ همچنان JSON');
@@ -246,6 +248,30 @@ function call(handler, { body, headers = {}, method = 'POST' }) {
   console.log('✓ درخواست تماس: اعتبارسنجی شماره (ارقام فارسی)، رضایت، پاکسازی متن، نمایش در پنل مدیر');
 
   delete process.env.LEAD_WEBHOOK_URL;
+
+  // ۱۳-ب) گزارش پرسش‌ها: تعداد، ادغام عبارت‌های مشابه، منبع پاسخ، CSV
+  const rep0 = require('../lib/report');
+  await rep0.reset(require('../lib/common').kv);
+  const ask = q => call(chat, { body: { messages: [{ role: 'user', content: q }] } });
+  await ask('سلام'); await ask('شهریه قسطی داره؟'); await ask('شهریه قسطی داره؟');
+  await ask('بازار کار رشته مهندسی کامپیوتر'); await ask('رشته مهندسی کامپیوتر بازار کارش چطوره');
+  await ask('شماره من 09123456789 هست بازار کار');
+  const AH = { authorization: 'Bearer ' + 'z'.repeat(20) };
+  r = await call(admin, { method: 'GET', url: '/api/admin?report=1', headers: AH });
+  const R = r.json;
+  assert.strictEqual(R.summary.totals.smalltalk, 1); assert.strictEqual(R.summary.totals.faq, 2);
+  assert.strictEqual(R.summary.privateQuestions, 1);
+  assert.ok(!JSON.stringify(R).includes('09123456789'));
+  const fq = R.questions.find(q => q.sources.faq); assert.strictEqual(fq.count, 2); assert.ok(fq.knowledgeChunks.length);
+  const cq = R.questions.find(q => /کامپیوتر/.test(q.question));
+  assert.strictEqual(cq.count, 2); assert.strictEqual(cq.similarPhrasings, 2);
+  assert.ok(['knowledge', 'vector', 'general', 'no_info'].includes(cq.mainSource));
+  assert.strictEqual(rep0.sourceOfReply('*به‌طور کلی', 'knowledge'), 'general');
+  assert.strictEqual(rep0.sourceOfReply('این سوال خارج از حوزه هدایت تحصیلی است', 'knowledge'), 'off_topic');
+  r = await call(admin, { method: 'GET', url: '/api/admin?report=csv', headers: AH });
+  assert.ok(/^\ufeffپرسش,تعداد/.test(r.body) && /کامپیوتر/.test(r.body));
+  r = await call(admin, { method: 'POST', body: { resetReport: true }, headers: AH }); assert.ok(r.json.ok);
+  console.log('✓ گزارش پرسش‌ها: شمارش، ادغام عبارت‌های مشابه، منبع پاسخ (پایگاه دانش/وکتور/مدل)، بدون اطلاعات شخصی، CSV');
 
   // ۱۴) چند سرویس مدل: سرویس اول محدود (429) → دومی؛ سقف هم‌زمانی پر → 503 «شلوغ»
   process.env.BACKUP_KEY = 'backup-key-123'; process.env.BAD_KEY = 'k1';

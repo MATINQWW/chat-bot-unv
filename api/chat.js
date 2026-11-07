@@ -4,6 +4,7 @@ const { describe } = require('../lib/learn');
 const { retrieveKnowledge, RULES, REMINDER, getLearner } = require('../lib/prompt');
 const { faqAnswer, smallTalk } = require('../lib/knowledge');
 const { parseAttachment, AttError } = require('../lib/attachments');
+const report = require('../lib/report');
 const llm = require('../lib/llm');   // یک یا چند سرویس مدل (OpenAI-compatible) — تنظیمات در lib/llm.js
 
 const LIMITS = {
@@ -108,11 +109,14 @@ module.exports = async (req, res) => {
     // ─── ۰) FAQ آماده: صفر توکن، بدون شبکه ───
     if (!att) {
       const st = smallTalk(question);
-      if (st) return res.status(200).json({ reply: st, sig: sign(st), cid: '', cached: 'smalltalk', lead: false });
+      if (st) { await report.record(kv, { info, source: 'smalltalk' }); return res.status(200).json({ reply: st, sig: sign(st), cid: '', cached: 'smalltalk', lead: false }); }
     }
     if (!att && (firstTurn || !info.deictic)) {
       const faq = faqAnswer(question);
-      if (faq) return res.status(200).json({ reply: faq.answer, sig: sign(faq.answer), cid: '', cached: 'faq', lead: offerLead(faq.answer) });
+      if (faq) {
+        await report.record(kv, { info, source: 'faq', chunks: faq.id ? [faq.id] : [] });
+        return res.status(200).json({ reply: faq.answer, sig: sign(faq.answer), cid: '', cached: 'faq', lead: offerLead(faq.answer) });
+      }
     }
 
     // ─── ۱) حافظه ───
@@ -120,6 +124,7 @@ module.exports = async (req, res) => {
       const hit = await L.lookup(info);
       if (hit) {
         await L.recordHit(info, hit);
+        await report.record(kv, { info, source: 'memory' });
         return res.status(200).json({ reply: hit.answer, sig: sign(hit.answer), cid: signCid(hit.key), cached: hit.via || true, lead: offerLead(hit.answer) });
       }
     }
@@ -182,6 +187,7 @@ module.exports = async (req, res) => {
     } catch (apiErr) {
       const status = apiErr && apiErr.status;
       console.error('upstream error', status, apiErr && apiErr.name, apiErr && apiErr.message);
+      await report.record(kv, { info, source: 'error' });
       if (apiErr && apiErr.busy) {
         // همهٔ سرویس‌ها پر/خراب: به‌جای خطای خشک، پیشنهاد تماس
         res.setHeader('Retry-After', '20');
@@ -248,6 +254,12 @@ module.exports = async (req, res) => {
     const u = usage || {};
     const used = (u.prompt_tokens || 0) + (u.completion_tokens || 0) ||
       Math.ceil((RULES.length + knowledge.length + question.length + reply.length) / 3);
+
+    // ─── گزارش: پاسخ از کجا آمد ───
+    await report.record(kv, {
+      info, chunks: r0.ids || [],
+      source: report.sourceOfReply(reply, (r0.ids && r0.ids.length) ? (r0.viaVector ? 'vector' : 'knowledge') : 'no_info'),
+    });
 
     // ─── ۳) یادگیری ───
     let cid = '';
