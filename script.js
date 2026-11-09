@@ -11,7 +11,7 @@ const LANG_DISPLAY={fa:'فارسی',ar:'العربية',en:'English'};
 
 const I18N={
   fa:{
-    'app.title':'سوپر همراه دانشجو','app.name':'سوپر همراه دانشجو',
+    'app.title':'همیار دانشجو نوکا','app.name':'همیار دانشجو نوکا',
     'sidebar.newChat':'مشاوره جدید','sidebar.search':'جستجو در مشاوره‌ها...',
     'sidebar.recent':'مشاوره‌های اخیر','sidebar.results':'نتایج جستجو',
     'sidebar.noChats':'هنوز مشاوره‌ای نیست','sidebar.noResults':'نتیجه‌ای یافت نشد',
@@ -21,7 +21,7 @@ const I18N={
     'sidebar.delete':'حذف','sidebar.archive':'آرشیو','sidebar.unarchive':'بازگردانی',
     'sidebar.tab.active':'مشاوره‌ها','sidebar.tab.archived':'آرشیو',
     'bottom.chats':'گفتگوها','bottom.archive':'آرشیو','bottom.settings':'تنظیمات','bottom.about':'درباره ما',
-    'welcome.badge':'پاسخ فوری • ۲۴ ساعته • کاملاً رایگان','welcome.title':'سوپر همراه دانشجو',
+    'welcome.badge':'پاسخ فوری • ۲۴ ساعته • کاملاً رایگان','welcome.title':'همیار دانشجو نوکا',
     'welcome.desc':'سلام! من مشاور تحصیلی هوشمند شما هستم. در زمینه انتخاب رشته، برنامه‌ریزی درسی، انتخاب واحد و هر سوال تحصیلی دیگه‌ای کمکتون می‌کنم.',
     'welcome.hint':'یا فقط شروع کن به نوشتن...',
     'welcome.intent1':'انتخاب رشته','welcome.intent2':'برنامه‌ریزی درسی','welcome.intent3':'تغییر رشته',
@@ -71,15 +71,15 @@ const I18N={
     'lang.title':'انتخاب زبان','lang.subtitle':'زبان مورد نظر',
     'support.title':'پشتیبانی','support.subtitle':'در خدمت شما','support.chat':'گفتگوی آنلاین','support.chat.desc':'پاسخ سریع در ساعات کاری','support.email':'ایمیل','support.phone':'تلفن',
     'about.title':'درباره ما','about.subtitle':'با ما آشنا شوید','about.version':'نسخه',
-    'about.desc':'سوپر همراه دانشجو یک دستیار هوشمند تحصیلی است که با هدف کمک به دانشجویان در مسیر تحصیلی طراحی شده. از انتخاب رشته تا برنامه‌ریزی درسی، ما کنار شما هستیم.',
+    'about.desc':'همیار دانشجو نوکا یک دستیار هوشمند تحصیلی است که با هدف کمک به دانشجویان در مسیر تحصیلی طراحی شده. از انتخاب رشته تا برنامه‌ریزی درسی، ما کنار شما هستیم.',
   },
   ar:{
-    'app.title':'المستشار الخارق','app.name':'المستشار الخارق',
+    'app.title':'مرافق الطالب نوكا','app.name':'مرافق الطالب نوكا',
     'sidebar.newChat':'استشارة جديدة','sidebar.search':'البحث...','sidebar.recent':'الأخيرة','sidebar.results':'النتائج',
     'sidebar.noChats':'لا توجد استشارات','sidebar.noResults':'لا نتائج','sidebar.noArchived':'الأرشيف فارغ','sidebar.guest':'طالب زائر',
     'sidebar.free':'مجاني','sidebar.settings':'الإعدادات','sidebar.support':'الدعم','sidebar.about':'من نحن','sidebar.delete':'حذف','sidebar.archive':'أرشفة','sidebar.unarchive':'استعادة',
     'sidebar.tab.active':'الاستشارات','sidebar.tab.archived':'الأرشيف','bottom.chats':'الاستشارات','bottom.archive':'الأرشيف','bottom.settings':'الإعدادات','bottom.about':'من نحن',
-    'welcome.badge':'رد فوري • 24/7 • مجاني','welcome.title':'المستشار الخارق',
+    'welcome.badge':'رد فوري • 24/7 • مجاني','welcome.title':'مرافق الطالب نوكا',
     'welcome.desc':'مرحباً! أنا مستشارك الأكاديمي الذكي. يمكنني مساعدتك في اختيار التخصص، التخطيط الدراسي، وأي سؤال أكاديمي.',
     'welcome.hint':'أو ابدأ الكتابة فحسب...','welcome.intent1':'اختيار التخصص','welcome.intent2':'التخطيط الدراسي','welcome.intent3':'تغيير التخصص',
     'welcome.q1.q':'ما المعلومات عن الجامعة؟','welcome.q2.q':'ما النقاط عند اختيار التخصص؟','welcome.q3.q':'ما شروط تغيير التخصص؟',
@@ -106,15 +106,15 @@ const I18N={
     'lead.major':'التخصص المطلوب (اختياري)','lead.consent':'أوافق على أن يتصل بي المركز على هذا الرقم.','lead.send':'إرسال','lead.cancel':'إلغاء',
     'lead.needConsent':'يرجى الموافقة على الاتصال','lead.done':'تم تسجيل طلبك وسنتصل بك قريباً.',
     'lang.title':'اللغة','lang.subtitle':'اختر','support.title':'الدعم','support.subtitle':'في خدمتك','support.chat':'محادثة','support.chat.desc':'رد سريع','support.email':'البريد','support.phone':'الهاتف',
-    'about.title':'من نحن','about.subtitle':'تعرف','about.version':'الإصدار','about.desc':'المستشار الخارق مساعد أكاديمي ذكي.',
+    'about.title':'من نحن','about.subtitle':'تعرف','about.version':'الإصدار','about.desc':'مرافق الطالب نوكا مساعد أكاديمي ذكي.',
   },
   en:{
-    'app.title':'Super Advisor','app.name':'Super Advisor',
+    'app.title':'Noka Student Assistant','app.name':'Noka Student Assistant',
     'sidebar.newChat':'New Consultation','sidebar.search':'Search...','sidebar.recent':'Recent','sidebar.results':'Results',
     'sidebar.noChats':'No consultations yet','sidebar.noResults':'No results','sidebar.noArchived':'Archive empty','sidebar.guest':'Guest Student',
     'sidebar.free':'Free consultation','sidebar.settings':'Settings','sidebar.support':'Support','sidebar.about':'About','sidebar.delete':'Delete','sidebar.archive':'Archive','sidebar.unarchive':'Restore',
     'sidebar.tab.active':'Consultations','sidebar.tab.archived':'Archive','bottom.chats':'Chats','bottom.archive':'Archive','bottom.settings':'Settings','bottom.about':'About',
-    'welcome.badge':'Instant • 24/7 • Free','welcome.title':'Super Advisor',
+    'welcome.badge':'Instant • 24/7 • Free','welcome.title':'Noka Student Assistant',
     'welcome.desc':"Hi! I'm your smart academic advisor. I can help with choosing a major, study planning, course registration, and any other academic question.",
     'welcome.hint':'Or just start typing...','welcome.intent1':'Choose a major','welcome.intent2':'Study planning','welcome.intent3':'Change major',
     'welcome.q1.q':'What info about the university?','welcome.q2.q':'What to consider when choosing a major?','welcome.q3.q':'How to change my major?',
@@ -141,7 +141,7 @@ const I18N={
     'lead.major':'Field of interest (optional)','lead.consent':'I agree to be contacted at this number.','lead.send':'Submit','lead.cancel':'Cancel',
     'lead.needConsent':'Please tick the consent box','lead.done':'Request received — we will call you soon.',
     'lang.title':'Choose Language','lang.subtitle':'Select','support.title':'Support','support.subtitle':'We help','support.chat':'Live chat','support.chat.desc':'Quick reply','support.email':'Email','support.phone':'Phone',
-    'about.title':'About Us','about.subtitle':'Get to know','about.version':'Version','about.desc':'Super Advisor is an intelligent academic assistant.',
+    'about.title':'About Us','about.subtitle':'Get to know','about.version':'Version','about.desc':'Noka Student Assistant is an intelligent academic assistant.',
   },
 };
 
@@ -606,7 +606,7 @@ function showWelcome(){
     <div class="welcome">
       <div class="welcome-mascot">
         <div class="welcome-mascot__glow"></div>
-        ${owlSVG('wave','welcome-mascot__img')}
+        <svg class="welcome-mascot__img" viewBox="0 0 120 120" aria-hidden="true"><use href="#s-mascot"/></svg>
       </div>
       <div class="badge-live"><span class="pulse-dot"></span><span>${esc(t('welcome.badge'))}</span></div>
       <h2 class="welcome-title">${esc(t('welcome.title'))}</h2>
@@ -618,67 +618,6 @@ function showWelcome(){
       </div>
       <p class="welcome-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>${esc(t('welcome.hint'))}</span></p>
     </div>`;
-  owlWelcomeStart();
-}
-
-/* ═══════════════════════════════════════════════════════════
-   OWL — جغد متحرک (۳ حالت: wave / computer / idle)
-   • صفحهٔ ورودی: wave ← بعد از یک دور idle
-   • در حال فکر کردن/جواب دادن: computer
-   • جواب تمام شد/بیکار: idle (فقط روی آخرین پیام بات؛ پیام‌های قدیمی لوگوی ثابت)
-   ═══════════════════════════════════════════════════════════ */
-let _owlN=0;
-function owlSVG(mode,cls){
-  const id='owl-clip-'+(++_owlN);
-  const lids=[[313,369],[502,369]].map(([x,y])=>`<g transform="translate(${x},${y})"><g clip-path="url(#${id})"><rect class="o-lid" x="-74" y="-74" width="148" height="148" fill="#fefefe"/></g><path class="o-arc" d="M-34 10Q0 -26 34 10" fill="none" stroke="#2a2350" stroke-width="9" stroke-linecap="round"/></g>`).join('');
-  const heart=(tx,sc,dl)=>`<g transform="translate(${tx})${sc?` scale(${sc})`:''}"><path class="o-heart o-v" style="animation-delay:${dl}s" d="M0 -6C-8 -18 -26 -8 -14 6L0 20L14 6C26 -8 8 -18 0 -6Z"/></g>`;
-  return `<svg class="owl ${cls||''}" data-mode="${mode}" viewBox="0 0 816 800" aria-hidden="true" focusable="false">`+
-    `<defs><clipPath id="${id}"><circle cx="0" cy="0" r="66"/></clipPath></defs>`+
-    `<ellipse class="o-shadow" cx="408" cy="758" rx="165" ry="14" fill="rgba(42,80,140,.14)"/>`+
-    `<image href="assets/owl/body.png" x="160" y="408" width="495" height="371"/>`+
-    `<g class="o-head o-v"><image href="assets/owl/head.png" x="-5" y="32" width="825" height="470"/>`+
-    `<image class="o-pupil" href="assets/owl/pupilL.png" x="264" y="320" width="98" height="98"/>`+
-    `<image class="o-pupil" href="assets/owl/pupilR.png" x="453" y="320" width="98" height="98"/>${lids}</g>`+
-    `<g class="o-tapL o-v"><image href="assets/owl/wingL.png" x="167" y="455" width="125" height="234"/></g>`+
-    `<g class="o-wave o-v"><g class="o-tapR o-v"><image href="assets/owl/wingR.png" x="524" y="459" width="123" height="233"/></g></g>`+
-    `<g class="o-laptop" transform="translate(82,127) scale(.8)"><g class="o-lap o-v">`+
-    `<rect x="268" y="556" width="280" height="146" rx="16" fill="#9b80cf"/><rect x="277" y="565" width="262" height="128" rx="10" fill="#b39ae8"/>`+
-    `<g class="o-logo"><path d="M408 596L416 622L442 630L416 638L408 664L400 638L374 630L400 622Z" fill="#fff"/></g>`+
-    `<rect x="300" y="696" width="216" height="8" rx="4" fill="#7f64bd"/><rect x="244" y="702" width="328" height="14" rx="7" fill="#8a6fc9"/></g></g>`+
-    `<g fill="#f58fbf">${heart('742,325','',0)}${heart('780,372','.8',1)}${heart('722,368','.7',2)}</g></svg>`;
-}
-const STATIC_AI_AVATAR='<svg class="msg-avatar msg-avatar--ai" viewBox="0 0 40 40" aria-hidden="true"><use href="#s-ai"/></svg>';
-/* صفحهٔ ورودی: یک دور wave و بعد idle */
-function owlWelcomeStart(){
-  const o=el.chat.querySelector('.welcome-mascot .owl');if(!o)return;
-  const arm=o.querySelector('.o-wave');let done=false;
-  const go=()=>{if(done)return;done=true;o.dataset.mode='idle';};
-  arm.addEventListener('animationiteration',go);
-  arm.addEventListener('animationend',go);
-  setTimeout(go,4600+(document.getElementById('loader')?2400:0)); // اطمینان در صورت نیامدن رویداد
-}
-/* آواتار آخرین پیام بات: computer در حال جواب دادن، idle بعد از پایان؛ بقیه ثابت */
-function syncOwls(){
-  const groups=el.chat.querySelectorAll('.msg-group:not(.mine)');
-  const last=groups[groups.length-1];
-  const mode=!el.typing.hidden?null:(S.generating?'computer':'idle');
-  groups.forEach(g=>{
-    const av=g.querySelector('.msg-avatar--ai');if(!av)return;
-    const animated=av.classList.contains('owl-av');
-    if(g===last&&mode){
-      if(animated)av.dataset.mode=mode;
-      else av.outerHTML=owlSVG(mode,'msg-avatar msg-avatar--ai owl-av');
-    }else if(animated){
-      av.outerHTML=STATIC_AI_AVATAR;
-    }
-  });
-}
-function initOwls(){
-  const ta=el.typing.querySelector('.msg-avatar');
-  if(ta)ta.outerHTML=owlSVG('computer','owl--typing');
-  const mo=new MutationObserver(syncOwls);
-  mo.observe(el.chat,{childList:true});
-  mo.observe(el.typing,{attributes:true,attributeFilter:['hidden']});
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1245,7 +1184,7 @@ function cancelGeneration(){
   if(!S.generating)return;
   try{S.abort?.abort();}catch{}
   S.typingAbort=true;S.generating=false;
-  stopTypingStages();el.typing.hidden=true;updateSend();syncOwls();
+  stopTypingStages();el.typing.hidden=true;updateSend();
   toast(t('toast.genStopped'),'warning');
 }
 function loadChat(id){
@@ -1473,7 +1412,6 @@ async function runCompletion(att){
   const stale=()=>run!==_runId||cid!==S.chatId;
   S.generating=true;
   el.typing.hidden=false;
-  syncOwls();
   startTypingStages();updateSend();scrollToBottom(true);
   try{
     let _r=await callAPI(att);
@@ -1509,7 +1447,7 @@ async function runCompletion(att){
       scrollToBottom(true);
     }
   }finally{
-    if(run===_runId){S.generating=false;updateSend();syncOwls();}
+    if(run===_runId){S.generating=false;updateSend();}
   }
 }
 async function regenerate(){
@@ -1849,7 +1787,6 @@ $$('[data-bottom]').forEach(btn=>{
 
   loadChats();
   S.chatId=uid();
-  initOwls();
   renderChatList();showWelcome();updateSend();
 
   if(!isSecure)setTimeout(()=>toast(t('toast.httpsNeeded'),'warning'),1500);
