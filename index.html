@@ -7,8 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="همیار دانشجو نوکا">
-<title>همیار دانشجو نوکا</title>
+<meta name="apple-mobile-web-app-title" content="سوپر همراه دانشجو">
+<title>سوپر همراه دانشجو</title>
 <meta name="description" content="مشاور هوشمند هدایت تحصیلی دانشگاه آزاد اسلامی اصفهان (خوراسگان)">
 <link rel="icon" type="image/png" href="owl.png">
 <link rel="apple-touch-icon" href="owl.png">
@@ -22,18 +22,13 @@
 <!-- Vazirmatn (طراحی جدید) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css">
 
-<link rel="stylesheet" href="style.css?v=20261109d">
+<link rel="stylesheet" href="style.css?v=20261109owl">
 </head>
 
 <body>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <!-- فیلتر ژله‌ای: قطره و بدنهٔ اعلان را به هم می‌چسباند -->
-    <filter id="goo" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b"/>
-      <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10"/>
-    </filter>
     <linearGradient id="g-brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2A7FC1"/><stop offset="1" stop-color="#2A7FC1"/></linearGradient>
     <linearGradient id="g-ai" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2A7FC1"/><stop offset="1" stop-color="#2A7FC1"/></linearGradient>
     <linearGradient id="g-cap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
@@ -50,11 +45,12 @@
       <div class="loader-orbit__ring"></div><div class="loader-orbit__ring"></div><div class="loader-orbit__ring"></div>
       <div class="loader-logo"><svg viewBox="0 0 40 40"><use href="#s-logo"/></svg></div>
     </div>
-    <div class="loader-title" data-i18n="app.name">همیار دانشجو نوکا</div>
+    <div class="loader-title" data-i18n="app.name">سوپر همراه دانشجو</div>
     <div class="loader-bar"><div class="loader-bar__fill"></div></div>
   </div>
 </div>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><filter id="goo" x="-15%" y="-250%" width="130%" height="500%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10"/></filter></defs></svg>
 <div id="toasts" aria-live="polite" aria-atomic="true"></div>
 
 <!-- SETTINGS MODAL (Accent & Font Family removed) -->
@@ -148,9 +144,9 @@
     </div>
     <div class="modal-body" style="text-align:center;padding:24px 20px">
       <div class="about-logo"><svg viewBox="0 0 40 40"><use href="#s-logo"/></svg></div>
-      <div class="about-name" data-i18n="app.name">همیار دانشجو نوکا</div>
+      <div class="about-name" data-i18n="app.name">سوپر همراه دانشجو</div>
       <div class="about-ver"><span data-i18n="about.version">نسخه</span> <span style="direction:ltr">1.0.0</span></div>
-      <p class="about-desc" data-i18n="about.desc">همیار دانشجو نوکا یک دستیار هوشمند تحصیلی است که با هدف کمک به دانشجویان در مسیر تحصیلی طراحی شده.</p>
+      <p class="about-desc" data-i18n="about.desc">سوپر همراه دانشجو یک دستیار هوشمند تحصیلی است که با هدف کمک به دانشجویان در مسیر تحصیلی طراحی شده.</p>
     </div>
     <div class="modal-foot"><button data-close="m-about" class="btn-primary" data-i18n="settings.close">بستن</button></div>
   </div>
@@ -199,7 +195,7 @@
     <button id="sb-toggle" class="icon-btn md:hidden hdr-menu" aria-label="menu" aria-expanded="false"><span class="hamburger"><span></span><span></span><span></span></span></button>
     <div class="hdr-brand">
       <div class="hdr-logo-wrap"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#s-logo"/></svg></div>
-      <h1 class="hdr-title" data-i18n="app.name">همیار دانشجو نوکا</h1>
+      <h1 class="hdr-title" data-i18n="app.name">سوپر همراه دانشجو</h1>
       <span id="platform-badge" class="platform-badge hidden sm:inline-flex"></span>
     </div>
     <div class="hdr-actions">
@@ -213,11 +209,12 @@
   <aside id="sidebar">
     <div class="sb-brand">
       <img class="sb-brand__logo" src="owl.png" alt="" width="40" height="40">
-      <span class="sb-brand__name" data-i18n="app.name">همیار دانشجو نوکا</span>
+      <span class="sb-brand__name" data-i18n="app.name">سوپر همراه دانشجو</span>
       <button id="sb-close" class="icon-btn md:hidden sb-brand__close" aria-label="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <button id="new-chat" class="btn-new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="sidebar.newChat">مشاوره جدید</span></button>
-    <div class="tabs">
+    <div class="tabs" data-view="active">
+      <span class="tabs__glider" aria-hidden="true"></span>
       <button class="tab active" data-chat-view="active"><span data-i18n="sidebar.tab.active">مشاوره‌ها</span><span class="tab__badge" id="badge-active">0</span></button>
       <button class="tab" data-chat-view="archived"><span data-i18n="sidebar.tab.archived">آرشیو</span><span class="tab__badge" id="badge-archived">0</span></button>
     </div>
@@ -271,14 +268,13 @@
 </div>
 
 <nav class="bottom-nav" aria-label="primary">
-  <span class="bottom-blob" aria-hidden="true"><i></i></span>
   <button class="bottom-item" data-bottom="chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.42-4.03 8-9 8a9.86 9.86 0 0 1-4.26-.95L3 20l1.4-3.72C3.51 15.04 3 13.57 3 12c0-4.42 4.03-8 9-8s9 3.58 9 8z"/></svg><span data-i18n="bottom.chats">مشاوره‌ها</span></button>
   <button class="bottom-item" data-bottom="archive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 1 1 0-4h14a2 2 0 1 1 0 4M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8m-9 4h4"/></svg><span data-i18n="bottom.archive">آرشیو</span></button>
   <button class="bottom-center" data-bottom="new" aria-label="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
   <button class="bottom-item" data-bottom="about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-i18n="bottom.about">درباره ما</span></button>
-  <button class="bottom-item" data-bottom="support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg><span data-i18n="bottom.support">پشتیبانی</span></button>
+  <button class="bottom-item" data-bottom="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span data-i18n="bottom.settings">تنظیمات</span></button>
 </nav>
 
-<script src="script.js?v=20261109d"></script>
+<script src="script.js?v=20261109owl"></script>
 </body>
 </html>

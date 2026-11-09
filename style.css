@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   همیار دانشجو نوکا — ظاهر آرام
+   سوپر همراه دانشجو — ظاهر آرام
    روشن: سفید گرم · تیره: زغالی عمیق
    primary = آبی روشن (فقط اکشن‌ها) · glow = یاسی کم‌رنگ (فقط تأکیدهای کوچک)
    دکمه‌ها رنگ یکدست · کارت کم و تخت · حرکت فقط وقتی معنا دارد
@@ -423,6 +423,12 @@ main{
   -webkit-background-clip:text; background-clip:text; color:transparent;
 }
 .welcome-desc{ order:2; max-width:32rem; margin:16px 0 0; font-size:1rem; line-height:2; color:var(--muted-foreground); font-weight:400; }
+.badge-live{
+  order:3; display:flex; align-items:center; gap:8px; margin:12px 0 0; padding:0;
+  background:none; border:0; box-shadow:none;
+  font-size:.875rem; font-weight:400; color:var(--muted-foreground);
+}
+.badge-live .pulse-dot::after{ display:none; }
 
 .intent-chips{
   order:4; display:grid; grid-template-columns:1fr; gap:12px; width:100%; margin:32px 0 0;
@@ -941,99 +947,26 @@ html:not([lang="fa"]) .composer-note{ display:none; }
 #toasts{
   position:fixed; top:0; left:0; right:0; z-index:100;
   padding:max(16px,env(safe-area-inset-top)) 16px 0;
-  display:flex; flex-direction:column; align-items:center; gap:14px; pointer-events:none;
+  display:flex; flex-direction:column; align-items:center; gap:10px; pointer-events:none;
 }
-/* اعلان ژله‌ای: قطره از بالا می‌افتد، می‌ترکد و به شکل اعلان پخش می‌شود
-   ساختار: .toast > .toast__goo (فیلتر ژله‌ای: .toast__body + .toast__drop) + .toast__content (متن، بدون فیلتر) */
 .toast{
-  --fall:80px; --toast-bg:var(--primary); --toast-fg:var(--primary-foreground);
-  position:relative; pointer-events:auto; max-width:min(92vw,420px);
-  padding:12px 18px; color:var(--toast-fg);
-  font-size:.875rem; font-weight:500; overflow-wrap:anywhere;
-  -webkit-filter:drop-shadow(0 10px 14px rgba(36,35,31,.20));
-  filter:drop-shadow(0 10px 14px rgba(36,35,31,.20));
+  pointer-events:auto; max-width:min(92vw,420px);
+  padding:12px 16px; border-radius:var(--r-xl); color:#fff;
+  font-size:.875rem; font-weight:500;
+  display:flex; align-items:flex-start; gap:10px;
+  box-shadow:var(--shadow-pop);
+  animation:toastIn .35s var(--ease-out-back);
+  overflow-wrap:anywhere;
 }
-.toast.success{ --toast-bg:var(--success); --toast-fg:#fff; }
-.toast.error{ --toast-bg:var(--destructive); --toast-fg:#fff; }
-.toast.info{ --toast-bg:var(--primary); --toast-fg:var(--primary-foreground); }
-.toast.warning{ --toast-bg:var(--warning); --toast-fg:#fff; }
-
-.toast__goo{
-  position:absolute; z-index:0; pointer-events:none;
-  left:-40px; right:-40px; bottom:-40px; top:calc(var(--fall) * -1);
-  -webkit-filter:url(#goo); filter:url(#goo);
-}
-/* اگر مرورگر فیلتر SVG روی HTML را پشتیبانی نکند: همان حرکت، بدون چسبندگی */
-.no-goo .toast__goo{ -webkit-filter:none; filter:none; }
-.toast__body{
-  position:absolute; left:40px; right:40px; bottom:40px; top:var(--fall);
-  border-radius:20px; background:var(--toast-bg);
-  transform-origin:50% 0;
-  animation:gooBody 1s cubic-bezier(.25,.8,.3,1) backwards;
-}
-.toast__drop{
-  position:absolute; top:0; left:50%; width:18px; height:22px; margin-left:-9px;
-  border-radius:50% 50% 50% 50% / 62% 62% 38% 38%;
-  background:var(--toast-bg); opacity:0; transform-origin:50% 100%;
-  animation:gooDrop 1s backwards;
-}
-.toast__content{
-  position:relative; z-index:1; display:flex; align-items:flex-start; gap:10px;
-  animation:gooContent .35s ease-out .62s backwards;
-}
+.toast.out{ animation:toastOut .25s ease-in forwards; }
+@keyframes toastIn{ from{ opacity:0; transform:translateY(-20px) scale(.94); } to{ opacity:1; transform:none; } }
+@keyframes toastOut{ to{ opacity:0; transform:translateY(-20px) scale(.94); } }
 .toast__icon{ width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:.75rem; flex-shrink:0; margin-top:1px; }
+.toast.success{ background:var(--success); }
+.toast.error{ background:var(--destructive); }
+.toast.info{ background:var(--primary); color:var(--primary-foreground); }
 .toast.info .toast__icon{ background:rgba(0,0,0,.14); }
-
-/* ۱) قطره بالای صفحه ورم می‌کند ۲) می‌افتد و کشیده می‌شود ۳) روی اعلان له می‌شود */
-@keyframes gooDrop{
-  0%  { opacity:0; transform:translateY(-4px) scale(.3); }
-  10% { opacity:1; transform:translateY(0) scale(.85,.95); animation-timing-function:ease-out; }
-  22% { opacity:1; transform:translateY(2px) scale(1,1.2); animation-timing-function:cubic-bezier(.55,0,.95,.5); }
-  52% { opacity:1; transform:translateY(calc(var(--fall) + 4px)) scale(.8,1.55); }
-  60% { opacity:1; transform:translateY(calc(var(--fall) + 6px)) scale(1.6,.5); }
-  72% { opacity:0; transform:translateY(calc(var(--fall) + 6px)) scale(.3); }
-  100%{ opacity:0; }
-}
-/* بدنه از نقطهٔ برخورد باز می‌شود: اول پخش‌شدن افقی (مثل چکه روی سطح)، بعد کامل می‌شود */
-@keyframes gooBody{
-  0%,44%{ transform:scale(0); }
-  52%   { transform:scale(.12,.1); }
-  66%   { transform:scale(.72,.22); }
-  82%   { transform:scale(1.03,.92); }
-  92%   { transform:scale(.99,1.03); }
-  100%  { transform:none; }
-}
-@keyframes gooContent{ from{ opacity:0; transform:translateY(5px); } to{ opacity:1; transform:none; } }
-
-/* خروج: متن محو می‌شود، بدنه جمع می‌شود و قطره به بالا کشیده می‌شود */
-.toast.out .toast__content{ animation:gooContentOut .16s ease-in forwards; }
-.toast.out .toast__body{ animation:gooBodyOut .5s cubic-bezier(.5,0,.75,.3) forwards; }
-.toast.out .toast__drop{ animation:gooDropUp .6s .2s ease-in both; }
-@keyframes gooContentOut{ to{ opacity:0; transform:translateY(-3px); } }
-@keyframes gooBodyOut{
-  0%  { transform:none; }
-  30% { transform:scale(1.02,.9); }
-  70% { transform:scale(.55,.2); }
-  100%{ transform:scale(0); }
-}
-@keyframes gooDropUp{
-  0%,40%{ opacity:0; transform:translateY(calc(var(--fall) + 6px)) scale(.5); }
-  50%   { opacity:1; transform:translateY(calc(var(--fall) + 4px)) scale(1.1,1.2); }
-  100%  { opacity:0; transform:translateY(-6px) scale(.6,1.6); }
-}
-/* پیام تکراری: بدنه یک بار می‌لرزد */
-.toast.bump:not(.out) .toast__body{ animation:gooBump .45s ease-out; }
-@keyframes gooBump{ 30%{ transform:scale(1.04,.92); } 60%{ transform:scale(.98,1.05); } 100%{ transform:none; } }
-
-@media (prefers-reduced-motion:reduce){
-  .toast__drop{ display:none; }
-  .toast__body{ animation:gooFade .2s backwards; }
-  .toast__content{ animation:gooFade .2s backwards; }
-  .toast.out .toast__body,.toast.out .toast__content{ animation:gooFadeOut .15s forwards; }
-  .toast.bump .toast__body{ animation:none; }
-  @keyframes gooFade{ from{ opacity:0; } to{ opacity:1; } }
-  @keyframes gooFadeOut{ to{ opacity:0; } }
-}
+.toast.warning{ background:var(--warning); }
 
 .ripple{ display:none; }
 @keyframes rippleAnim{ to{ transform:scale(2.6); opacity:0; } }
@@ -1154,6 +1087,8 @@ header.hdr{ background:var(--background); backdrop-filter:none; -webkit-backdrop
 @keyframes msgIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:none; } }
 @keyframes welcomeIn{ from{ opacity:0; } to{ opacity:1; } }
 @keyframes modalIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+@keyframes toastIn{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:none; } }
+@keyframes toastOut{ to{ opacity:0; transform:translateY(-6px); } }
 @keyframes recPanelIn{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
 @keyframes loaderIn{ from{ opacity:0; } to{ opacity:1; } }
 .modal-card{ animation-duration:.2s; }
@@ -1169,6 +1104,9 @@ html.theme-switching *,html.theme-switching *::before,html.theme-switching *::af
 @media (hover:none){ .icon-btn:hover{ background:transparent; color:var(--muted-foreground); } .icon-btn:active{ background:var(--accent); color:var(--foreground); } }
 .hdr-actions,.hdr-actions .icon-btn{ border:0; box-shadow:none; }
 
+/* اعلان تکراری: یک ضربه‌ی کوتاه */
+.toast.bump{ animation:toastBump .25s ease-out; }
+@keyframes toastBump{ 50%{ transform:scale(1.04); } }
 
 /* دکمه‌های زیر پیام: آیکونی */
 .msg-action.ic{ width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:var(--r-md); }
@@ -1178,62 +1116,310 @@ html.theme-switching *,html.theme-switching *::before,html.theme-switching *::af
 .msg-action.ic.stop{ display:none; }
 .msg-group.speaking .msg-action.stop.ic{ display:inline-flex; }
 
+/* ═══════════════ حرکت‌های ظریف رابط کاربری ═══════════════ */
+@keyframes uiDropIn{
+  from{opacity:0; transform:translateY(-12px)}
+  to{opacity:1; transform:translateY(0)}
+}
+@keyframes uiRiseIn{
+  from{opacity:0; transform:translateY(14px)}
+  to{opacity:1; transform:translateY(0)}
+}
+@keyframes owlFloat{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  50%{transform:translateY(-7px) rotate(-1.5deg)}
+}
+@keyframes owlBlinkGlow{
+  0%,100%{filter:drop-shadow(0 2px 3px rgba(42,127,193,.08))}
+  50%{filter:drop-shadow(0 7px 12px rgba(42,127,193,.2))}
+}
+@keyframes softShine{
+  0%,100%{opacity:.0; transform:translateX(-120%)}
+  45%{opacity:.22}
+  70%{opacity:0; transform:translateX(120%)}
+}
 
-/* ═══════════════ نوار پایین: حباب مایع + حرکت آیکون‌ها ═══════════════ */
-.bottom-blob{
-  position:absolute; left:0; top:0; width:0; height:0; z-index:0; pointer-events:none;
-  opacity:0; transform:translateX(0);
-  transition:transform .55s cubic-bezier(.3,1.35,.5,1), opacity .2s;
+/* هدر و اجزای برند */
+header.hdr{animation:uiDropIn .65s var(--ease-out-expo) both}
+.hdr-brand{animation:uiRiseIn .7s .08s var(--ease-out-expo) both}
+.hdr-actions .icon-btn{animation:uiDropIn .55s calc(.12s + var(--i,0)*.06s) var(--ease-out-expo) both}
+
+/* برند سایدبار و جغد خوش‌آمدگویی */
+.sb-brand{animation:uiRiseIn .65s .12s var(--ease-out-expo) both}
+.welcome{animation:uiRiseIn .8s .12s var(--ease-out-expo) both}
+.welcome-title{animation:uiRiseIn .7s .2s var(--ease-out-expo) both}
+.welcome-desc{animation:uiRiseIn .7s .3s var(--ease-out-expo) both}
+.badge-live{animation:uiRiseIn .65s .38s var(--ease-out-expo) both}
+.intent-chip{animation:uiRiseIn .65s var(--ease-out-expo) both}
+.intent-chip:nth-child(1){animation-delay:.42s}
+.intent-chip:nth-child(2){animation-delay:.50s}
+.intent-chip:nth-child(3){animation-delay:.58s}
+.intent-chip:nth-child(4){animation-delay:.66s}
+.intent-chip:nth-child(5){animation-delay:.74s}
+
+/* پیام‌ها و کارت‌هایی که به گفتگو اضافه می‌شوند */
+#chat > :not(.welcome){animation:uiRiseIn .42s var(--ease-out-expo) both}
+.chat-item{animation:uiRiseIn .38s var(--ease-out-expo) both}
+.chat-item-inner{transition:background .2s ease,transform .22s var(--ease-out-expo),box-shadow .22s ease}
+.chat-item:hover .chat-item-inner{transform:translateX(-2px)}
+.intent-chip{transition:transform .22s var(--ease-out-expo),box-shadow .22s ease,border-color .22s ease}
+.intent-chip:hover{transform:translateY(-3px);box-shadow:0 7px 18px rgba(42,127,193,.09)}
+
+/* نوار پایین و دکمه‌ها */
+.bottom-nav{animation:uiRiseIn .55s .08s var(--ease-out-expo) both}
+.bottom-item svg,.bottom-center svg{transition:transform .22s var(--ease-out-back)}
+.bottom-item:hover svg{transform:translateY(-2px)}
+.bottom-item:active svg{transform:scale(.88)}
+.bottom-center{transition:transform .22s var(--ease-out-back),box-shadow .22s ease}
+.bottom-center:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(42,127,193,.18)}
+.icon-btn,.composer-btn,.send-btn{transition:transform .2s var(--ease-out-back),background-color .2s ease,color .2s ease,box-shadow .2s ease}
+.icon-btn:hover,.composer-btn:hover{transform:translateY(-1px)}
+.send-btn:not(:disabled):hover{transform:scale(1.06)}
+
+/* احترام به تنظیم کاهش حرکت سیستم‌عامل */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
-.bottom-blob.on{ opacity:1; }
-.bottom-blob.snap{ transition:none; }
-.bottom-blob i{
-  position:absolute; inset:0; border-radius:var(--r-lg); background:var(--primary-soft);
-  transform-origin:var(--blob-origin,50%) 50%;
+
+/* ═══════════════ انیمیشن‌های تکمیلی (منوی همبرگری، سایدبار، نوار پایین) ═══════════════ */
+@keyframes sbItemIn{ from{opacity:0; transform:translateX(18px)} to{opacity:1; transform:none} }
+@keyframes navPop{ 0%{transform:translateY(0) scale(1)} 35%{transform:translateY(-6px) scale(1.22)} 65%{transform:translateY(1px) scale(.94)} 100%{transform:translateY(0) scale(1)} }
+@keyframes navLabelIn{ from{opacity:.4; transform:translateY(4px)} to{opacity:1; transform:none} }
+@keyframes centerRing{ 0%{transform:scale(1); opacity:.35} 70%,100%{transform:scale(1.55); opacity:0} }
+@keyframes icoPop{ 0%{transform:scale(1)} 40%{transform:scale(1.3) rotate(-8deg)} 100%{transform:scale(1) rotate(0)} }
+@keyframes sendPop{ 0%{transform:scale(.8)} 60%{transform:scale(1.12)} 100%{transform:scale(1)} }
+
+/* ── منوی همبرگری ── */
+.hdr-menu{ transition:transform .55s var(--ease-out-expo), background-color .3s ease, color .3s ease; }
+.hamburger span{ transition:transform .45s var(--ease-out-expo), opacity .25s ease, top .4s var(--ease-out-expo), width .35s var(--ease-out-expo); }
+.hamburger span:nth-child(1){ transition-delay:0s; }
+.hamburger span:nth-child(2){ transition-delay:.04s; }
+.hamburger span:nth-child(3){ transition-delay:.08s; }
+@media (hover:hover){
+  .hdr-menu:hover .hamburger span:nth-child(2){ width:100%; }
+  body.sb-open .hdr-menu:hover .hamburger span:nth-child(2){ width:70%; }
 }
-.bottom-blob.stretch i{ animation:blobStretch .55s cubic-bezier(.3,.9,.4,1); }
-@keyframes blobStretch{
-  0%  { transform:scale(1,1); }
-  35% { transform:scale(1.55,.8); }
-  70% { transform:scale(.94,1.08); }
-  100%{ transform:scale(1,1); }
+body.sb-open #sb-toggle{ transform:rotate(180deg); background:var(--primary-soft); color:var(--primary); }
+body.sb-open #sb-toggle:active{ transform:rotate(180deg) scale(.9); }
+
+/* ── پس‌زمینه‌ی تیره‌ی سایدبار ── */
+#sb-overlay{
+  backdrop-filter:blur(0px); -webkit-backdrop-filter:blur(0px);
+  transition:opacity .4s var(--ease-out-expo), visibility .4s, backdrop-filter .4s ease, -webkit-backdrop-filter .4s ease;
 }
-.bottom-item,.bottom-center{ position:relative; z-index:1; }
+#sb-overlay.show{ backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
+
+/* ── ورود پله‌ای آیتم‌های سایدبار (موبایل) ── */
+@media (max-width:767px){
+  #sidebar.open > *{ animation:sbItemIn .55s var(--ease-out-expo) both; }
+  #sidebar.open > :nth-child(1){ animation-delay:.10s }
+  #sidebar.open > :nth-child(2){ animation-delay:.16s }
+  #sidebar.open > :nth-child(3){ animation-delay:.22s }
+  #sidebar.open > :nth-child(4){ animation-delay:.28s }
+  #sidebar.open > :nth-child(5){ animation-delay:.34s }
+  #sidebar.open > :nth-child(6){ animation-delay:.40s }
+  #sidebar.open > :nth-child(7){ animation-delay:.46s }
+  #sidebar.open .chat-item{ animation:sbItemIn .5s var(--ease-out-expo) both; }
+  #sidebar.open .chat-item:nth-child(1){ animation-delay:.30s }
+  #sidebar.open .chat-item:nth-child(2){ animation-delay:.36s }
+  #sidebar.open .chat-item:nth-child(3){ animation-delay:.42s }
+  #sidebar.open .chat-item:nth-child(4){ animation-delay:.48s }
+  #sidebar.open .chat-item:nth-child(n+5){ animation-delay:.54s }
+}
+.sidebar-tool{ transition:transform .25s var(--ease-out-back), background-color .2s ease, color .2s ease; }
+.sidebar-tool:hover{ transform:translateY(-2px); }
+.sidebar-tool:active{ transform:scale(.9); }
+.sidebar-tool svg{ transition:transform .4s var(--ease-out-expo); }
+.sidebar-tool:hover svg{ transform:rotate(18deg) scale(1.08); }
+.btn-new svg{ transition:transform .4s var(--ease-out-back); }
+.btn-new:hover svg{ transform:rotate(90deg); }
+.tab{ transition:background-color .25s ease, color .25s ease, transform .2s var(--ease-out-back); }
+.tab:active{ transform:scale(.95); }
+.tab__badge{ transition:transform .3s var(--ease-out-back); }
+.tab.active .tab__badge{ transform:scale(1.1); }
+
+/* ── نوار پایین: قرص متحرک، پرش آیکون، حلقه‌ی دکمه‌ی وسط ── */
+.bottom-nav{ position:fixed; }
+.bottom-item{ position:relative; z-index:1; }
+.bottom-pill{
+  position:absolute; left:0; top:0; z-index:0; width:0; height:0;
+  border-radius:var(--r-lg); background:var(--primary-soft);
+  opacity:0; pointer-events:none;
+  transition:transform .5s var(--ease-out-expo), width .5s var(--ease-out-expo), height .5s var(--ease-out-expo), opacity .3s ease;
+}
+.bottom-pill.on{ opacity:1; }
 .bottom-item.active:hover{ background:transparent; }
-@media (hover:none){ .bottom-item:hover{ background:transparent; color:var(--muted-foreground); } .bottom-item.active:hover{ color:var(--primary); } }
-.bottom-item svg,.bottom-item span{ transition:transform .3s var(--ease-out-expo), color .2s; }
-.bottom-item.active span{ transform:translateY(1px); }
-.bottom-item.active svg{ transform:translateY(-1px) scale(1.08); }
-.bottom-item:active svg{ transform:scale(.8); }
-
-/* هر دکمه یک حرکت مخصوص خودش دارد */
-.bottom-item.anim svg{ animation-duration:.6s; animation-timing-function:cubic-bezier(.2,.8,.2,1); animation-fill-mode:both; }
-.bottom-item.anim[data-bottom="chats"] svg{ transform-origin:50% 90%; animation-name:navWiggle; }
-.bottom-item.anim[data-bottom="archive"] svg{ animation-name:navDrop; }
-.bottom-item.anim[data-bottom="about"] svg{ animation-name:navPop; }
-.bottom-item.anim[data-bottom="support"] svg{ transform-origin:50% 60%; animation-name:navRingTone; animation-duration:.7s; }
-@keyframes navWiggle{ 0%{transform:rotate(0)} 25%{transform:rotate(-14deg) scale(1.12)} 55%{transform:rotate(9deg) scale(1.08)} 80%{transform:rotate(-3deg)} 100%{transform:rotate(0)} }
-@keyframes navDrop{ 0%{transform:translateY(0)} 30%{transform:translateY(-6px) scale(1.05,.95)} 60%{transform:translateY(1px) scale(1.1,.88)} 100%{transform:translateY(-1px) scale(1.08)} }
-@keyframes navPop{ 0%{transform:scale(1)} 35%{transform:scale(1.35)} 65%{transform:scale(.9)} 100%{transform:scale(1)} }
-@keyframes navRingTone{ 0%{transform:scale(1) rotate(0)} 15%{transform:scale(1.2) rotate(-12deg)} 30%{transform:scale(1.2) rotate(10deg)} 45%{transform:scale(1.15) rotate(-8deg)} 60%{transform:scale(1.1) rotate(5deg)} 100%{transform:scale(1) rotate(0)} }
-
-/* دکمهٔ مرکزی: له می‌شود، فنری برمی‌گردد، علامت + می‌چرخد و یک حلقه پخش می‌شود */
-.bottom-center{ transition:transform .45s cubic-bezier(.3,1.5,.5,1), background .2s; }
-.bottom-center:active{ transform:scale(.88,.94); filter:none; }
+.bottom-item span{ transition:color .25s ease, transform .35s var(--ease-out-expo); }
+.bottom-item.active svg{ animation:navPop .55s var(--ease-out-expo); }
+.bottom-item.active span{ animation:navLabelIn .4s var(--ease-out-expo) both; font-weight:800; }
+.bottom-center{ position:relative; }
 .bottom-center::after{
   content:""; position:absolute; inset:-4px; border-radius:50%;
   border:2px solid var(--primary); opacity:0; pointer-events:none;
+  animation:centerRing 2.8s ease-out 1.2s infinite;
 }
-.bottom-center.anim::after{ animation:navRing .65s ease-out; }
-.bottom-center.anim svg{ animation:navPlus .55s cubic-bezier(.3,1.4,.5,1); }
-@keyframes navRing{ 0%{ opacity:.55; transform:scale(1); } 100%{ opacity:0; transform:scale(1.7); } }
-@keyframes navPlus{ 0%{ transform:rotate(0) scale(1); } 40%{ transform:rotate(100deg) scale(.8); } 100%{ transform:rotate(180deg) scale(1); } }
+.bottom-center svg{ transition:transform .45s var(--ease-out-back); }
+.bottom-center:hover svg{ transform:rotate(90deg); }
+.bottom-center:active svg{ transform:rotate(180deg) scale(.9); }
 
-@media (prefers-reduced-motion:reduce){
-  .bottom-blob{ transition:opacity .2s; }
-  .bottom-blob.stretch i,.bottom-item.anim svg,.bottom-center.anim svg,.bottom-center.anim::after{ animation:none; }
-  .bottom-center,.bottom-item svg,.bottom-item span{ transition:none; }
+/* ── جزئیات دیگر: ارسال، ورودی، دکمه‌های زیر پیام، تم ── */
+.send-btn:not(:disabled){ animation:sendPop .4s var(--ease-out-back); }
+.send-btn:not(:disabled):active{ transform:scale(.9); }
+.composer{ transition:border-color .25s ease, box-shadow .3s ease, transform .3s var(--ease-out-expo); }
+.composer:focus-within{ transform:translateY(-1px); box-shadow:0 8px 24px -10px rgba(42,127,193,.28); }
+.msg-action.ic{ transition:transform .2s var(--ease-out-back), background-color .2s ease, color .2s ease; }
+.msg-action.ic:hover{ transform:translateY(-2px); }
+.msg-action.ic:active{ transform:scale(.88); }
+.msg-action.ic.copied svg,.msg-action.ic.voted svg{ animation:icoPop .45s var(--ease-out-back); }
+.theme-icon{ transition:transform .6s var(--ease-out-expo); }
+#theme-toggle:hover .theme-icon{ transform:rotate(25deg); }
+#theme-toggle:active .theme-icon{ transform:rotate(180deg); }
+.modal-card .modal-close:hover,.modal-card .icon-btn:hover{ transform:rotate(90deg); }
+
+/* ═══════════════ سوییچ مشاوره‌ها ⇄ آرشیو: لغزنده‌ی شیشه‌ای ساده ═══════════════ */
+:root{
+  --n-archive:#C25E0B; --n-archive-ink:#fff;      /* نارنجی: آرشیو */
+  --n-delete:#C0392B;  --n-delete-ink:#fff;       /* قرمز: حذف */
 }
+.dark{
+  --n-archive:#E89A4A; --n-archive-ink:#2A1604;
+  --n-delete:#E5766B;  --n-delete-ink:#2B0A06;
+}
+.tabs{ position:relative; isolation:isolate; }
+.tab{ position:relative; z-index:1; }
+.tabs__glider{
+  position:absolute; top:4px; bottom:4px; left:0; width:0; z-index:0;
+  border-radius:var(--r-lg); pointer-events:none; opacity:0;
+  background-color:color-mix(in oklab,var(--surface) 72%,transparent);
+  background-image:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.12));
+  -webkit-backdrop-filter:blur(8px) saturate(1.5); backdrop-filter:blur(8px) saturate(1.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75), inset 0 -1px 0 rgba(0,0,0,.05), 0 1px 3px rgba(0,0,0,.10), 0 8px 14px -10px rgba(0,0,0,.25);
+  transition:translate .45s var(--ease-out-expo), width .45s var(--ease-out-expo), background-color .35s ease, opacity .2s;
+}
+.dark .tabs__glider{
+  background-image:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.03));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1px 0 rgba(0,0,0,.25), 0 6px 14px -8px rgba(0,0,0,.6);
+}
+.tabs__glider.on{ opacity:1; }
+/* حالت «مایع»: هنگام حرکت کمی کشیده و جمع می‌شود */
+.tabs__glider.squish{ animation:gliderSquish .45s var(--ease-out-expo); }
+@keyframes gliderSquish{ 0%{scale:1 1} 35%{scale:1.14 .9} 72%{scale:.98 1.03} 100%{scale:1 1} }
+/* وقتی لغزنده فعال است، پس‌زمینه‌ی خود تب لازم نیست */
+.tabs.has-glider .tab.active,.dark .tabs.has-glider .tab.active{ background:transparent; box-shadow:none; }
+/* آرشیو: رگه‌ی نارنجی ملایم، هماهنگ با رنگ اعلانش */
+.tabs[data-view="archived"] .tabs__glider{ background-color:color-mix(in oklab,var(--n-archive) 20%,var(--surface)); }
+.tabs[data-view="archived"] .tab.active .tab__badge{ background:var(--n-archive); color:var(--n-archive-ink); }
+.tab.active .tab__badge{ transition:background-color .3s ease, color .3s ease, transform .3s var(--ease-out-back); }
 
-/* لمس: بدون چشمک خاکستری و بدون تأخیر دوبار-ضربه */
-.bottom-item,.bottom-center{ -webkit-tap-highlight-color:transparent; touch-action:manipulation; user-select:none; -webkit-user-select:none; }
+/* ورود نرم لیست، از سمت تب مقصد */
+#chat-list.swapping{ animation:listSwap .38s var(--ease-out-expo); }
+@keyframes listSwap{ from{ opacity:0; transform:translateX(var(--swap-x,18px)); } to{ opacity:1; transform:none; } }
+
+/* ═══════════════ اعلان‌ها: رنگ مخصوص هر کار ═══════════════ */
+.toast__icon svg{ width:12px; height:12px; }
+.toast.k-new{ background:var(--primary); color:var(--primary-foreground); }
+.toast.k-new .toast__icon{ background:rgba(0,0,0,.14); }
+.toast.k-archive{ background:var(--n-archive); color:var(--n-archive-ink); }
+.toast.k-archive .toast__icon{ background:rgba(0,0,0,.16); }
+.toast.k-delete{ background:var(--n-delete); color:var(--n-delete-ink); }
+.toast.k-delete .toast__icon{ background:rgba(0,0,0,.16); }
+.toast.bump{ animation:none; }
+
+/* ═══════════════ اعلان قطره‌ای (gooey drop) ═══════════════
+   قطره از لبه‌ی بالای صفحه آویزان می‌شود، می‌چکد و به شکل اعلان باز می‌شود.
+   فیلتر goo فقط روی لایه‌ی پس‌زمینه است تا متن واضح بماند. */
+.toast{ position:relative; isolation:isolate; background:none !important; box-shadow:none; animation:none !important; }
+.toast.success{ --tbg:var(--success); } .toast.error{ --tbg:var(--destructive); }
+.toast.info,.toast.k-new{ --tbg:var(--primary); } .toast.warning{ --tbg:var(--warning); }
+.toast.k-archive{ --tbg:var(--n-archive); } .toast.k-delete{ --tbg:var(--n-delete); }
+.toast__goo{ position:absolute; inset:0; z-index:-1; pointer-events:none; filter:url(#goo) drop-shadow(0 10px 12px rgba(0,0,0,.16)); }
+.goo-body{ position:absolute; inset:0; border-radius:var(--r-xl); background:var(--tbg); transform-origin:50% 0; animation:gooBodyIn .8s cubic-bezier(.3,1.1,.4,1) both; }
+.goo-neck{ position:absolute; left:50%; top:-90px; width:14px; height:90px; margin-left:-7px; border-radius:7px; background:var(--tbg); transform-origin:50% 0; animation:gooNeckIn .7s cubic-bezier(.5,0,.7,.4) both; }
+.toast > :not(.toast__goo){ animation:gooTextIn .3s .42s ease-out both; }
+@keyframes gooBodyIn{
+  0%{ transform:translateY(-40px) scale(.08,.1); }
+  38%{ transform:translateY(-6px) scale(.3,.55); }
+  62%{ transform:translateY(3px) scale(.82,1.12); }
+  80%{ transform:scale(1.04,.95); }
+  100%{ transform:none; }
+}
+@keyframes gooNeckIn{ 0%,25%{ transform:scaleY(1); } 70%,100%{ transform:scaleY(0); } }
+@keyframes gooTextIn{ from{ opacity:0; transform:translateY(-4px); } to{ opacity:1; transform:none; } }
+/* خروج: قطره دوباره جمع می‌شود و بالا کشیده می‌شود */
+.toast.out .goo-body{ animation:gooBodyOut .44s cubic-bezier(.5,0,.8,.4) forwards; }
+.toast.out .goo-neck{ animation:gooNeckOut .44s .12s ease-in both; }
+.toast.out > :not(.toast__goo){ animation:gooTextOut .14s ease-in forwards; }
+@keyframes gooBodyOut{ 0%{ transform:none; } 35%{ transform:scale(.7,1.08); } 100%{ transform:translateY(-42px) scale(.08,.1); } }
+@keyframes gooNeckOut{ from{ transform:scaleY(0); } to{ transform:scaleY(1); } }
+@keyframes gooTextOut{ to{ opacity:0; } }
+
+
+/* ═══════════════ جغد متحرک (idle / computer / wave) ═══════════════ */
+.owl{ display:block; overflow:visible; shape-rendering:geometricPrecision; flex-shrink:0; }
+.owl .o-v{ transform-box:view-box; }
+.owl .o-head,.owl .o-tapL,.owl .o-tapR,.owl .o-wave,.owl .o-pupil{ will-change:transform; }
+.owl .o-shadow{ transform-origin:408px 758px; animation:ow-shadow 3.4s ease-in-out infinite; }
+.owl .o-head{ transform-origin:408px 455px; }
+.owl .o-tapL{ transform-origin:262px 470px; }
+.owl .o-tapR,.owl .o-wave{ transform-origin:558px 470px; }
+.owl .o-lid{ transform-box:fill-box; transform-origin:50% 0; transform:scaleY(0); }
+.owl .o-arc{ transform-box:fill-box; transform-origin:50% 50%; opacity:0; }
+.owl .o-laptop{ opacity:0; transition:opacity .4s; }
+.owl .o-logo{ transform-box:fill-box; transform-origin:50% 50%; }
+.owl .o-heart{ transform-origin:0 6px; opacity:0; }
+
+/* idle */
+.owl[data-mode=idle] .o-head{ animation:ow-headIdle 5s ease-in-out infinite; }
+.owl[data-mode=idle] .o-tapL{ animation:ow-fluffL 2.6s ease-in-out infinite; }
+.owl[data-mode=idle] .o-tapR{ animation:ow-fluffR 2.6s ease-in-out infinite; }
+.owl[data-mode=idle] .o-pupil{ animation:ow-lookAround 5s ease-in-out infinite; }
+.owl[data-mode=idle] .o-lid,.owl[data-mode=idle] .o-arc{ animation:ow-blinkIdle 5s ease-in-out infinite; }
+/* computer: در حال فکر کردن / جواب دادن */
+.owl[data-mode=computer] .o-laptop{ opacity:1; }
+.owl[data-mode=computer] .o-lap{ animation:ow-jig .25s ease-in-out infinite; }
+.owl[data-mode=computer] .o-logo{ animation:ow-pulse 1.2s ease-in-out infinite; }
+.owl[data-mode=computer] .o-head{ animation:ow-headType 1.6s ease-in-out infinite; }
+.owl[data-mode=computer] .o-tapL{ animation:ow-tapL .5s ease-in-out infinite; }
+.owl[data-mode=computer] .o-tapR{ animation:ow-tapR .62s ease-in-out infinite; }
+.owl[data-mode=computer] .o-pupil{ animation:ow-readScreen 3s ease-in-out infinite; }
+.owl[data-mode=computer] .o-lid,.owl[data-mode=computer] .o-arc{ animation:ow-blinkType 6s ease-in-out infinite; }
+/* wave: صفحهٔ ورودی */
+.owl[data-mode=wave] .o-head{ animation:ow-headWave .8s ease-in-out infinite; }
+.owl[data-mode=wave] .o-wave{ animation:ow-wave 4s ease-in-out infinite; }
+.owl[data-mode=wave] .o-tapL{ animation:ow-fluffL 1.6s ease-in-out infinite; }
+.owl[data-mode=wave] .o-lid,.owl[data-mode=wave] .o-arc{ animation:ow-blinkWave 4s ease-in-out infinite; }
+.owl[data-mode=wave] .o-heart{ animation:ow-heart 3s ease-out infinite; }
+/* تا وقتی لودر باز است، دست‌تکان‌دادن شروع نشود */
+body:has(#loader:not(.hide)) .owl *{ animation-play-state:paused !important; }
+
+@keyframes ow-shadow{ 50%{ transform:scaleX(.94); opacity:.8; } }
+@keyframes ow-headIdle{ 0%,100%{ transform:translateY(0) rotate(0); } 25%{ transform:translateY(-3px) rotate(-2deg); } 50%{ transform:translateY(0) rotate(0); } 75%{ transform:translateY(-3px) rotate(2deg); } }
+@keyframes ow-fluffL{ 50%{ transform:rotate(8deg); } }
+@keyframes ow-fluffR{ 50%{ transform:rotate(-8deg); } }
+@keyframes ow-lookAround{ 0%,100%{ transform:translate(0,0); } 25%{ transform:translate(-9px,-3px); } 55%{ transform:translate(9px,-3px); } 80%{ transform:translate(0,0); } }
+@keyframes ow-blinkIdle{
+  0%,30%{ transform:scaleY(0); opacity:0; } 32%,36%{ transform:scaleY(1); opacity:1; } 38%,62%{ transform:scaleY(0); opacity:0; }
+  66%,82%{ transform:scaleY(1); opacity:1; } 87%,100%{ transform:scaleY(0); opacity:0; } }
+@keyframes ow-headType{ 50%{ transform:translateY(-2px); } }
+@keyframes ow-tapL{ 50%{ transform:rotate(-9deg); } }
+@keyframes ow-tapR{ 50%{ transform:rotate(9deg); } }
+@keyframes ow-jig{ 50%{ transform:translateY(1.5px); } }
+@keyframes ow-pulse{ 50%{ transform:scale(1.25); opacity:.7; } }
+@keyframes ow-readScreen{ 0%,100%{ transform:translate(-6px,9px); } 50%{ transform:translate(6px,9px); } }
+@keyframes ow-blinkType{
+  0%,60%{ transform:scaleY(0); opacity:0; } 62%,65%{ transform:scaleY(1); opacity:1; } 67%,100%{ transform:scaleY(0); opacity:0; } }
+@keyframes ow-headWave{ 50%{ transform:translateY(-4px) rotate(1.5deg); } }
+@keyframes ow-wave{
+  0%{ transform:rotate(0); } 8%{ transform:rotate(-92deg); } 16%{ transform:rotate(-70deg); } 24%{ transform:rotate(-102deg); }
+  32%{ transform:rotate(-70deg); } 40%{ transform:rotate(-102deg); } 48%{ transform:rotate(-70deg); } 56%{ transform:rotate(-102deg); }
+  64%{ transform:rotate(-70deg); } 72%{ transform:rotate(-102deg); } 82%{ transform:rotate(-90deg); } 92%,100%{ transform:rotate(0); } }
+@keyframes ow-blinkWave{
+  0%,5%{ transform:scaleY(0); opacity:0; } 10%,86%{ transform:scaleY(1); opacity:1; } 92%,100%{ transform:scaleY(0); opacity:0; } }
+@keyframes ow-heart{ 0%{ opacity:0; transform:translateY(0) scale(.6); } 8%{ opacity:1; } 40%{ opacity:0; transform:translateY(-80px) scale(1.1); } 100%{ opacity:0; } }
+
+/* جای‌گذاری جغد در رابط */
+.welcome-mascot{ width:150px; height:147px; }
+.welcome-mascot .owl{ width:100%; height:100%; }
+.owl--typing{ width:64px; height:63px; margin:-14px -12px -14px; }
+.msg-avatar.owl-av{ width:60px; height:59px; margin:-12px -12px -11px; overflow:visible; }
+@media (max-width:480px){ .welcome-mascot{ width:128px; height:125px; } }

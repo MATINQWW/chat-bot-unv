@@ -15,7 +15,7 @@
 // بدون ویرایش فایل هم می‌شود سرویس فعال را عوض کرد: متغیر LLM_USE را در Vercel بگذارید (مثلاً irancopilot).
 // ═══════════════════════════════════════════════════════════
 module.exports = {
-  use: 'irancopilot',
+  use: 'ollama',
   fallback: [],
 
   providers: {
