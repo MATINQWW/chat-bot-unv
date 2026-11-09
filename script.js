@@ -608,7 +608,6 @@ function showWelcome(){
         <div class="welcome-mascot__glow"></div>
         ${owlSVG('wave','welcome-mascot__img')}
       </div>
-      <div class="badge-live"><span class="pulse-dot"></span><span>${esc(t('welcome.badge'))}</span></div>
       <h2 class="welcome-title">${esc(t('welcome.title'))}</h2>
       <p class="welcome-desc">${esc(t('welcome.desc'))}</p>
       <div class="intent-chips">
