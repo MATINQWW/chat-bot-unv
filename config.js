@@ -21,7 +21,7 @@ module.exports = {
         vision: true,
       },
       irancopilot: {
-        url: 'https://irancopilot.com/studio/pro/v1/chat/completions',
+        url: 'https://irancopilot.com/studio/pro/v1',
         model: 'icp-chat',
         key: 'ICP_API_KEY',
       },
@@ -30,7 +30,7 @@ module.exports = {
     maxTokens: 800,          // سقف طول پاسخ
     knowledgeChars: 1800,    // سقف متن دانش در هر درخواست
     temperature: 0.2,
-    stream: true,            // پاسخ جریانی (کلمه‌به‌کلمه)؛ false اگر سرویس پشتیبانی نمی‌کند
+    stream: false,            // پاسخ جریانی (کلمه‌به‌کلمه)؛ false اگر سرویس پشتیبانی نمی‌کند
     timeoutMs: 40000,        // کمتر از maxDuration تابع Vercel (۶۰ ثانیه)
     maxConcurrent: 50,       // سقف درخواست هم‌زمان به هر سرویس (در هر instance)
     breakMs: 60000,          // مدت کنار گذاشتن سرویسی که پشت سر هم خطا داده
