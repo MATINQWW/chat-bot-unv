@@ -11,7 +11,7 @@ const LANG_DISPLAY={fa:'فارسی',ar:'العربية',en:'English'};
 
 const I18N={
   fa:{
-    'app.title':'سوپر همراه دانشجو','app.name':'سوپر همراه دانشجو',
+    'app.title':'همیار دانشجو نوکا','app.name':'همیار دانشجو نوکا',
     'sidebar.newChat':'مشاوره جدید','sidebar.search':'جستجو در مشاوره‌ها...',
     'sidebar.recent':'مشاوره‌های اخیر','sidebar.results':'نتایج جستجو',
     'sidebar.noChats':'هنوز مشاوره‌ای نیست','sidebar.noResults':'نتیجه‌ای یافت نشد',
@@ -20,8 +20,8 @@ const I18N={
     'sidebar.support':'پشتیبانی','sidebar.about':'درباره ما',
     'sidebar.delete':'حذف','sidebar.archive':'آرشیو','sidebar.unarchive':'بازگردانی',
     'sidebar.tab.active':'مشاوره‌ها','sidebar.tab.archived':'آرشیو',
-    'bottom.chats':'گفتگوها','bottom.archive':'آرشیو','bottom.settings':'تنظیمات','bottom.about':'درباره ما',
-    'welcome.badge':'پاسخ فوری • ۲۴ ساعته • کاملاً رایگان','welcome.title':'سوپر همراه دانشجو',
+    'bottom.chats':'گفتگوها','bottom.archive':'آرشیو','bottom.support':'پشتیبانی','bottom.about':'درباره ما',
+    'welcome.title':'همیار دانشجو نوکا',
     'welcome.desc':'سلام! من مشاور تحصیلی هوشمند شما هستم. در زمینه انتخاب رشته، برنامه‌ریزی درسی، انتخاب واحد و هر سوال تحصیلی دیگه‌ای کمکتون می‌کنم.',
     'welcome.hint':'یا فقط شروع کن به نوشتن...',
     'welcome.intent1':'انتخاب رشته','welcome.intent2':'برنامه‌ریزی درسی','welcome.intent3':'تغییر رشته',
@@ -71,15 +71,15 @@ const I18N={
     'lang.title':'انتخاب زبان','lang.subtitle':'زبان مورد نظر',
     'support.title':'پشتیبانی','support.subtitle':'در خدمت شما','support.chat':'گفتگوی آنلاین','support.chat.desc':'پاسخ سریع در ساعات کاری','support.email':'ایمیل','support.phone':'تلفن',
     'about.title':'درباره ما','about.subtitle':'با ما آشنا شوید','about.version':'نسخه',
-    'about.desc':'سوپر همراه دانشجو یک دستیار هوشمند تحصیلی است که با هدف کمک به دانشجویان در مسیر تحصیلی طراحی شده. از انتخاب رشته تا برنامه‌ریزی درسی، ما کنار شما هستیم.',
+    'about.desc':'همیار دانشجو نوکا یک دستیار هوشمند تحصیلی است که با هدف کمک به دانشجویان در مسیر تحصیلی طراحی شده. از انتخاب رشته تا برنامه‌ریزی درسی، ما کنار شما هستیم.',
   },
   ar:{
-    'app.title':'المستشار الخارق','app.name':'المستشار الخارق',
+    'app.title':'همیار دانشجو نوکا','app.name':'همیار دانشجو نوکا',
     'sidebar.newChat':'استشارة جديدة','sidebar.search':'البحث...','sidebar.recent':'الأخيرة','sidebar.results':'النتائج',
     'sidebar.noChats':'لا توجد استشارات','sidebar.noResults':'لا نتائج','sidebar.noArchived':'الأرشيف فارغ','sidebar.guest':'طالب زائر',
     'sidebar.free':'مجاني','sidebar.settings':'الإعدادات','sidebar.support':'الدعم','sidebar.about':'من نحن','sidebar.delete':'حذف','sidebar.archive':'أرشفة','sidebar.unarchive':'استعادة',
-    'sidebar.tab.active':'الاستشارات','sidebar.tab.archived':'الأرشيف','bottom.chats':'الاستشارات','bottom.archive':'الأرشيف','bottom.settings':'الإعدادات','bottom.about':'من نحن',
-    'welcome.badge':'رد فوري • 24/7 • مجاني','welcome.title':'المستشار الخارق',
+    'sidebar.tab.active':'الاستشارات','sidebar.tab.archived':'الأرشيف','bottom.chats':'الاستشارات','bottom.archive':'الأرشيف','bottom.support':'الدعم','bottom.about':'من نحن',
+    'welcome.title':'همیار دانشجو نوکا',
     'welcome.desc':'مرحباً! أنا مستشارك الأكاديمي الذكي. يمكنني مساعدتك في اختيار التخصص، التخطيط الدراسي، وأي سؤال أكاديمي.',
     'welcome.hint':'أو ابدأ الكتابة فحسب...','welcome.intent1':'اختيار التخصص','welcome.intent2':'التخطيط الدراسي','welcome.intent3':'تغيير التخصص',
     'welcome.q1.q':'ما المعلومات عن الجامعة؟','welcome.q2.q':'ما النقاط عند اختيار التخصص؟','welcome.q3.q':'ما شروط تغيير التخصص؟',
@@ -106,15 +106,15 @@ const I18N={
     'lead.major':'التخصص المطلوب (اختياري)','lead.consent':'أوافق على أن يتصل بي المركز على هذا الرقم.','lead.send':'إرسال','lead.cancel':'إلغاء',
     'lead.needConsent':'يرجى الموافقة على الاتصال','lead.done':'تم تسجيل طلبك وسنتصل بك قريباً.',
     'lang.title':'اللغة','lang.subtitle':'اختر','support.title':'الدعم','support.subtitle':'في خدمتك','support.chat':'محادثة','support.chat.desc':'رد سريع','support.email':'البريد','support.phone':'الهاتف',
-    'about.title':'من نحن','about.subtitle':'تعرف','about.version':'الإصدار','about.desc':'المستشار الخارق مساعد أكاديمي ذكي.',
+    'about.title':'من نحن','about.subtitle':'تعرف','about.version':'الإصدار','about.desc':'همیار دانشجو نوکا مساعد أكاديمي ذكي.',
   },
   en:{
-    'app.title':'Super Advisor','app.name':'Super Advisor',
+    'app.title':'همیار دانشجو همیار دانشجو نوکا','app.name':'همیار دانشجو همیار دانشجو نوکا',
     'sidebar.newChat':'New Consultation','sidebar.search':'Search...','sidebar.recent':'Recent','sidebar.results':'Results',
     'sidebar.noChats':'No consultations yet','sidebar.noResults':'No results','sidebar.noArchived':'Archive empty','sidebar.guest':'Guest Student',
     'sidebar.free':'Free consultation','sidebar.settings':'Settings','sidebar.support':'Support','sidebar.about':'About','sidebar.delete':'Delete','sidebar.archive':'Archive','sidebar.unarchive':'Restore',
-    'sidebar.tab.active':'Consultations','sidebar.tab.archived':'Archive','bottom.chats':'Chats','bottom.archive':'Archive','bottom.settings':'Settings','bottom.about':'About',
-    'welcome.badge':'Instant • 24/7 • Free','welcome.title':'Super Advisor',
+    'sidebar.tab.active':'Consultations','sidebar.tab.archived':'Archive','bottom.chats':'Chats','bottom.archive':'Archive','bottom.support':'Support','bottom.about':'About',
+    'welcome.title':'همیار دانشجو همیار دانشجو نوکا',
     'welcome.desc':"Hi! I'm your smart academic advisor. I can help with choosing a major, study planning, course registration, and any other academic question.",
     'welcome.hint':'Or just start typing...','welcome.intent1':'Choose a major','welcome.intent2':'Study planning','welcome.intent3':'Change major',
     'welcome.q1.q':'What info about the university?','welcome.q2.q':'What to consider when choosing a major?','welcome.q3.q':'How to change my major?',
@@ -141,7 +141,7 @@ const I18N={
     'lead.major':'Field of interest (optional)','lead.consent':'I agree to be contacted at this number.','lead.send':'Submit','lead.cancel':'Cancel',
     'lead.needConsent':'Please tick the consent box','lead.done':'Request received — we will call you soon.',
     'lang.title':'Choose Language','lang.subtitle':'Select','support.title':'Support','support.subtitle':'We help','support.chat':'Live chat','support.chat.desc':'Quick reply','support.email':'Email','support.phone':'Phone',
-    'about.title':'About Us','about.subtitle':'Get to know','about.version':'Version','about.desc':'Super Advisor is an intelligent academic assistant.',
+    'about.title':'About Us','about.subtitle':'Get to know','about.version':'Version','about.desc':'همیار دانشجو همیار دانشجو نوکا is an intelligent academic assistant.',
   },
 };
 
@@ -234,10 +234,11 @@ function md(text){
    ═══════════════════════════════════════════════════════════ */
 const TOAST_ICONS={success:'✓',error:'✕',info:'ℹ',warning:'⚠'};
 const TOAST_MAX=2;
+try{if(!(window.CSS&&CSS.supports&&(CSS.supports('filter','url(#goo)')||CSS.supports('-webkit-filter','url(#goo)'))))document.documentElement.classList.add('no-goo');}catch{}
 function toast(msg,type='info'){
   const box=$('#toasts');
   const live=()=>[...box.querySelectorAll('.toast:not(.out)')];
-  const dismiss=n=>{if(!n||n.classList.contains('out'))return;clearTimeout(n._t);n.classList.add('out');setTimeout(()=>n.remove(),250);};
+  const dismiss=n=>{if(!n||n.classList.contains('out'))return;clearTimeout(n._t);n.classList.remove('bump');n.classList.add('out');setTimeout(()=>n.remove(),800);};
   // همان پیام تکراری: فقط زمان نمایش تمدید می‌شود
   const dup=live().find(n=>n.dataset.msg===msg&&n.dataset.type===type);
   if(dup){
@@ -252,8 +253,11 @@ function toast(msg,type='info'){
   node.className=`toast ${type}`;
   node.dataset.msg=msg;node.dataset.type=type;
   node.setAttribute('role','status');
-  node.innerHTML=`<span class="toast__icon">${TOAST_ICONS[type]||TOAST_ICONS.info}</span><span style="flex:1;overflow-wrap:anywhere">${esc(msg)}</span>`;
+  node.innerHTML=`<span class="toast__goo" aria-hidden="true"><span class="toast__body"></span><span class="toast__drop"></span></span>`
+    +`<span class="toast__content"><span class="toast__icon">${TOAST_ICONS[type]||TOAST_ICONS.info}</span><span style="flex:1;overflow-wrap:anywhere">${esc(msg)}</span></span>`;
   box.appendChild(node);
+  // قطره از بالای صفحه شروع می‌کند: فاصلهٔ سقوط = فاصلهٔ اعلان تا لبهٔ بالای صفحه
+  node.style.setProperty('--fall',Math.max(60,Math.round(node.getBoundingClientRect().top)+28)+'px');
   node._t=setTimeout(()=>dismiss(node),3000);
 }
 
@@ -596,7 +600,6 @@ function showWelcome(){
         <div class="welcome-mascot__glow"></div>
         <svg class="welcome-mascot__img" viewBox="0 0 120 120" aria-hidden="true"><use href="#s-mascot"/></svg>
       </div>
-      <div class="badge-live"><span class="pulse-dot"></span><span>${esc(t('welcome.badge'))}</span></div>
       <h2 class="welcome-title">${esc(t('welcome.title'))}</h2>
       <p class="welcome-desc">${esc(t('welcome.desc'))}</p>
       <div class="intent-chips">
@@ -1683,7 +1686,41 @@ window.addEventListener('beforeunload',e=>{
 /* ═══════════════════════════════════════════════════════════
    BOTTOM NAV
    ═══════════════════════════════════════════════════════════ */
-function setBottomActive(k){$$('.bottom-item').forEach(b=>b.classList.toggle('active',b.dataset.bottom===k));}
+var bottomNav=$('.bottom-nav'),bottomBlob=$('.bottom-blob'),blobIdx=-1;
+// حبابِ مایع زیر دکمهٔ فعال؛ هنگام جابه‌جایی کشیده می‌شود و فنری می‌نشیند
+function placeBlob(animate){
+  if(!bottomBlob||!bottomNav)return;
+  const items=[...bottomNav.querySelectorAll('.bottom-item')];
+  const idx=items.findIndex(b=>b.classList.contains('active'));
+  if(idx<0){bottomBlob.classList.remove('on');blobIdx=-1;return;}
+  const el=items[idx];
+  if(!el.offsetWidth)return;                       // نوار مخفی است (کیبورد باز / دسکتاپ)
+  const first=blobIdx<0||!bottomBlob.classList.contains('on');
+  const rtl=document.documentElement.dir==='rtl';
+  bottomBlob.style.width=el.offsetWidth+'px';bottomBlob.style.height=el.offsetHeight+'px';
+  bottomBlob.style.top=el.offsetTop+'px';
+  if(first||!animate)bottomBlob.classList.add('snap');
+  bottomBlob.style.transform=`translateX(${el.offsetLeft}px)`;
+  bottomBlob.classList.add('on');
+  if(first||!animate){void bottomBlob.offsetWidth;bottomBlob.classList.remove('snap');}
+  else if(idx!==blobIdx){
+    // سمتِ حرکت تعیین می‌کند حباب از کدام لبه کشیده شود
+    const dir=idx>blobIdx?1:-1;
+    bottomBlob.style.setProperty('--blob-origin',((dir*(rtl?-1:1))>0?'0%':'100%'));
+    bottomBlob.classList.remove('stretch');void bottomBlob.offsetWidth;bottomBlob.classList.add('stretch');
+  }
+  blobIdx=idx;
+}
+function setBottomActive(k){$$('.bottom-item').forEach(b=>b.classList.toggle('active',b.dataset.bottom===k));placeBlob(true);}
+if(bottomNav&&'ResizeObserver' in window)new ResizeObserver(()=>placeBlob(false)).observe(bottomNav);
+window.addEventListener('resize',()=>placeBlob(false),{passive:true});
+// حرکت مخصوص هر دکمه هنگام لمس
+$$('.bottom-item,.bottom-center').forEach(b=>{
+  b.addEventListener('pointerdown',()=>{
+    b.classList.remove('anim');void b.offsetWidth;b.classList.add('anim');
+    clearTimeout(b._anim);b._anim=setTimeout(()=>b.classList.remove('anim'),750);
+  },{passive:true});
+});
 $$('[data-bottom]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const what=btn.dataset.bottom;
@@ -1698,7 +1735,7 @@ $$('[data-bottom]').forEach(btn=>{
       $$('[data-chat-view]').forEach(t=>t.classList.toggle('active',t.dataset.chatView==='archived'));
       renderChatList();toggleSidebar(true);setBottomActive('archive');return;
     }
-    if(what==='settings'){openModal('m-settings');return;}
+    if(what==='support'){openModal('m-support');return;}
     if(what==='about'){openModal('m-about');return;}
   });
 });
