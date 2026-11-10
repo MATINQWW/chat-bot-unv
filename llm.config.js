@@ -21,8 +21,7 @@ module.exports = {
   providers: {
     ollama: {
       url: 'https://ollama.com/v1',
-      model: 'deepseek-v4.1-flash:cloud',
-      //model: 'gemma4:31b',
+      model: 'gemma4',
       key: 'OLLAMA_API_KEY',
       vision: true,
     },
