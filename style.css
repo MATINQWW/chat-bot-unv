@@ -128,6 +128,9 @@ a{ color:inherit; text-decoration:none; }
   transition:opacity .6s var(--ease-out-expo), visibility .6s;
 }
 #loader.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+/* شبکهٔ اطمینان: اگر به هر دلیل اسکریپت اجرا نشد، لودر بعد از ۶ ثانیه خودش کنار می‌رود */
+#loader{ animation:loaderFailsafe .4s ease 6s forwards; }
+@keyframes loaderFailsafe{ to{ opacity:0; visibility:hidden; pointer-events:none; } }
 .loader-stack{ display:flex; flex-direction:column; align-items:center; gap:28px; animation:loaderIn .8s var(--ease-out-expo) both; }
 @keyframes loaderIn{ from{ opacity:0; transform:translateY(20px) scale(.96); } to{ opacity:1; transform:none; } }
 .loader-orbit{ position:relative; width:120px; height:120px; }
@@ -322,31 +325,64 @@ body.sb-open .hamburger span:nth-child(3){ top:6px; transform:rotate(-45deg); wi
 .chat-item-inner{
   position:relative; z-index:2; display:flex; align-items:center; gap:10px;
   padding:10px 12px; border-radius:var(--r-lg); background:transparent;
-  transition:transform .3s var(--ease-out-expo), background-color .2s;
+  transition:background-color .2s;
   cursor:pointer; touch-action:pan-y;
 }
+.chat-body{ flex:1; min-width:0; display:flex; align-items:center; gap:10px; cursor:pointer; }
 .chat-item:hover .chat-item-inner{ background:color-mix(in oklab,var(--accent) 60%,transparent); }
 .chat-item-active .chat-item-inner,
 .chat-item-active:hover .chat-item-inner{ background:var(--accent); }
-.chat-item.swiping .chat-item-inner{ transition:none; }
 .chat-avatar{ display:none; }
 .chat-title{ font-size:.875rem; font-weight:500; color:color-mix(in oklab,var(--foreground) 88%,transparent); line-height:1.4; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .chat-item-active .chat-title{ color:var(--foreground); }
 .chat-meta{ font-size:.6875rem; color:var(--muted-foreground); margin-top:1px; display:block; }
 
-.chat-action-bg{
-  position:absolute; top:0; bottom:0; width:92px;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-  color:#fff; z-index:1; pointer-events:none; opacity:0;
-  transition:opacity .15s ease-out; border-radius:var(--r-lg);
+
+
+/* ── اکشن‌های گفتگو: دکمهٔ ⋯ و نوار کوچک آرشیو/حذف ── */
+.chat-actions{ position:relative; flex:0 0 auto; display:flex; align-items:center; align-self:stretch; }
+.chat-more{
+  width:32px; height:32px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+  color:var(--muted-foreground); opacity:.75;
+  transition:opacity .15s, background-color .15s, color .15s;
 }
-.chat-item.swipe-left .chat-action-bg.left,
-.chat-item.swipe-right .chat-action-bg.right{ opacity:1; }
-.chat-action-bg.left{ left:0; background:var(--destructive); }
-.chat-action-bg.right{ right:0; background:var(--warning); }
-.chat-action-bg.right.is-restore{ background:var(--success); }
-.chat-action-bg .icon-badge{ width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.22); font-size:1rem; line-height:1; }
-.chat-action-bg .action-text{ font-size:.625rem; font-weight:700; }
+.chat-more svg{ width:18px; height:18px; }
+.chat-more:hover,.chat-more:focus-visible{ opacity:1; background:var(--accent); color:var(--foreground); }
+.chat-more:active{ background:var(--surface-2); }
+@media (hover:hover){
+  .chat-more{ opacity:0; }
+  .chat-item:hover .chat-more,.chat-item:focus-within .chat-more{ opacity:1; }
+}
+.chat-item.actions-open .chat-more{ opacity:0; pointer-events:none; }
+
+.chat-tray{
+  position:absolute; inset-block:50% auto; inset-inline-end:-2px; z-index:3;
+  display:flex; align-items:center; gap:2px; padding:3px;
+  background:var(--surface); border:1px solid var(--border); border-radius:99px;
+  box-shadow:var(--shadow-pop);
+  opacity:0; visibility:hidden; pointer-events:none;
+  transform:translateY(-50%) translateX(10px) scale(.92);
+  transition:opacity .18s ease, transform .26s var(--ease-out-expo), visibility 0s linear .26s;
+}
+[dir="rtl"] .chat-tray{ transform:translateY(-50%) translateX(-10px) scale(.92); }
+.chat-item.actions-open .chat-tray{
+  opacity:1; visibility:visible; pointer-events:auto;
+  transform:translateY(-50%) translateX(0) scale(1);
+  transition:opacity .18s ease, transform .26s var(--ease-out-expo), visibility 0s;
+}
+.chat-act{
+  width:34px; height:34px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+  color:var(--muted-foreground); transition:background-color .15s, color .15s, transform .12s;
+}
+.chat-act svg{ width:17px; height:17px; }
+.chat-act:hover,.chat-act:focus-visible{ background:var(--accent); color:var(--foreground); }
+.chat-act[data-act="archive"]:hover,.chat-act[data-act="archive"]:focus-visible,
+.chat-act[data-act="unarchive"]:hover,.chat-act[data-act="unarchive"]:focus-visible{ background:var(--primary-soft); color:var(--primary); }
+.chat-act--danger:hover,.chat-act--danger:focus-visible{ background:color-mix(in oklab,var(--destructive) 14%,transparent); color:var(--destructive); }
+.chat-act:active{ transform:scale(.9); }
+.chat-act--close{ margin-inline-start:2px; border-inline-start:1px solid var(--border); border-radius:0 50% 50% 0; width:30px; }
+[dir="rtl"] .chat-act--close{ border-radius:50% 0 0 50%; }
+@media (prefers-reduced-motion:reduce){ .chat-tray,.chat-item.actions-open .chat-tray{ transition:opacity .01s; transform:translateY(-50%); } }
 
 .sidebar-tools{ display:flex; gap:6px; padding-top:10px; border-top:1px solid var(--border); }
 .sidebar-tool{
@@ -1382,7 +1418,7 @@ html.theme-switching *,html.theme-switching *::before,html.theme-switching *::af
 
 /* ── Faster, tighter hover transitions on desktop ── */
 @media (hover:hover) and (min-width:1024px){
-  .chat-item-inner{ transition:background-color .15s ease, transform .3s var(--ease-out-expo); }
+  .chat-item-inner{ transition:background-color .15s ease; }
   .intent-chip{ transition:background-color .15s ease; }
   .intent-chip:hover{ background:var(--surface-2); }
   .icon-btn:hover,.composer-btn:hover,.sidebar-tool:hover{ background:var(--accent); }
@@ -1398,4 +1434,138 @@ html.theme-switching *,html.theme-switching *::before,html.theme-switching *::af
 @media (min-width:1536px){
   :root{ --chat-max:56rem; }
   .hdr-title{ font-size:1.0625rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   حرکت و انیمیشن — نرم، کوتاه و کاربرپسند
+   اصل: فقط transform/opacity · یک لحظهٔ هماهنگ هنگام ورود · پاسخ به لمس کاربر
+   ═══════════════════════════════════════════════════════════ */
+:root{ --ease-smooth:cubic-bezier(.22,1,.36,1); }
+@keyframes riseIn{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+@keyframes msgRise{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+@keyframes msgRiseMine{ from{ opacity:0; transform:translateY(8px) scale(.97); } to{ opacity:1; transform:none; } }
+@keyframes rowIn{ from{ opacity:0; transform:translateX(var(--row-from,12px)); } to{ opacity:1; transform:none; } }
+@keyframes mascotFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-5px); } }
+@keyframes dotBounce{ 0%,60%,100%{ transform:translateY(0); opacity:.35; } 30%{ transform:translateY(-4px); opacity:1; } }
+
+/* ورود صفحهٔ خوش‌آمدگویی: عناصر پشت‌سرهم، تا لودر کنار نرفته منتظر می‌مانند */
+.welcome{ animation:none; }
+.welcome > *:not(.intent-chips){ animation:riseIn .65s var(--ease-smooth) both; }
+.welcome > :nth-child(1){ animation-delay:.00s; }
+.welcome > :nth-child(2){ animation-delay:.07s; }
+.welcome > :nth-child(3){ animation-delay:.14s; }
+.welcome > :nth-child(5){ animation-delay:.42s; }
+.intent-chip{ animation:riseIn .6s var(--ease-smooth) both; }
+.intent-chip:nth-child(1){ animation-delay:.22s; }
+.intent-chip:nth-child(2){ animation-delay:.29s; }
+.intent-chip:nth-child(3){ animation-delay:.36s; }
+html:not(.ready) .welcome *{ animation-play-state:paused; }
+.welcome-mascot__img{ animation:mascotFloat 6s ease-in-out 1s infinite; }
+
+/* پیام‌ها */
+.msg-group{ animation:msgRise .42s var(--ease-smooth) both; }
+.msg-group.mine{ animation-name:msgRiseMine; }
+.typing-bubble .dot{ animation:dotBounce 1.2s ease-in-out infinite; }
+#typing:not([hidden]){ animation:msgRise .3s var(--ease-smooth) both; }
+
+/* مودال: ورود و خروج نرم با transition (بدون نیاز به جاوااسکریپت) */
+.modal-backdrop{
+  display:flex; visibility:hidden; opacity:0; pointer-events:none; animation:none;
+  transition:opacity .26s var(--ease-smooth), visibility 0s linear .26s;
+}
+.modal-backdrop.show{
+  visibility:visible; opacity:1; pointer-events:auto;
+  transition:opacity .26s var(--ease-smooth), visibility 0s;
+}
+.modal-card{
+  animation:none; opacity:0; transform:translateY(14px) scale(.97);
+  transition:opacity .22s ease, transform .34s var(--ease-smooth);
+}
+.modal-backdrop.show .modal-card{ opacity:1; transform:none; }
+
+/* منوی کشویی: ردیف گفتگوها هنگام باز شدن آرام وارد می‌شوند */
+[dir="rtl"] #sidebar{ --row-from:12px; }
+[dir="ltr"] #sidebar{ --row-from:-12px; }
+#sidebar.sb-enter .chat-item,#sidebar.sb-enter .list-header{ animation:rowIn .42s var(--ease-smooth) both; }
+#sidebar.sb-enter .chat-item:nth-child(2){ animation-delay:.04s; }
+#sidebar.sb-enter .chat-item:nth-child(3){ animation-delay:.08s; }
+#sidebar.sb-enter .chat-item:nth-child(4){ animation-delay:.12s; }
+#sidebar.sb-enter .chat-item:nth-child(5){ animation-delay:.16s; }
+#sidebar.sb-enter .chat-item:nth-child(n+6){ animation-delay:.2s; }
+@media (max-width:767px){
+  #sidebar{ transition:transform .5s var(--ease-smooth), box-shadow .45s, visibility 0s linear .5s; }
+  #sidebar.open{ transition:transform .5s var(--ease-smooth), box-shadow .45s, visibility 0s; }
+}
+#sb-overlay{ transition:opacity .4s var(--ease-smooth), visibility .4s; }
+
+/* بازخورد لمس و هاور (فقط روی دستگاه‌های دارای ماوس بالا می‌آید) */
+.composer{ transition:border-color .25s ease, box-shadow .25s ease; }
+.tab{ transition:background-color .25s var(--ease-smooth), color .2s, transform .15s; }
+.chat-item-inner{ transition:background-color .25s ease; }
+@media (hover:hover){
+  .intent-chip:hover{ transform:translateY(-2px); }
+  .intent-chip:active{ transform:translateY(0) scale(.985); }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .welcome > *,.intent-chip,.msg-group,#typing,.welcome-mascot__img,
+  #sidebar.sb-enter .chat-item,#sidebar.sb-enter .list-header{ animation:none !important; }
+  .modal-card{ transform:none; transition:opacity .01s; }
+  .intent-chip:hover{ transform:none; }
+}
+
+
+/* هدر دسکتاپ: چیدمان گرید واقعی ("برند · دکمه‌ها")؛
+   در فارسی برند سمت راست و دکمه‌های تم/تنظیمات سمت چپ بالا */
+@media (min-width:1024px){
+  .hdr-bar{ display:grid; }
+  .hdr-actions{ justify-self:end; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   قرص متحرک تب‌ها — حس شیشهٔ مایع، ولی ساده و هم‌سبک سایت
+   یک قرص نیمه‌شفاف با لبهٔ روشن که سر می‌خورد و هنگام حرکت کمی کش می‌آید
+   ═══════════════════════════════════════════════════════════ */
+.tabs{ position:relative; isolation:isolate; }
+.tab{ position:relative; z-index:1; }
+.tabs-pill{
+  position:absolute; left:0; top:0; z-index:0; pointer-events:none; opacity:0;
+  transition:transform .55s var(--ease-smooth), width .35s var(--ease-smooth), opacity .2s;
+  will-change:transform;
+}
+.tabs.has-pill .tabs-pill{ opacity:1; }
+.tabs-pill.snap{ transition:none; }
+.tabs-pill i{
+  position:absolute; inset:0; border-radius:var(--r-lg); transform-origin:var(--pill-origin,50%) 50%;
+  background:linear-gradient(180deg,color-mix(in oklab,var(--surface) 92%,#fff) 0%,var(--surface) 100%);
+  border:1px solid color-mix(in oklab,#fff 55%,var(--border));
+  box-shadow:0 1px 2px rgba(36,35,31,.07), 0 6px 14px -8px rgba(36,35,31,.18), inset 0 1px 0 rgba(255,255,255,.85);
+}
+/* بازتاب نور روی لبهٔ بالایی */
+.tabs-pill i::after{
+  content:""; position:absolute; inset:1px 10% auto; height:42%; border-radius:99px;
+  background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0));
+  opacity:.7;
+}
+.dark .tabs-pill i{
+  background:linear-gradient(180deg,color-mix(in oklab,var(--accent) 88%,#fff) 0%,var(--accent) 100%);
+  border-color:rgba(255,255,255,.10);
+  box-shadow:0 1px 2px rgba(0,0,0,.35), 0 6px 14px -8px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.10);
+}
+.dark .tabs-pill i::after{ background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0)); }
+.tabs-pill.stretch i{ animation:pillStretch .55s cubic-bezier(.3,.9,.4,1); }
+@keyframes pillStretch{
+  0%{ transform:scale(1,1); }
+  38%{ transform:scale(1.16,.93); }
+  72%{ transform:scale(.98,1.03); }
+  100%{ transform:scale(1,1); }
+}
+/* وقتی قرص فعال است، پس‌زمینهٔ خود تب کنار می‌رود */
+.tabs.has-pill .tab.active,.dark .tabs.has-pill .tab.active{ background:transparent; box-shadow:none; }
+.tab.active .tab__badge{ transition:transform .4s var(--ease-smooth), background-color .25s, color .25s; }
+.tab.active .tab__badge{ transform:scale(1.06); }
+@media (prefers-reduced-motion:reduce){
+  .tabs-pill{ transition:opacity .2s; }
+  .tabs-pill.stretch i{ animation:none; }
 }

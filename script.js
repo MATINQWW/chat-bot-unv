@@ -1,5 +1,21 @@
 'use strict';
 
+/* ── بارگذاری غیرمسدودکنندهٔ فونت‌ها ──
+   با media=print شروع می‌شود تا مرورگر منتظرش نماند؛ بعد از دریافت، به all تبدیل می‌شود.
+   اگر CDN در دسترس نبود، صفحه با فونت جایگزین (Tahoma/system-ui) عادی کار می‌کند. */
+(function loadFonts(){
+  ['https://cdn.jsdelivr.net/gh/AmirAbbasVafaee/persian-fonts-cdn@main/css/iran-yekan.css',
+   'https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css'].forEach(href=>{
+    try{
+      const l=document.createElement('link');
+      l.rel='stylesheet';l.href=href;l.media='print';
+      l.addEventListener('load',()=>{l.media='all';});
+      l.addEventListener('error',()=>{l.remove();});
+      document.head.appendChild(l);
+    }catch{}
+  });
+})();
+
 /* ═══════════════════════════════════════════════════════════
    CONSTANTS + STATE
    ═══════════════════════════════════════════════════════════ */
@@ -18,7 +34,7 @@ const I18N={
     'sidebar.noArchived':'آرشیو خالی است','sidebar.guest':'کاربر مهمان',
     'sidebar.free':'مشاوره رایگان','sidebar.settings':'تنظیمات',
     'sidebar.support':'پشتیبانی','sidebar.about':'درباره ما',
-    'sidebar.delete':'حذف','sidebar.archive':'آرشیو','sidebar.unarchive':'بازگردانی',
+    'sidebar.delete':'حذف','sidebar.archive':'آرشیو','sidebar.unarchive':'بازگردانی','sidebar.more':'گزینه‌ها',
     'sidebar.tab.active':'مشاوره‌ها','sidebar.tab.archived':'آرشیو',
     'bottom.chats':'گفتگوها','bottom.archive':'آرشیو','bottom.support':'پشتیبانی','bottom.about':'درباره ما',
     'welcome.title':'همیار دانشجو نوکا',
@@ -77,7 +93,7 @@ const I18N={
     'app.title':'همیار دانشجو نوکا','app.name':'همیار دانشجو نوکا',
     'sidebar.newChat':'استشارة جديدة','sidebar.search':'البحث...','sidebar.recent':'الأخيرة','sidebar.results':'النتائج',
     'sidebar.noChats':'لا توجد استشارات','sidebar.noResults':'لا نتائج','sidebar.noArchived':'الأرشيف فارغ','sidebar.guest':'طالب زائر',
-    'sidebar.free':'مجاني','sidebar.settings':'الإعدادات','sidebar.support':'الدعم','sidebar.about':'من نحن','sidebar.delete':'حذف','sidebar.archive':'أرشفة','sidebar.unarchive':'استعادة',
+    'sidebar.free':'مجاني','sidebar.settings':'الإعدادات','sidebar.support':'الدعم','sidebar.about':'من نحن','sidebar.delete':'حذف','sidebar.archive':'أرشفة','sidebar.unarchive':'استعادة','sidebar.more':'خيارات',
     'sidebar.tab.active':'الاستشارات','sidebar.tab.archived':'الأرشيف','bottom.chats':'الاستشارات','bottom.archive':'الأرشيف','bottom.support':'الدعم','bottom.about':'من نحن',
     'welcome.title':'همیار دانشجو نوکا',
     'welcome.desc':'مرحباً! أنا مستشارك الأكاديمي الذكي. يمكنني مساعدتك في اختيار التخصص، التخطيط الدراسي، وأي سؤال أكاديمي.',
@@ -112,7 +128,7 @@ const I18N={
     'app.title':'Noka Student Assistant','app.name':'Noka Student Assistant',
     'sidebar.newChat':'New Consultation','sidebar.search':'Search...','sidebar.recent':'Recent','sidebar.results':'Results',
     'sidebar.noChats':'No consultations yet','sidebar.noResults':'No results','sidebar.noArchived':'Archive empty','sidebar.guest':'Guest Student',
-    'sidebar.free':'Free consultation','sidebar.settings':'Settings','sidebar.support':'Support','sidebar.about':'About','sidebar.delete':'Delete','sidebar.archive':'Archive','sidebar.unarchive':'Restore',
+    'sidebar.free':'Free consultation','sidebar.settings':'Settings','sidebar.support':'Support','sidebar.about':'About','sidebar.delete':'Delete','sidebar.archive':'Archive','sidebar.unarchive':'Restore','sidebar.more':'Options',
     'sidebar.tab.active':'Consultations','sidebar.tab.archived':'Archive','bottom.chats':'Chats','bottom.archive':'Archive','bottom.support':'Support','bottom.about':'About',
     'welcome.title':'Noka Student Assistant',
     'welcome.desc':"Hi! I'm your smart academic advisor. I can help with choosing a major, study planning, course registration, and any other academic question.",
@@ -531,6 +547,8 @@ function toggleSidebar(force){
   const sb=$('#sidebar'),ov=$('#sb-overlay');
   const next=force!==undefined?force:!sb.classList.contains('open');
   sb.classList.toggle('open',next);
+  if(next&&window.__placeTabsPill)requestAnimationFrame(()=>window.__placeTabsPill(false));
+  if(next){sb.classList.add('sb-enter');clearTimeout(sb._enter);sb._enter=setTimeout(()=>sb.classList.remove('sb-enter'),800);}
   document.body.classList.toggle('sb-open',next&&window.innerWidth<768);
   $('#sb-toggle')?.setAttribute('aria-expanded',String(next));
   if(next&&window.innerWidth<768)ov.classList.add('show');
@@ -872,79 +890,41 @@ async function shareText(text){
 }
 
 /* ═══════════════════════════════════════════════════════════
-   SWIPE
+   CHAT ROW ACTIONS (جایگزین حالت کشیدنی)
+   دکمهٔ ⋯ کنار هر گفتگو؛ با لمس، یک نوار کوچک با آرشیو/حذف باز می‌شود.
    ═══════════════════════════════════════════════════════════ */
-let _openSwipeItem=null;
-function attachSwipeHandlers(item){
-  const inner=item.querySelector('.chat-item-inner');
-  if(!inner)return;
-  const chatId=item.dataset.chatId;
-  const chat=S.chats.find(c=>c.id===chatId);
-  if(!chat)return;
-  const MAX=92,THRESH=56;
-  let pointerId=null,startX=0,startY=0,currentX=0,dragging=false,axis=null,suppressClick=false;
-  const setX=(x,animate)=>{
-    const c=Math.max(-MAX,Math.min(MAX,x));
-    inner.style.transition=animate?'':'none';
-    inner.style.transform=`translateX(${c}px)`;
-    currentX=c;
-    if(c>2){item.classList.add('swipe-left');item.classList.remove('swipe-right');}
-    else if(c<-2){item.classList.add('swipe-right');item.classList.remove('swipe-left');}
-    else item.classList.remove('swipe-left','swipe-right');
-  };
-  const onDown=e=>{
-    if(e.pointerType==='mouse'&&e.button!==0)return;
-    if(pointerId!==null)return;
-    if(_openSwipeItem&&_openSwipeItem!==item){try{_openSwipeItem._closeSwipe?.();}catch{}}
-    pointerId=e.pointerId;startX=e.clientX;startY=e.clientY;
-    currentX=0;dragging=false;axis=null;
-  };
-  const onMove=e=>{
-    if(e.pointerId!==pointerId)return;
-    const rx=e.clientX-startX,ry=e.clientY-startY;
-    if(axis===null){
-      if(Math.abs(rx)>8||Math.abs(ry)>8){
-        axis=Math.abs(rx)>Math.abs(ry)?'x':'y';
-        if(axis==='x'){
-          dragging=true;item.classList.add('swiping');
-          inner.style.transition='none';
-          _openSwipeItem=item;
-          try{inner.setPointerCapture(e.pointerId);}catch{}
-        }else{pointerId=null;try{inner.releasePointerCapture(e.pointerId);}catch{}return;}
-      }else return;
-    }
-    if(axis!=='x')return;
-    setX(rx,false);
-    if(e.cancelable)e.preventDefault();
-  };
-  const onUp=e=>{
-    if(e.pointerId!==pointerId)return;
-    try{inner.releasePointerCapture(e.pointerId);}catch{}
-    const wasDragging=dragging;
-    const fx=currentX;
-    pointerId=null;dragging=false;
-    item.classList.remove('swiping','swipe-left','swipe-right');
-    if(!wasDragging){_openSwipeItem=null;return;}
-    suppressClick=true;setTimeout(()=>{suppressClick=false;},180);
-    inner.style.transition='';inner.style.transform='';
-    currentX=0;_openSwipeItem=null;
-    if(fx>=THRESH){haptic(15);setTimeout(()=>triggerSwipeAction(chatId,'delete'),60);}
-    else if(fx<=-THRESH){haptic(15);setTimeout(()=>triggerSwipeAction(chatId,chat.archived?'unarchive':'archive'),60);}
-  };
-  inner.addEventListener('pointerdown',onDown,{passive:true});
-  inner.addEventListener('pointermove',onMove,{passive:false});
-  inner.addEventListener('pointerup',onUp);
-  inner.addEventListener('pointercancel',onUp);
-  inner.addEventListener('dragstart',e=>e.preventDefault());
-  inner.addEventListener('click',e=>{if(suppressClick){e.preventDefault();e.stopPropagation();return;}},true);
-  item._closeSwipe=()=>{
-    inner.style.transition='';inner.style.transform='';
-    item.classList.remove('swiping','swipe-left','swipe-right');
-    currentX=0;if(_openSwipeItem===item)_openSwipeItem=null;
-  };
+const ROW_ICONS={
+  more:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>',
+  archive:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1.2"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8M10 12h4"/></svg>',
+  restore:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1.2"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8M12 17v-6M9.5 13.5 12 11l2.5 2.5"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',
+  close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+};
+let _openRow=null;
+function closeRowActions(restoreFocus){
+  if(!_openRow)return;
+  const row=_openRow;_openRow=null;
+  row.classList.remove('actions-open');
+  const more=row.querySelector('.chat-more');
+  if(more){more.setAttribute('aria-expanded','false');if(restoreFocus)more.focus({preventScroll:true});}
+  const tray=row.querySelector('.chat-tray');if(tray)tray.inert=true;
 }
-function triggerSwipeAction(id,action){
-  if(_openSwipeItem){try{_openSwipeItem._closeSwipe?.();}catch{}_openSwipeItem=null;}
+function openRowActions(row){
+  if(_openRow&&_openRow!==row)closeRowActions(false);
+  _openRow=row;
+  row.classList.add('actions-open');
+  row.querySelector('.chat-more')?.setAttribute('aria-expanded','true');
+  const tray=row.querySelector('.chat-tray');
+  if(tray){tray.inert=false;haptic(8);setTimeout(()=>tray.querySelector('.chat-act')?.focus({preventScroll:true}),30);}
+}
+document.addEventListener('pointerdown',e=>{
+  if(_openRow&&!_openRow.contains(e.target))closeRowActions(false);
+},{passive:true,capture:true});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&_openRow){e.stopPropagation();closeRowActions(true);}
+},true);
+function runChatAction(id,action){
+  closeRowActions(false);
   const chat=S.chats.find(c=>c.id===id);if(!chat)return;
   if(action==='delete'){
     confirmDialog({
@@ -977,12 +957,6 @@ function triggerSwipeAction(id,action){
     });
   }
 }
-document.addEventListener('pointerdown',e=>{
-  if(_openSwipeItem&&!_openSwipeItem.contains(e.target)){
-    try{_openSwipeItem._closeSwipe?.();}catch{}
-    _openSwipeItem=null;
-  }
-},{passive:true,capture:true});
 
 /* ═══════════════════════════════════════════════════════════
    CHAT LIST
@@ -1005,7 +979,7 @@ function renderChatList(filter=''){
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       <p>${esc(msg)}</p>
     </div>`;
-    _openSwipeItem=null;
+    _openRow=null;
     return;
   }
 
@@ -1023,39 +997,50 @@ function renderChatList(filter=''){
     wrapper.className=`chat-item ${active?'chat-item-active':''}`;
     wrapper.dataset.chatId=chat.id;
 
-    const bgLeft=document.createElement('div');
-    bgLeft.className='chat-action-bg left';
-    bgLeft.setAttribute('aria-hidden','true');
-    bgLeft.innerHTML=`<span class="icon-badge">🗑️</span><span class="action-text">${esc(t('sidebar.delete'))}</span>`;
-
-    const bgRight=document.createElement('div');
-    bgRight.className='chat-action-bg right'+(chat.archived?' is-restore':'');
-    bgRight.setAttribute('aria-hidden','true');
-    bgRight.innerHTML=chat.archived
-      ?`<span class="icon-badge">📤</span><span class="action-text">${esc(t('sidebar.unarchive'))}</span>`
-      :`<span class="icon-badge">📦</span><span class="action-text">${esc(t('sidebar.archive'))}</span>`;
-
     const inner=document.createElement('div');
     inner.className='chat-item-inner';
-    inner.setAttribute('draggable','false');
 
     const body=document.createElement('div');
-    body.style.cssText='flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer';
+    body.className='chat-body';
     body.dataset.load=chat.id;
     body.innerHTML=`
       <div class="chat-avatar"><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#s-logo"/></svg></div>
       <div style="min-width:0;flex:1"><span class="chat-title">${esc(chat.title)}</span><span class="chat-meta">${new Date(chat.date||Date.now()).toLocaleDateString(locale,{month:'short',day:'numeric'})}</span></div>`;
 
-    inner.appendChild(body);
-    wrapper.append(bgLeft,bgRight,inner);
+    const acts=document.createElement('div');
+    acts.className='chat-actions';
+    const archLabel=chat.archived?t('sidebar.unarchive'):t('sidebar.archive');
+    acts.innerHTML=
+      `<button type="button" class="chat-more" data-more aria-haspopup="true" aria-expanded="false" aria-label="${escAttr(t('sidebar.more'))}" title="${escAttr(t('sidebar.more'))}">${ROW_ICONS.more}</button>`
+     +`<div class="chat-tray" role="group" aria-label="${escAttr(t('sidebar.more'))}" inert>`
+     +`<button type="button" class="chat-act" data-act="${chat.archived?'unarchive':'archive'}" aria-label="${escAttr(archLabel)}" title="${escAttr(archLabel)}">${chat.archived?ROW_ICONS.restore:ROW_ICONS.archive}</button>`
+     +`<button type="button" class="chat-act chat-act--danger" data-act="delete" aria-label="${escAttr(t('sidebar.delete'))}" title="${escAttr(t('sidebar.delete'))}">${ROW_ICONS.trash}</button>`
+     +`<button type="button" class="chat-act chat-act--close" data-act="close" aria-label="${escAttr(t('settings.close'))}" title="${escAttr(t('settings.close'))}">${ROW_ICONS.close}</button>`
+     +`</div>`;
+
+    inner.append(body,acts);
+    wrapper.appendChild(inner);
     frag.appendChild(wrapper);
-    attachSwipeHandlers(wrapper);
   });
 
   el.list.replaceChildren(frag);
-  _openSwipeItem=null;
+  _openRow=null;
 }
 el.list.addEventListener('click',e=>{
+  const more=e.target.closest('[data-more]');
+  if(more){
+    const row=more.closest('.chat-item');
+    if(row.classList.contains('actions-open'))closeRowActions(false);else openRowActions(row);
+    return;
+  }
+  const act=e.target.closest('[data-act]');
+  if(act){
+    const row=act.closest('.chat-item');
+    if(act.dataset.act==='close'){closeRowActions(true);return;}
+    runChatAction(row.dataset.chatId,act.dataset.act);
+    return;
+  }
+  if(_openRow){closeRowActions(false);return;}
   const load=e.target.closest('[data-load]')||e.target.querySelector?.('[data-load]');
   if(load)loadChat(load.dataset.load);
 });
@@ -1067,8 +1052,9 @@ $$('[data-chat-view]').forEach(tab=>{
     if(S.chatView===view)return;
     S.chatView=view;
     $$('[data-chat-view]').forEach(t=>t.classList.toggle('active',t.dataset.chatView===view));
-    if(_openSwipeItem){try{_openSwipeItem._closeSwipe?.();}catch{}_openSwipeItem=null;}
+    closeRowActions(false);
     renderChatList($('#search-chats').value);
+    {const sb=$('#sidebar');sb.classList.add('sb-enter');clearTimeout(sb._enter);sb._enter=setTimeout(()=>sb.classList.remove('sb-enter'),700);}
   });
 });
 
@@ -1727,11 +1713,48 @@ $$('[data-bottom]').forEach(btn=>{
 });
 
 /* ═══════════════════════════════════════════════════════════
+   TABS PILL — قرص شیشه‌ای متحرک پشت «مشاوره‌ها / آرشیو»
+   با هر تغییر کلاس active (از تب، نوار پایین یا بازنشانی) خودش جابه‌جا می‌شود.
+   ═══════════════════════════════════════════════════════════ */
+(function tabsPill(){
+  const tabs=$('.tabs');if(!tabs)return;
+  const pill=document.createElement('span');
+  pill.className='tabs-pill';pill.setAttribute('aria-hidden','true');
+  pill.innerHTML='<i></i>';
+  tabs.prepend(pill);
+  let lastX=null;
+  function place(animate){
+    const a=tabs.querySelector('.tab.active');
+    if(!a||!a.offsetWidth)return;
+    const x=a.offsetLeft;
+    pill.style.width=a.offsetWidth+'px';pill.style.height=a.offsetHeight+'px';pill.style.top=a.offsetTop+'px';
+    if(!animate||lastX===null)pill.classList.add('snap');
+    pill.style.transform=`translateX(${x}px)`;
+    if(!animate||lastX===null){void pill.offsetWidth;pill.classList.remove('snap');}
+    else if(x!==lastX){
+      pill.style.setProperty('--pill-origin',x>lastX?'0%':'100%');
+      pill.classList.remove('stretch');void pill.offsetWidth;pill.classList.add('stretch');
+    }
+    lastX=x;
+    if(!tabs.classList.contains('has-pill'))tabs.classList.add('has-pill');
+  }
+  // فقط خود تب‌ها زیر نظر هستند (نه خود قرص) تا تغییر کلاس قرص حلقهٔ بی‌پایان نسازد
+  const mo=new MutationObserver(()=>place(true));
+  tabs.querySelectorAll('.tab').forEach(t=>mo.observe(t,{attributes:true,attributeFilter:['class']}));
+  if('ResizeObserver' in window)new ResizeObserver(()=>place(false)).observe(tabs);
+  window.addEventListener('resize',()=>place(false),{passive:true});
+  place(false);
+  document.fonts?.ready?.then(()=>place(false));
+  window.__placeTabsPill=place;
+})();
+
+/* ═══════════════════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════════════════ */
 (function init(){
   let savedLang=null;try{savedLang=localStorage.getItem('n_lang');}catch{}
-  S.lang=['fa','ar','en'].includes(savedLang)?savedLang:DEFAULTS.lang;
+  // پیش‌فرض همیشه فارسی است؛ فقط اگر کاربر خودش زبان دیگری انتخاب کرده باشد همان می‌ماند
+  S.lang=['fa','ar','en'].includes(savedLang)?savedLang:'fa';
   TTS.refresh();
 
   let savedTheme=null;try{savedTheme=localStorage.getItem('n_theme');}catch{}
@@ -1760,7 +1783,7 @@ $$('[data-bottom]').forEach(btn=>{
   }
 
   window.addEventListener('pagehide',()=>{try{persistCurrentChat();}catch{}});
-  const hideLoader=()=>{const l=$('#loader');l.classList.add('hide');setTimeout(()=>l.remove(),700);};
+  const hideLoader=()=>{const l=$('#loader');document.documentElement.classList.add('ready');l.classList.add('hide');setTimeout(()=>l.remove(),700);};
   Promise.race([document.fonts?.ready||Promise.resolve(),wait(1200)]).then(()=>wait(500)).then(hideLoader);
 })();
 
