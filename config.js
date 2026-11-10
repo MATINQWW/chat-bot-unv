@@ -8,7 +8,7 @@ module.exports = {
 
   // ─── مدل زبانی ───
   llm: {
-    use: 'ollama',           // سرویس فعال (یکی از providers)
+    use: 'irancopilot',           // سرویس فعال (یکی از providers)
     fallback: [],            // اختیاری: اگر فعال خطا داد یا پر بود، به ترتیب این‌ها؛ مثلاً ['irancopilot']
 
     providers: {
@@ -21,7 +21,7 @@ module.exports = {
         vision: true,
       },
       irancopilot: {
-        url: 'https://irancopilot.com/studio/pro/v1/chat/completions',
+        url: 'https://irancopilot.com/studio/pro/v1',
         model: 'icp-chat',
         key: 'ICP_API_KEY',
       },
