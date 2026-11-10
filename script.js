@@ -20,8 +20,8 @@ const I18N={
     'sidebar.support':'پشتیبانی','sidebar.about':'درباره ما',
     'sidebar.delete':'حذف','sidebar.archive':'آرشیو','sidebar.unarchive':'بازگردانی',
     'sidebar.tab.active':'مشاوره‌ها','sidebar.tab.archived':'آرشیو',
-    'bottom.chats':'گفتگوها','bottom.archive':'آرشیو','bottom.settings':'تنظیمات','bottom.about':'درباره ما',
-    'welcome.badge':'کاملاً رایگان','welcome.title':'همیار دانشجو نوکا',
+    'bottom.chats':'گفتگوها','bottom.archive':'آرشیو','bottom.support':'پشتیبانی','bottom.about':'درباره ما',
+    'welcome.title':'همیار دانشجو نوکا',
     'welcome.desc':'سلام! من مشاور تحصیلی هوشمند شما هستم. در زمینه انتخاب رشته، برنامه‌ریزی درسی، انتخاب واحد و هر سوال تحصیلی دیگه‌ای کمکتون می‌کنم.',
     'welcome.hint':'یا فقط شروع کن به نوشتن...',
     'welcome.intent1':'انتخاب رشته','welcome.intent2':'برنامه‌ریزی درسی','welcome.intent3':'تغییر رشته',
@@ -74,12 +74,12 @@ const I18N={
     'about.desc':'همیار دانشجو نوکا یک دستیار هوشمند تحصیلی است که با هدف کمک به دانشجویان در مسیر تحصیلی طراحی شده. از انتخاب رشته تا برنامه‌ریزی درسی، ما کنار شما هستیم.',
   },
   ar:{
-    'app.title':'مرافق الطالب نوكا','app.name':'مرافق الطالب نوكا',
+    'app.title':'همیار دانشجو نوکا','app.name':'همیار دانشجو نوکا',
     'sidebar.newChat':'استشارة جديدة','sidebar.search':'البحث...','sidebar.recent':'الأخيرة','sidebar.results':'النتائج',
     'sidebar.noChats':'لا توجد استشارات','sidebar.noResults':'لا نتائج','sidebar.noArchived':'الأرشيف فارغ','sidebar.guest':'طالب زائر',
     'sidebar.free':'مجاني','sidebar.settings':'الإعدادات','sidebar.support':'الدعم','sidebar.about':'من نحن','sidebar.delete':'حذف','sidebar.archive':'أرشفة','sidebar.unarchive':'استعادة',
-    'sidebar.tab.active':'الاستشارات','sidebar.tab.archived':'الأرشيف','bottom.chats':'الاستشارات','bottom.archive':'الأرشيف','bottom.settings':'الإعدادات','bottom.about':'من نحن',
-    'welcome.badge':'مجاني بالكامل','welcome.title':'مرافق الطالب نوكا',
+    'sidebar.tab.active':'الاستشارات','sidebar.tab.archived':'الأرشيف','bottom.chats':'الاستشارات','bottom.archive':'الأرشيف','bottom.support':'الدعم','bottom.about':'من نحن',
+    'welcome.title':'همیار دانشجو نوکا',
     'welcome.desc':'مرحباً! أنا مستشارك الأكاديمي الذكي. يمكنني مساعدتك في اختيار التخصص، التخطيط الدراسي، وأي سؤال أكاديمي.',
     'welcome.hint':'أو ابدأ الكتابة فحسب...','welcome.intent1':'اختيار التخصص','welcome.intent2':'التخطيط الدراسي','welcome.intent3':'تغيير التخصص',
     'welcome.q1.q':'ما المعلومات عن الجامعة؟','welcome.q2.q':'ما النقاط عند اختيار التخصص؟','welcome.q3.q':'ما شروط تغيير التخصص؟',
@@ -106,15 +106,15 @@ const I18N={
     'lead.major':'التخصص المطلوب (اختياري)','lead.consent':'أوافق على أن يتصل بي المركز على هذا الرقم.','lead.send':'إرسال','lead.cancel':'إلغاء',
     'lead.needConsent':'يرجى الموافقة على الاتصال','lead.done':'تم تسجيل طلبك وسنتصل بك قريباً.',
     'lang.title':'اللغة','lang.subtitle':'اختر','support.title':'الدعم','support.subtitle':'في خدمتك','support.chat':'محادثة','support.chat.desc':'رد سريع','support.email':'البريد','support.phone':'الهاتف',
-    'about.title':'من نحن','about.subtitle':'تعرف','about.version':'الإصدار','about.desc':'مرافق الطالب نوكا مساعد أكاديمي ذكي.',
+    'about.title':'من نحن','about.subtitle':'تعرف','about.version':'الإصدار','about.desc':'همیار دانشجو نوکا مساعد أكاديمي ذكي.',
   },
   en:{
     'app.title':'Noka Student Assistant','app.name':'Noka Student Assistant',
     'sidebar.newChat':'New Consultation','sidebar.search':'Search...','sidebar.recent':'Recent','sidebar.results':'Results',
     'sidebar.noChats':'No consultations yet','sidebar.noResults':'No results','sidebar.noArchived':'Archive empty','sidebar.guest':'Guest Student',
     'sidebar.free':'Free consultation','sidebar.settings':'Settings','sidebar.support':'Support','sidebar.about':'About','sidebar.delete':'Delete','sidebar.archive':'Archive','sidebar.unarchive':'Restore',
-    'sidebar.tab.active':'Consultations','sidebar.tab.archived':'Archive','bottom.chats':'Chats','bottom.archive':'Archive','bottom.settings':'Settings','bottom.about':'About',
-    'welcome.badge':'Completely free','welcome.title':'Noka Student Assistant',
+    'sidebar.tab.active':'Consultations','sidebar.tab.archived':'Archive','bottom.chats':'Chats','bottom.archive':'Archive','bottom.support':'Support','bottom.about':'About',
+    'welcome.title':'Noka Student Assistant',
     'welcome.desc':"Hi! I'm your smart academic advisor. I can help with choosing a major, study planning, course registration, and any other academic question.",
     'welcome.hint':'Or just start typing...','welcome.intent1':'Choose a major','welcome.intent2':'Study planning','welcome.intent3':'Change major',
     'welcome.q1.q':'What info about the university?','welcome.q2.q':'What to consider when choosing a major?','welcome.q3.q':'How to change my major?',
@@ -233,40 +233,29 @@ function md(text){
    TOASTS
    ═══════════════════════════════════════════════════════════ */
 const TOAST_ICONS={success:'✓',error:'✕',info:'ℹ',warning:'⚠'};
-const _ti=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
-/* اعلان‌های اختصاصی هر کار: رنگ و آیکون مخصوص خودشان را دارند */
-const TOAST_KINDS={
-  newChat:{cls:'k-new',icon:_ti('<path d="M12 5v14M5 12h14"/>')},                                                    // آبی
-  archive:{cls:'k-archive',icon:_ti('<path d="M4 7h16M5 7v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M3 4h18v3H3zM10 12h4"/>')}, // نارنجی
-  unarchive:{cls:'k-archive',icon:_ti('<path d="M4 7h16M5 7v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M3 4h18v3H3zM12 17v-5m-2.5 2.5L12 12l2.5 2.5"/>')},
-  delete:{cls:'k-delete',icon:_ti('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>')} // قرمز
-};
-const TOAST_SHOW_MS=3000,TOAST_OUT_MS=440,TOAST_QUEUE_MAX=4;   // خروج = مدت انیمیشن جمع‌شدن قطره
-const _toastQ=[];let _toastCur=null;
-/* هر درخواست = یک اعلان. اعلان‌ها یکی‌یکی نمایش داده می‌شوند: تا انیمیشن قبلی کامل تمام نشود، بعدی شروع نمی‌شود.
-   درخواست تکراری از همان نوع (مثلاً اسپم «مشاوره جدید») در حالی که اعلانش روی صفحه یا در صف است، نادیده گرفته می‌شود. */
-function toast(msg,type='info',kind){
-  const key=kind||`${type}|${msg}`;
-  if(_toastCur&&!_toastCur.leaving&&_toastCur.key===key)return;
-  if(_toastQ.some(q=>q.key===key))return;
-  if(_toastQ.length>=TOAST_QUEUE_MAX)_toastQ.shift();
-  _toastQ.push({msg,type,kind,key});
-  if(!_toastCur)_toastNext();
-}
-function _toastNext(){
-  const item=_toastQ.shift();
-  if(!item){_toastCur=null;return;}
-  const k=item.kind&&TOAST_KINDS[item.kind];
+const TOAST_MAX=2;
+try{if(!(window.CSS&&CSS.supports&&(CSS.supports('filter','url(#goo)')||CSS.supports('-webkit-filter','url(#goo)'))))document.documentElement.classList.add('no-goo');}catch{}
+function toast(msg,type='info'){
+  const box=$('#toasts');
+  const live=()=>[...box.querySelectorAll('.toast:not(.out)')];
+  const dismiss=n=>{if(!n||n.classList.contains('out'))return;clearTimeout(n._t);n.classList.remove('bump');n.classList.add('out');setTimeout(()=>n.remove(),800);};
+  const dup=live().find(n=>n.dataset.msg===msg&&n.dataset.type===type);
+  if(dup){
+    clearTimeout(dup._t);dup._t=setTimeout(()=>dismiss(dup),3000);
+    dup.classList.remove('bump');void dup.offsetWidth;dup.classList.add('bump');
+    return;
+  }
+  const cur=live();
+  while(cur.length>=TOAST_MAX)dismiss(cur.shift());
   const node=document.createElement('div');
-  node.className=`toast ${item.type}${k?' '+k.cls:''}`;
+  node.className=`toast ${type}`;
+  node.dataset.msg=msg;node.dataset.type=type;
   node.setAttribute('role','status');
-  node.innerHTML=`<span class="toast__goo" aria-hidden="true"><i class="goo-body"></i><i class="goo-neck"></i></span><span class="toast__icon">${k?k.icon:(TOAST_ICONS[item.type]||TOAST_ICONS.info)}</span><span style="flex:1;overflow-wrap:anywhere">${esc(item.msg)}</span>`;
-  $('#toasts').appendChild(node);
-  const cur=_toastCur={key:item.key,node,leaving:false};
-  setTimeout(()=>{
-    cur.leaving=true;node.classList.add('out');
-    setTimeout(()=>{node.remove();if(_toastCur===cur){_toastCur=null;_toastNext();}},TOAST_OUT_MS);
-  },TOAST_SHOW_MS);
+  node.innerHTML=`<span class="toast__goo" aria-hidden="true"><span class="toast__body"></span><span class="toast__drop"></span></span>`
+    +`<span class="toast__content"><span class="toast__icon">${TOAST_ICONS[type]||TOAST_ICONS.info}</span><span style="flex:1;overflow-wrap:anywhere">${esc(msg)}</span></span>`;
+  box.appendChild(node);
+  node.style.setProperty('--fall',Math.max(60,Math.round(node.getBoundingClientRect().top)+28)+'px');
+  node._t=setTimeout(()=>dismiss(node),3000);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -353,7 +342,6 @@ const TTS={
       const u=new SpeechSynthesisUtterance(part);
       if(useVoice){u.voice=useVoice;u.lang=useVoice.lang;}else u.lang=getLangCode();
       u.rate=0.95;u.pitch=1;u.volume=1;
-      // فقط آخرین تکه (و فقط برای همین نوبت) دکمهٔ توقف را برمی‌گرداند
       if(i===parts.length-1){const done=()=>{if(tok===this._tok)this._clearUI();};u.onend=done;u.onerror=done;}
       speechSynthesis.speak(u);
     });
@@ -563,7 +551,6 @@ window.addEventListener('resize',debounce(()=>{
    CHATS
    ═══════════════════════════════════════════════════════════ */
 function trimChats(){
-  // حداکثر MAX_HISTORY گفتگو (فعال + آرشیو) نگه داشته می‌شود؛ قدیمی‌ترها حذف می‌شوند
   S.chats=S.chats.slice().sort((a,b)=>(b.date||0)-(a.date||0)).slice(0,MAX_HISTORY);
 }
 function loadChats(){
@@ -606,7 +593,7 @@ function showWelcome(){
     <div class="welcome">
       <div class="welcome-mascot">
         <div class="welcome-mascot__glow"></div>
-        ${owlSVG('wave','welcome-mascot__img')}
+        <svg class="welcome-mascot__img" viewBox="0 0 120 120" aria-hidden="true"><use href="#s-mascot"/></svg>
       </div>
       <h2 class="welcome-title">${esc(t('welcome.title'))}</h2>
       <p class="welcome-desc">${esc(t('welcome.desc'))}</p>
@@ -617,67 +604,6 @@ function showWelcome(){
       </div>
       <p class="welcome-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>${esc(t('welcome.hint'))}</span></p>
     </div>`;
-  owlWelcomeStart();
-}
-
-/* ═══════════════════════════════════════════════════════════
-   OWL — جغد متحرک (۳ حالت: wave / computer / idle)
-   • صفحهٔ ورودی: wave ← بعد از یک دور idle
-   • در حال فکر کردن/جواب دادن: computer
-   • جواب تمام شد/بیکار: idle (فقط روی آخرین پیام بات؛ پیام‌های قدیمی لوگوی ثابت)
-   ═══════════════════════════════════════════════════════════ */
-let _owlN=0;
-function owlSVG(mode,cls){
-  const id='owl-clip-'+(++_owlN);
-  const lids=[[313,369],[502,369]].map(([x,y])=>`<g transform="translate(${x},${y})"><g clip-path="url(#${id})"><rect class="o-lid" x="-74" y="-74" width="148" height="148" fill="#fefefe"/></g><path class="o-arc" d="M-34 10Q0 -26 34 10" fill="none" stroke="#2a2350" stroke-width="9" stroke-linecap="round"/></g>`).join('');
-  const heart=(tx,sc,dl)=>`<g transform="translate(${tx})${sc?` scale(${sc})`:''}"><path class="o-heart o-v" style="animation-delay:${dl}s" d="M0 -6C-8 -18 -26 -8 -14 6L0 20L14 6C26 -8 8 -18 0 -6Z"/></g>`;
-  return `<svg class="owl ${cls||''}" data-mode="${mode}" viewBox="0 0 816 800" aria-hidden="true" focusable="false">`+
-    `<defs><clipPath id="${id}"><circle cx="0" cy="0" r="66"/></clipPath></defs>`+
-    `<ellipse class="o-shadow" cx="408" cy="758" rx="165" ry="14" fill="rgba(42,80,140,.14)"/>`+
-    `<image href="assets/owl/body.png" x="160" y="408" width="495" height="371"/>`+
-    `<g class="o-head o-v"><image href="assets/owl/head.png" x="-5" y="32" width="825" height="470"/>`+
-    `<image class="o-pupil" href="assets/owl/pupilL.png" x="264" y="320" width="98" height="98"/>`+
-    `<image class="o-pupil" href="assets/owl/pupilR.png" x="453" y="320" width="98" height="98"/>${lids}</g>`+
-    `<g class="o-tapL o-v"><image href="assets/owl/wingL.png" x="167" y="455" width="125" height="234"/></g>`+
-    `<g class="o-wave o-v"><g class="o-tapR o-v"><image href="assets/owl/wingR.png" x="524" y="459" width="123" height="233"/></g></g>`+
-    `<g class="o-laptop" transform="translate(82,127) scale(.8)"><g class="o-lap o-v">`+
-    `<rect x="268" y="556" width="280" height="146" rx="16" fill="#9b80cf"/><rect x="277" y="565" width="262" height="128" rx="10" fill="#b39ae8"/>`+
-    `<g class="o-logo"><path d="M408 596L416 622L442 630L416 638L408 664L400 638L374 630L400 622Z" fill="#fff"/></g>`+
-    `<rect x="300" y="696" width="216" height="8" rx="4" fill="#7f64bd"/><rect x="244" y="702" width="328" height="14" rx="7" fill="#8a6fc9"/></g></g>`+
-    `<g fill="#f58fbf">${heart('742,325','',0)}${heart('780,372','.8',1)}${heart('722,368','.7',2)}</g></svg>`;
-}
-const STATIC_AI_AVATAR='<svg class="msg-avatar msg-avatar--ai" viewBox="0 0 40 40" aria-hidden="true"><use href="#s-ai"/></svg>';
-/* صفحهٔ ورودی: یک دور wave و بعد idle */
-function owlWelcomeStart(){
-  const o=el.chat.querySelector('.welcome-mascot .owl');if(!o)return;
-  const arm=o.querySelector('.o-wave');let done=false;
-  const go=()=>{if(done)return;done=true;o.dataset.mode='idle';};
-  arm.addEventListener('animationiteration',go);
-  arm.addEventListener('animationend',go);
-  setTimeout(go,4600+(document.getElementById('loader')?2400:0)); // اطمینان در صورت نیامدن رویداد
-}
-/* آواتار آخرین پیام بات: computer در حال جواب دادن، idle بعد از پایان؛ بقیه ثابت */
-function syncOwls(){
-  const groups=el.chat.querySelectorAll('.msg-group:not(.mine)');
-  const last=groups[groups.length-1];
-  const mode=!el.typing.hidden?null:(S.generating?'computer':'idle');
-  groups.forEach(g=>{
-    const av=g.querySelector('.msg-avatar--ai');if(!av)return;
-    const animated=av.classList.contains('owl-av');
-    if(g===last&&mode){
-      if(animated)av.dataset.mode=mode;
-      else av.outerHTML=owlSVG(mode,'msg-avatar msg-avatar--ai owl-av');
-    }else if(animated){
-      av.outerHTML=STATIC_AI_AVATAR;
-    }
-  });
-}
-function initOwls(){
-  const ta=el.typing.querySelector('.msg-avatar');
-  if(ta)ta.outerHTML=owlSVG('computer','owl--typing');
-  const mo=new MutationObserver(syncOwls);
-  mo.observe(el.chat,{childList:true});
-  mo.observe(el.typing,{attributes:true,attributeFilter:['hidden']});
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -754,7 +680,7 @@ function stopTypingStages(){
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TYPEWRITER (parse-once + clip reveal)
+   TYPEWRITER
    ═══════════════════════════════════════════════════════════ */
 const TYPE_CPS=55, TYPE_MAX_MS=14000;
 function appendAITyped(fullText,cid,mid){
@@ -768,7 +694,6 @@ function appendAITyped(fullText,cid,mid){
   cursor.className='typewriter-cursor';
   const total=fullText.length;
   const cps=Math.max(TYPE_CPS,total/(TYPE_MAX_MS/1000));
-  // close an unfinished ``` fence so partial code renders as a code block
   const partial=n=>{
     let t=fullText.slice(0,n);
     if((t.match(/```/g)||[]).length%2)t+='\n```';
@@ -786,7 +711,7 @@ function appendAITyped(fullText,cid,mid){
     const tick=now=>{
       if(S.typingAbort){finish();resolve();return;}
       let n=Math.min(total,Math.floor((now-start)/1000*cps));
-      if(n<total){ // snap to word boundary so words appear whole
+      if(n<total){
         const sp=fullText.slice(n,n+12).search(/[\s\n]/);
         n=sp>=0?n+sp:n;
       }
@@ -859,7 +784,6 @@ el.chat.addEventListener('click',async e=>{
     case'lead-send':sendLead(group);break;
   }
 });
-/* ─── درخواست تماس با مشاور ─── */
 function addLeadButton(group){
   if(!group||group.querySelector('[data-action="lead"]'))return;
   const actions=group.querySelector('.msg-actions');if(!actions)return;
@@ -887,7 +811,6 @@ async function sendLead(group){
   const f=group.querySelector('.lead-form');if(!f||f.dataset.busy)return;
   const v=n=>f.querySelector(`[name="${n}"]`);
   if(!v('consent').checked){toast(t('lead.needConsent'),'error');return;}
-  // آخرین سؤال کاربر پیش از این پاسخ
   const mid=group.dataset.mid,i=S.messages.findIndex(m=>m.mid===mid);
   const q=(S.messages.slice(0,i<0?S.messages.length:i).reverse().find(m=>m.role==='user')||{}).content||'';
   f.dataset.busy='1';
@@ -901,7 +824,6 @@ async function sendLead(group){
   }catch{toast(t('toast.serverError'),'error');}
   finally{delete f.dataset.busy;}
 }
-// هر پیام فقط یک‌بار بازخورد می‌گیرد؛ وضعیت در خود پیام ذخیره می‌شود و بعد از رفرش هم می‌ماند
 function submitVote(group,vote){
   if(!group||group.dataset.voted)return;
   const cid=group.dataset.cid,mid=group.dataset.mid;
@@ -1031,7 +953,7 @@ function triggerSwipeAction(id,action){
         S.chats=S.chats.filter(c=>c.id!==id);saveChats();
         if(S.chatId===id){cancelGeneration();S.messages=[];S.chatId=null;newChat(true);}
         else renderChatList($('#search-chats').value);
-        toast(t('toast.chatDeleted'),'success','delete');haptic(20);
+        toast(t('toast.chatDeleted'),'success');haptic(20);
       }
     });
   }else if(action==='archive'){
@@ -1041,7 +963,7 @@ function triggerSwipeAction(id,action){
         chat.archived=true;chat.date=chat.date||Date.now();saveChats();
         if(S.chatId===id){cancelGeneration();S.messages=[];S.chatId=uid();showWelcome();}
         renderChatList($('#search-chats').value);
-        toast(t('toast.chatArchived'),'success','archive');haptic(15);
+        toast(t('toast.chatArchived'),'success');haptic(15);
       }
     });
   }else if(action==='unarchive'){
@@ -1050,7 +972,7 @@ function triggerSwipeAction(id,action){
       onConfirm:()=>{
         chat.archived=false;chat.date=Date.now();saveChats();
         renderChatList($('#search-chats').value);
-        toast(t('toast.chatUnarchived'),'success','unarchive');haptic(15);
+        toast(t('toast.chatUnarchived'),'success');haptic(15);
       }
     });
   }
@@ -1139,54 +1061,14 @@ el.list.addEventListener('click',e=>{
 });
 $('#search-chats').addEventListener('input',debounce(e=>renderChatList(e.target.value),150));
 
-/* ── سوییچ مشاوره‌ها ⇄ آرشیو: لغزنده‌ی شیشه‌ای ساده + ورود نرم لیست ── */
-const tabsEl=$('.tabs');
-const gliderEl=tabsEl?tabsEl.querySelector('.tabs__glider'):null;
-function placeGlider(animate){
-  if(!tabsEl||!gliderEl)return;
-  const a=tabsEl.querySelector('.tab.active');
-  if(!a||!a.offsetWidth)return;                       // سایدبار هنوز دیده نمی‌شود؛ ResizeObserver دوباره صدا می‌زند
-  const first=!tabsEl.classList.contains('has-glider');
-  const move=animate&&!first;
-  if(!move)gliderEl.style.transition='none';
-  gliderEl.style.width=a.offsetWidth+'px';
-  gliderEl.style.translate=a.offsetLeft+'px 0';
-  tabsEl.dataset.view=S.chatView||'active';
-  if(!move){
-    void gliderEl.offsetWidth;gliderEl.style.transition='';
-    gliderEl.classList.add('on');tabsEl.classList.add('has-glider');
-  }else{
-    gliderEl.classList.remove('squish');void gliderEl.offsetWidth;gliderEl.classList.add('squish');
-  }
-}
-if(gliderEl){
-  gliderEl.addEventListener('animationend',()=>gliderEl.classList.remove('squish'));
-  if('ResizeObserver' in window){
-    const ro=new ResizeObserver(()=>placeGlider(false));
-    ro.observe(tabsEl);$$('.tab',tabsEl).forEach(tb=>ro.observe(tb));
-  }
-  window.addEventListener('load',()=>placeGlider(false));
-}
-function swapList(prev,next){
-  const a=tabsEl?.querySelector(`[data-chat-view="${prev}"]`),b=tabsEl?.querySelector(`[data-chat-view="${next}"]`);
-  const dir=a&&b&&b.offsetLeft<a.offsetLeft?-1:1;     // لیست از سمتی وارد می‌شود که تب مقصد آنجاست
-  el.list.style.setProperty('--swap-x',(dir*18)+'px');
-  el.list.classList.remove('swapping');void el.list.offsetWidth;el.list.classList.add('swapping');
-}
-el.list.addEventListener('animationend',e=>{if(e.target===el.list)el.list.classList.remove('swapping');});
-function setChatView(view,{render=true}={}){
-  const prev=S.chatView||'active';
-  const changed=prev!==view;
-  S.chatView=view;
-  $$('[data-chat-view]').forEach(t=>t.classList.toggle('active',t.dataset.chatView===view));
-  placeGlider(changed);
-  if(_openSwipeItem){try{_openSwipeItem._closeSwipe?.();}catch{}_openSwipeItem=null;}
-  if(render){renderChatList($('#search-chats').value);if(changed)swapList(prev,view);}
-}
 $$('[data-chat-view]').forEach(tab=>{
   tab.addEventListener('click',()=>{
-    if(S.chatView===tab.dataset.chatView)return;
-    setChatView(tab.dataset.chatView);
+    const view=tab.dataset.chatView;
+    if(S.chatView===view)return;
+    S.chatView=view;
+    $$('[data-chat-view]').forEach(t=>t.classList.toggle('active',t.dataset.chatView===view));
+    if(_openSwipeItem){try{_openSwipeItem._closeSwipe?.();}catch{}_openSwipeItem=null;}
+    renderChatList($('#search-chats').value);
   });
 });
 
@@ -1233,18 +1115,21 @@ function newChat(silent){
   cancelGeneration();
   persistCurrentChat();
   S.messages=[];S.chatId=uid();
-  if(S.chatView!=='active')setChatView('active',{render:false});
+  if(S.chatView!=='active'){
+    S.chatView='active';
+    $$('[data-chat-view]').forEach(t=>t.classList.toggle('active',t.dataset.chatView==='active'));
+  }
   showWelcome();renderChatList();
   if(!silent){
     if(window.innerWidth<768)toggleSidebar(false);
-    toast(t('toast.newChat'),'success','newChat');
+    toast(t('toast.newChat'),'success');
   }
 }
 function cancelGeneration(){
   if(!S.generating)return;
   try{S.abort?.abort();}catch{}
   S.typingAbort=true;S.generating=false;
-  stopTypingStages();el.typing.hidden=true;updateSend();syncOwls();
+  stopTypingStages();el.typing.hidden=true;updateSend();
   toast(t('toast.genStopped'),'warning');
 }
 function loadChat(id){
@@ -1315,7 +1200,6 @@ function readFileBase64(file){
 }
 const DOC_EXT=['pdf','txt','md','csv'], MAX_DOC_BYTES=2500000, MAX_IMG_B64=1200000;
 function loadImage(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file);const im=new Image();im.onload=()=>{URL.revokeObjectURL(u);res(im);};im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('img'));};im.src=u;});}
-// تصویر قبل از ارسال کوچک می‌شود (کاهش حجم و توکن): حداکثر ۱۰۲۴ پیکسل، JPEG
 async function shrinkImage(file){
   const im=await loadImage(file);let max=1024,q=.82;
   for(let i=0;i<5;i++){
@@ -1410,7 +1294,6 @@ async function callAPI(att){
     });
     if(!res.ok){const d=await res.text().catch(()=>'');console.error('API Error:',res.status);let sm='',j={};try{j=JSON.parse(d);sm=(j.message||'').slice(0,300);}catch{}
       const e=new Error(sm||`Server error (${res.status})`);if(j.error==='busy'){e.name='BusyError';e.lead=!!j.lead;}throw e;}
-    // پاسخ جریانی (SSE) فقط وقتی مدل صدا زده شده؛ کش/FAQ همان JSON است
     if((res.headers.get('content-type')||'').includes('text/event-stream')&&res.body){
       return {stream:res.body,clear:()=>clearTimeout(timer)};
     }
@@ -1423,7 +1306,6 @@ async function callAPI(att){
   }finally{clearTimeout(timer);}
 }
 const STREAM_OK=typeof ReadableStream!=='undefined'&&typeof TextDecoder!=='undefined';
-// خواندن SSE و نمایش تدریجی در یک حباب تازه؛ خروجی: {reply,sig,cid,lead}
 async function consumeStream(body,mid,stale){
   el.chat.insertAdjacentHTML('beforeend',aiBubbleHTML('','',mid));
   const groups=el.chat.querySelectorAll('.msg-group');
@@ -1472,7 +1354,6 @@ async function runCompletion(att){
   const stale=()=>run!==_runId||cid!==S.chatId;
   S.generating=true;
   el.typing.hidden=false;
-  syncOwls();
   startTypingStages();updateSend();scrollToBottom(true);
   try{
     let _r=await callAPI(att);
@@ -1496,7 +1377,7 @@ async function runCompletion(att){
     if(stale())return;
     stopTypingStages();el.typing.hidden=true;
     if(err.name!=='AbortError'){
-      if(err.name==='BusyError'){ // همهٔ سرویس‌های مدل پر: پیام دوستانه + دکمهٔ تماس (بدون «خطا»)
+      if(err.name==='BusyError'){
         el.chat.insertAdjacentHTML('beforeend',aiBubbleHTML(`⏳ ${err.message}`));
         if(err.lead)addLeadButton(el.chat.querySelector('.msg-group:last-child'));
         scrollToBottom(true);return;
@@ -1508,7 +1389,7 @@ async function runCompletion(att){
       scrollToBottom(true);
     }
   }finally{
-    if(run===_runId){S.generating=false;updateSend();syncOwls();}
+    if(run===_runId){S.generating=false;updateSend();}
   }
 }
 async function regenerate(){
@@ -1784,6 +1665,7 @@ document.addEventListener('keydown',e=>{
   if(e.altKey&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&e.code==='KeyK'){e.preventDefault();newChat();}
   if(e.altKey&&!e.ctrlKey&&!e.metaKey&&e.code==='Slash'){e.preventDefault();el.input.focus();}
   if(e.altKey&&e.shiftKey&&e.code==='KeyV'){e.preventDefault();Voice.start();}
+  if(e.altKey&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&e.code==='KeyS'){e.preventDefault();openModal('m-settings');}
   if(e.key==='Escape'&&window.innerWidth<768&&$('#sidebar').classList.contains('open')&&!$('.modal-backdrop.show'))toggleSidebar(false);
 });
 window.addEventListener('beforeunload',e=>{
@@ -1793,32 +1675,53 @@ window.addEventListener('beforeunload',e=>{
 /* ═══════════════════════════════════════════════════════════
    BOTTOM NAV
    ═══════════════════════════════════════════════════════════ */
-function movePill(){
-  const nav=$('.bottom-nav');if(!nav)return;
-  let pill=nav.querySelector('.bottom-pill');
-  if(!pill){pill=document.createElement('span');pill.className='bottom-pill';pill.setAttribute('aria-hidden','true');nav.prepend(pill);}
-  const a=nav.querySelector('.bottom-item.active');
-  if(!a||!a.offsetWidth){pill.classList.remove('on');return;}
-  pill.style.width=a.offsetWidth+'px';pill.style.height=a.offsetHeight+'px';
-  pill.style.transform='translate('+a.offsetLeft+'px,'+a.offsetTop+'px)';
-  pill.classList.add('on');
+var bottomNav=$('.bottom-nav'),bottomBlob=$('.bottom-blob'),blobIdx=-1;
+function placeBlob(animate){
+  if(!bottomBlob||!bottomNav)return;
+  const items=[...bottomNav.querySelectorAll('.bottom-item')];
+  const idx=items.findIndex(b=>b.classList.contains('active'));
+  if(idx<0){bottomBlob.classList.remove('on');blobIdx=-1;return;}
+  const el=items[idx];
+  if(!el.offsetWidth)return;
+  const first=blobIdx<0||!bottomBlob.classList.contains('on');
+  const rtl=document.documentElement.dir==='rtl';
+  bottomBlob.style.width=el.offsetWidth+'px';bottomBlob.style.height=el.offsetHeight+'px';
+  bottomBlob.style.top=el.offsetTop+'px';
+  if(first||!animate)bottomBlob.classList.add('snap');
+  bottomBlob.style.transform=`translateX(${el.offsetLeft}px)`;
+  bottomBlob.classList.add('on');
+  if(first||!animate){void bottomBlob.offsetWidth;bottomBlob.classList.remove('snap');}
+  else if(idx!==blobIdx){
+    const dir=idx>blobIdx?1:-1;
+    bottomBlob.style.setProperty('--blob-origin',((dir*(rtl?-1:1))>0?'0%':'100%'));
+    bottomBlob.classList.remove('stretch');void bottomBlob.offsetWidth;bottomBlob.classList.add('stretch');
+  }
+  blobIdx=idx;
 }
-function setBottomActive(k){$$('.bottom-item').forEach(b=>b.classList.toggle('active',b.dataset.bottom===k));movePill();}
-window.addEventListener('resize',debounce(movePill,150));
-window.addEventListener('load',movePill);
+function setBottomActive(k){$$('.bottom-item').forEach(b=>b.classList.toggle('active',b.dataset.bottom===k));placeBlob(true);}
+if(bottomNav&&'ResizeObserver' in window)new ResizeObserver(()=>placeBlob(false)).observe(bottomNav);
+window.addEventListener('resize',()=>placeBlob(false),{passive:true});
+$$('.bottom-item,.bottom-center').forEach(b=>{
+  b.addEventListener('pointerdown',()=>{
+    b.classList.remove('anim');void b.offsetWidth;b.classList.add('anim');
+    clearTimeout(b._anim);b._anim=setTimeout(()=>b.classList.remove('anim'),750);
+  },{passive:true});
+});
 $$('[data-bottom]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const what=btn.dataset.bottom;
     if(what==='new'){newChat();return;}
     if(what==='chats'){
-      setChatView('active');
-      toggleSidebar(true);setBottomActive('chats');return;
+      S.chatView='active';
+      $$('[data-chat-view]').forEach(t=>t.classList.toggle('active',t.dataset.chatView==='active'));
+      renderChatList();toggleSidebar(true);setBottomActive('chats');return;
     }
     if(what==='archive'){
-      setChatView('archived');
-      toggleSidebar(true);setBottomActive('archive');return;
+      S.chatView='archived';
+      $$('[data-chat-view]').forEach(t=>t.classList.toggle('active',t.dataset.chatView==='archived'));
+      renderChatList();toggleSidebar(true);setBottomActive('archive');return;
     }
-    if(what==='settings'){openModal('m-settings');return;}
+    if(what==='support'){openModal('m-support');return;}
     if(what==='about'){openModal('m-about');return;}
   });
 });
@@ -1836,7 +1739,6 @@ $$('[data-bottom]').forEach(btn=>{
 
   applyI18n();setPlatform();
 
-
   let savedFontSize=null;try{savedFontSize=localStorage.getItem('n_fontsize');}catch{}
   const initFontSize=savedFontSize||DEFAULTS.fontSize;
   $('#font-size').value=initFontSize;
@@ -1848,10 +1750,15 @@ $$('[data-bottom]').forEach(btn=>{
 
   loadChats();
   S.chatId=uid();
-  initOwls();
   renderChatList();showWelcome();updateSend();
 
   if(!isSecure)setTimeout(()=>toast(t('toast.httpsNeeded'),'warning'),1500);
+
+  // Auto-focus the composer on desktop for immediate typing
+  if(window.matchMedia('(min-width:1024px)').matches){
+    setTimeout(()=>el.input.focus({preventScroll:true}),400);
+  }
+
   window.addEventListener('pagehide',()=>{try{persistCurrentChat();}catch{}});
   const hideLoader=()=>{const l=$('#loader');l.classList.add('hide');setTimeout(()=>l.remove(),700);};
   Promise.race([document.fonts?.ready||Promise.resolve(),wait(1200)]).then(()=>wait(500)).then(hideLoader);
@@ -1880,9 +1787,16 @@ $$('[data-bottom]').forEach(btn=>{
     vv.addEventListener('resize',apply);
     vv.addEventListener('scroll',()=>{if(root.classList.contains('kb-open'))window.scrollTo(0,0);});
   }
-  const main=document.querySelector('main'),footer=document.querySelector('footer.composer-footer');
+  const main=document.querySelector('main'),footer=document.querySelector('footer.composer-footer'),header=document.querySelector('header.hdr');
   if(main&&footer&&window.ResizeObserver){
-    new ResizeObserver(()=>main.style.setProperty('--footer-h',footer.offsetHeight+'px')).observe(footer);
+    const sync=()=>{
+      main.style.setProperty('--footer-h',footer.offsetHeight+'px');
+      if(header&&window.innerWidth>=1024){
+        main.style.setProperty('--header-h',header.offsetHeight+'px');
+      }
+    };
+    new ResizeObserver(sync).observe(footer);
+    sync();
   }
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='hidden'){try{persistCurrentChat();}catch{}}
