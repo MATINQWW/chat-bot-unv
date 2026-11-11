@@ -3,6 +3,7 @@ const { sign, signCid, validSig, ipHash, originAllowed, rateLimited, baseHeaders
 const { describe } = require('../lib/learn');
 const { retrieveKnowledge, RULES, REMINDER, getLearner } = require('../lib/prompt');
 const { classifyQuestion, instructionFor } = require('../lib/intent');
+const { GENERAL_POLICY, RESPONSE_STYLE_POLICY } = require('../lib/answer-policy');
 const { faqAnswer, smallTalk } = require('../lib/knowledge');
 const { parseAttachment, AttError } = require('../lib/attachments');
 const report = require('../lib/report');
@@ -32,13 +33,6 @@ const BUDGETS = [
 
 // سؤال‌های عمومی نباید بار ۲KB دستورها و بازیابی دانش را حمل کنند.
 // مسیر مستقل و کم‌حجم باعث می‌شود فضای کافی برای پاسخ کامل باقی بماند.
-const GENERAL_POLICY = [
-  'تو مشاور هدایت تحصیلی هستی. مستقیماً به پرسش کاربر پاسخ بده.',
-  'برای راهنمایی عمومی از دانش معتبر خود استفاده کن؛ نبودن موضوع در پایگاه دانشگاه دلیل امتناع نیست.',
-  'شهریه، پذیرش، ظرفیت، تاریخ و قوانین اختصاصی دانشگاه را بدون منبع رسمی حدس نزن.',
-  'درباره تناسب رشته حکم قطعی نده؛ مزایا، چالش‌ها، مهارت‌های لازم و یک راه عملی برای آزمودن علاقه را بگو.',
-  'آمار دقیق و متغیر حقوق یا اشتغال را بدون منبع نیاور. به فارسی، منظم و کامل اما بدون تکرار بنویس.',
-].join('\n');
 const GENERAL_BUDGETS = [
   { maxTokens: 700, chars: 1200, attachmentChars: 1800, prevQ: 1, qChars: 180 },
   { maxTokens: 520, chars: 900,  attachmentChars: 1200, prevQ: 1, qChars: 140 },
@@ -324,7 +318,7 @@ module.exports = async (req, res) => {
           : [
               'دستیار هدایت تحصیلی دانشگاه آزاد اصفهان هستی. پاسخ دقیق، کوتاه و مفید بده.',
               'دانش عمومی را از اطلاعات رسمی دانشگاه جدا کن. اطلاعات رسمیِ بی‌منبع، شهریه، ظرفیت، تاریخ و قوانین پذیرش را هرگز حدس نزن.',
-              instructionFor(intent), langHint,
+              instructionFor(intent), RESPONSE_STYLE_POLICY, langHint,
               'اطلاعات مرجع دانشگاه (فقط منبع ادعاهای اختصاصی):\n' + (knowledge || '(اطلاعات رسمی مرتبط پیدا نشد)'),
             ].join('\n\n');
         const requestMessages = [{ role: 'system', content: system }].concat(

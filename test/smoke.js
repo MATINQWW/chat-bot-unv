@@ -192,7 +192,7 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.ok(generalSystem.includes('تو مشاور هدایت تحصیلی هستی'));
   assert.ok(generalSystem.includes('نبودن موضوع در پایگاه دانشگاه دلیل امتناع نیست'));
   assert.ok(!generalSystem.includes('اطلاعات مرجع دانشگاه'));
-  assert.ok(generalSystem.length < 800, 'general system prompt must stay compact');
+  assert.ok(generalSystem.length < 1000, 'general system prompt must stay compact for limited-context providers');
   assert.ok(generalRequest.max_tokens >= 650, 'general questions should retain enough output budget');
   assert.strictEqual(generalRequest.messages.length, 2, 'generic first-turn question should send only system + current user question');
   process.env.LEAD_WEBHOOK_URL = base + '/hook';
@@ -245,7 +245,7 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.strictEqual(r.code, 200, 'upstream 413 should recover using the compact general retry');
   assert.strictEqual(seen.length, 3, 'general route should retry with progressively smaller 700/520/400-token budgets');
   assert.deepStrictEqual(seen.map(x => x.body.max_tokens), [700, 520, 400]);
-  assert.ok(seen.every(x => x.body.messages[0].content.length < 800), 'general system prompt remains compact on every attempt');
+  assert.ok(seen.every(x => x.body.messages[0].content.length < 1000), 'general system prompt remains compact on every attempt');
   assert.ok(seen[0].body.messages.reduce((n, m) => n + String(m.content).length, 0) < 1400, 'general request must avoid the multi-kilobyte university policy and RAG payload');
   mode = 'lengthThenContinue'; seen = [];
   r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'مزایا و چالش‌های مهندسی کامپیوتر چیست؟' }] } });
@@ -331,7 +331,7 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.strictEqual(seen.length, 1); // سؤال واقعی بعد از سلام → مدل
   seen = [];
   r = await call(chat, { body: { messages: [{ role: 'user', content: 'یه چیزی بگو' }] } });
-  assert.ok(!/اطلاعات مرجع دانشگاه/.test(seen[0].body.messages[0].content)); assert.ok(seen[0].body.messages[0].content.length < 800);
+  assert.ok(!/اطلاعات مرجع دانشگاه/.test(seen[0].body.messages[0].content)); assert.ok(seen[0].body.messages[0].content.length < 1000);
   console.log('✓ احوالپرسی/تشکر بدون مدل؛ پیام بی‌محتوا بدون تزریق دانش');
 
   // ۱۱) Streaming: تکه‌ها و رویداد پایانی با امضا

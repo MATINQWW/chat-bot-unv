@@ -1,0 +1,16 @@
+const assert = require('assert');
+const { GENERAL_POLICY, RESPONSE_STYLE_POLICY } = require('../lib/answer-policy');
+const { instructionFor } = require('../lib/intent');
+assert.ok(GENERAL_POLICY.includes('منبع معتبر و تاریخ‌دار'));
+assert.ok(GENERAL_POLICY.includes('امنیت شغلی'));
+assert.ok(GENERAL_POLICY.includes('چارت و ترم دقیق'));
+assert.ok(GENERAL_POLICY.includes('حداکثر ۳۵۰'));
+assert.ok(GENERAL_POLICY.includes('نه پاراگراف'));
+assert.ok(RESPONSE_STYLE_POLICY.includes('حداکثر ۴ تیتر'));
+const mixed = instructionFor({ mode: 'mixed' });
+const general = instructionFor({ mode: 'general' });
+assert.ok(mixed.includes('منبع معتبر و تاریخ‌دار'));
+assert.ok(mixed.includes('حداکثر چهار بخش کوتاه'));
+assert.ok(general.includes('جبر خطی'));
+assert.ok(general.includes('حداکثر ۳۵۰ واژه'));
+console.log('✓ سیاست کیفیت پاسخ: بازار کار، دقت سرفصل، طول و قالب‌بندی');
