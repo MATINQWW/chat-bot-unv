@@ -24,7 +24,7 @@ module.exports = {
         url: 'https://irancopilot.com/studio/pro/v1',
         model: 'icp-chat',
         key: 'ICP_API_KEY',
-        vision: true,
+        vision: false,
       },
       openrouter: {
         url: 'https://openrouter.ai/api/v1',
