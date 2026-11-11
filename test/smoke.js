@@ -91,8 +91,21 @@ const server = http.createServer((rq, rs) => {
       const request = seen[seen.length - 1].body;
       if (!String(request.messages?.[0]?.content || '').includes('تو مشاور هدایت تحصیلی هستی')) { rs.statusCode = 413; return rs.end('{"error":"context too large"}'); }
     }
-    const content = mode === 'empty' ? '' : 'پاسخ آزمایشی: با مرکز هدایت تحصیلی تماس بگیرید ☎️ ۰۳۱-۳۵۳۵۴۰۴۹';
     const req = seen[seen.length - 1].body;
+    const isContinuation = req.messages?.some(m => m.role === 'user' && String(m.content).includes('پاسخ قبلی به سقف خروجی رسیده است'));
+    if (mode === 'lengthThenContinue' || mode === 'lengthStreamThenContinue' || mode === 'lengthContinuation413') {
+      if (mode === 'lengthContinuation413' && isContinuation && req.max_tokens > 350) { rs.statusCode = 413; return rs.end('{\"error\":\"context too large\"}'); }
+      const text = isContinuation ? 'ادامهٔ پاسخ کامل شد و پیشنهاد عملی ارائه شد.' : 'این پاسخ تا اینجا ناقص است و باید ادامه پیدا کند';
+      const finish = isContinuation ? 'stop' : 'length';
+      rs.setHeader('content-type', req.stream ? 'text/event-stream' : 'application/json');
+      if (req.stream) {
+        rs.write('data: ' + JSON.stringify({ choices: [{ delta: { content: text }, finish_reason: null }] }) + '\n\n');
+        rs.write('data: ' + JSON.stringify({ choices: [{ delta: {}, finish_reason: finish }] }) + '\n\n');
+        return rs.end('data: [DONE]\n\n');
+      }
+      return rs.end(JSON.stringify({ choices: [{ message: { content: text }, finish_reason: finish }], usage: { prompt_tokens: 20, completion_tokens: 35 } }));
+    }
+    const content = mode === 'empty' ? '' : 'پاسخ آزمایشی: با مرکز هدایت تحصیلی تماس بگیرید ☎️ ۰۳۱-۳۵۳۵۴۰۴۹';
     if (req.stream) {   // SSE به سبک OpenAI
       rs.setHeader('content-type', 'text/event-stream');
       const parts = mode === 'empty' ? [] : ['پاسخ ', 'آزمایشی ', 'جریانی'];
@@ -222,7 +235,35 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.strictEqual(seen.length, 4, 'three oversized attempts then one compact retry');
   assert.strictEqual(seen[3].body.max_tokens, 400, 'compact retry must preserve enough output budget');
   assert.ok(seen[3].body.messages[0].content.length < 900, 'compact system prompt must be short');
-  mode = 'ok'; console.log('✓ مدیریت پاسخ خالی / کلید نامعتبر / 429 و بازیابی خودکار 413 با Prompt فشرده');
+  mode = 'lengthThenContinue'; seen = [];
+  r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'مزایا و چالش‌های مهندسی کامپیوتر چیست؟' }] } });
+  assert.strictEqual(r.code, 200);
+  assert.ok(r.json.reply.includes('این پاسخ تا اینجا ناقص است'));
+  assert.ok(r.json.reply.includes('ادامهٔ پاسخ کامل شد'));
+  assert.strictEqual(seen.length, 2, 'a length-limited non-stream answer must trigger one continuation call');
+  assert.strictEqual(r.json.sig, sign(r.json.reply), 'the combined answer must be signed as one response');
+  assert.strictEqual(seen[1].body.max_tokens, 600);
+  assert.ok(seen[1].body.messages[1].content.includes('پاسخ قبلی به سقف خروجی رسیده است'));
+
+  mode = 'lengthContinuation413'; seen = [];
+  r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'مزایا و چالش‌های مهندسی کامپیوتر چیست؟' }] } });
+  assert.strictEqual(r.code, 200);
+  assert.ok(r.json.reply.includes('ادامهٔ پاسخ کامل شد'));
+  assert.strictEqual(seen.length, 3, 'a 413 continuation must retry once with a smaller prompt');
+  assert.strictEqual(seen[1].body.max_tokens, 600);
+  assert.strictEqual(seen[2].body.max_tokens, 350);
+
+  mode = 'lengthStreamThenContinue'; seen = [];
+  r = await call(chat, { body: { lang: 'fa', stream: true, messages: [{ role: 'user', content: 'مزایا و چالش‌های مهندسی کامپیوتر چیست؟' }] } });
+  assert.strictEqual(r.code, 200);
+  const continuedEvents = r.events.filter(e => e.d).map(e => e.d).join('');
+  assert.ok(continuedEvents.includes('این پاسخ تا اینجا ناقص است'));
+  assert.ok(continuedEvents.includes('ادامهٔ پاسخ کامل شد'));
+  const continuedFinal = r.events[r.events.length - 1];
+  assert.ok(continuedFinal.done && continuedFinal.reply.includes('ادامهٔ پاسخ کامل شد'));
+  assert.strictEqual(continuedFinal.sig, sign(continuedFinal.reply));
+  mode = 'ok'; console.log('✓ پاسخ ناقص length در JSON و SSE با ادامهٔ خودکار تکمیل و دوباره امضا می‌شود');
+  console.log('✓ مدیریت پاسخ خالی / کلید نامعتبر / 429 و بازیابی خودکار 413 با Prompt فشرده');
 
   // ۶) feedback: cid بدون امضا رد می‌شود
   r = await call(feedback, { body: { cid: 'a'.repeat(16), vote: 'down' } }); assert.strictEqual(r.code, 400);

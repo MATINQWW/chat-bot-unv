@@ -37,6 +37,82 @@ const offerLead = (t, intentMode) => intentMode !== 'general' && leadAvailable()
 
 const LANG_NAMES = { fa: 'فارسی', en: 'English', ar: 'العربية' };
 
+// بعضی Providerها وقتی سقف max_tokens تمام می‌شود، finish_reason=length برمی‌گردانند.
+// به‌جای تحویل پاسخ نیمه‌کاره، یک ادامهٔ کوچک و محدود درخواست می‌کنیم.
+const isLengthFinish = (value) => value === 'length' || value === 'max_tokens';
+
+function continuationDelta(previous, next) {
+  const a = String(previous || '').trimEnd();
+  const b = String(next || '').trim();
+  if (!b) return '';
+  const max = Math.min(320, a.length, b.length);
+  for (let n = max; n >= 18; n--) {
+    if (a.slice(-n) === b.slice(0, n)) return b.slice(n).trimStart();
+  }
+  return b;
+}
+
+async function readCompletion(result, streamed) {
+  let text = '', finish = null;
+  if (streamed) {
+    for await (const chunk of result) {
+      const choice = chunk && chunk.choices && chunk.choices[0];
+      const delta = choice && choice.delta && choice.delta.content;
+      if (typeof delta === 'string') text += delta;
+      if (choice && choice.finish_reason) finish = choice.finish_reason;
+    }
+  } else {
+    const choice = result && result.choices && result.choices[0];
+    text = choice && choice.message && typeof choice.message.content === 'string' ? choice.message.content : '';
+    finish = choice && choice.finish_reason;
+  }
+  return { text: text.trim(), finish };
+}
+
+async function continueTruncatedReply({ reply, question, langHint, stream, idempotencyKey }) {
+  // یک بخش ادامه؛ در صورت 413 فقط یک بار با Context و سقف کوچک‌تر تلاش می‌شود.
+  const variants = [
+    { tail: 1400, question: 500, maxTokens: 600, timeoutMs: 12000 },
+    { tail: 650, question: 320, maxTokens: 350, timeoutMs: 8000 },
+  ];
+  for (let i = 0; i < variants.length; i++) {
+    const v = variants[i];
+    const prompt = [
+      `پرسش اصلی کاربر: ${String(question || '').slice(0, v.question)}`,
+      'انتهای پاسخ قبلی (فقط برای حفظ پیوستگی؛ آن را تکرار نکن):',
+      String(reply || '').slice(-v.tail),
+      'پاسخ قبلی به سقف خروجی رسیده است. دقیقاً از بعد آخرین عبارت ادامه بده، از تکرار مطالب قبلی خودداری کن و پاسخ را با جمع‌بندی طبیعی تمام کن.',
+    ].join('\n\n');
+    let result;
+    try {
+      result = await llm.complete({
+        messages: [
+          { role: 'system', content: `تو دستیار هدایت تحصیلی هستی. این فقط ادامهٔ پاسخ ناتمام است؛ موضوع و زبان پاسخ قبلی را حفظ کن. اطلاعات رسمی دانشگاه، آمار حقوق و نرخ اشتغال را بدون منبع نساز. ${langHint || ''}` },
+          { role: 'user', content: prompt },
+        ],
+        maxTokens: v.maxTokens,
+        stream: !!stream,
+        idempotencyKey: `${idempotencyKey}-continue-${i}`,
+        timeoutMs: v.timeoutMs,
+      });
+      try {
+        const part = await readCompletion(result.result, result.streamed);
+        return { ...part, provider: result.provider };
+      } finally {
+        result.release();
+      }
+    } catch (error) {
+      if (llm.kind(error) === 'too_big' && i === 0) {
+        console.warn('continuation context too big — retrying with a smaller continuation prompt');
+        continue;
+      }
+      console.warn('answer continuation failed', error && (error.status || error.message));
+      return { text: '', finish: 'incomplete' };
+    }
+  }
+  return { text: '', finish: 'incomplete' };
+}
+
 module.exports = async (req, res) => {
   baseHeaders(res);
   if (req.method !== 'POST') return res.status(405).end();
@@ -276,6 +352,31 @@ module.exports = async (req, res) => {
         return res.status(502).json({ error: 'empty_reply', message: EMPTY });
       }
     }
+    // اگر مدل پاسخ را به‌علت سقف توکن قطع کرد، یک ادامهٔ کوچک می‌گیریم.
+    // این درخواست فقط انتهای پاسخ را می‌فرستد؛ بنابراین راه‌حل 413 به Context بزرگ‌تر وابسته نیست.
+    let truncated = false;
+    if (isLengthFinish(finish)) {
+      const extra = await continueTruncatedReply({
+        reply, question: question0.slice(0, 500), langHint,
+        stream: wantStream, idempotencyKey,
+      });
+      if (extra.text) {
+        const delta = continuationDelta(reply, extra.text);
+        if (delta) {
+          reply += (reply && !/[\s\n]$/.test(reply) && !/^[،؛.!?؟]/.test(delta) ? '\n' : '') + delta;
+          if (wantStream) sse({ d: delta });
+        }
+        finish = extra.finish;
+      }
+      truncated = isLengthFinish(finish) || !extra.text;
+      if (truncated) {
+        const note = '\n\nادامهٔ پاسخ به‌دلیل محدودیت سرویس کامل دریافت نشد.';
+        if (!reply.includes(note.trim())) reply += note;
+        if (wantStream) sse({ d: note });
+        console.warn('answer remains truncated after continuation attempt');
+      }
+    }
+
     const u = usage || {};
     const used = (u.prompt_tokens || 0) + (u.completion_tokens || 0) ||
       Math.ceil((RULES.length + knowledge.length + question.length + reply.length) / 3);
@@ -292,7 +393,7 @@ module.exports = async (req, res) => {
       try {
         const state = await L.observe({
           info, answer: reply, ipHash: ipHash(req), usedTokens: used,
-          retrievalScore: topScore, eligibleToStore: firstTurn && finish !== 'length' && intent.mode === 'university',
+          retrievalScore: topScore, eligibleToStore: firstTurn && !truncated && !isLengthFinish(finish) && intent.mode === 'university',
         });
         if (info.ok && firstTurn && state !== 'banned') cid = signCid(info.key);
       } catch (e) { console.warn('learn failed', e && e.message); }
