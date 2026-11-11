@@ -32,7 +32,7 @@ module.exports = {
     },
        openrouter: {
       url: 'https://openrouter.ai/api/v1',
-      model: 'openrouter/baidu/ernie-5.5-flash-preview:free',
+      model: 'baidu/ernie-5.5-flash-preview:free',
       key: 'OPENROUTER_API_KEY',
       vision: true,
     },
