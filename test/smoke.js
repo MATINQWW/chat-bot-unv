@@ -132,6 +132,13 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   const feedback = require('../api/feedback.js');
   const { sign } = require('../lib/common');
   const vector = require('../lib/vector');
+  const intentPolicy = require('../lib/intent');
+  assert.strictEqual(intentPolicy.classifyQuestion('من به برنامه نویسی علاقه دارم اما ریاضی ام متوسطه؛ مهندسی کامپیوتر برای من مناسبه؟').mode, 'general');
+  assert.strictEqual(intentPolicy.classifyQuestion('شهریه مهندسی کامپیوتر در خوراسگان چقدره؟').mode, 'university');
+  assert.strictEqual(intentPolicy.classifyQuestion('مهندسی کامپیوتر در خوراسگان چه مزایا و بازار کاری داره؟').mode, 'mixed');
+  assert.strictEqual(intentPolicy.classifyQuestion('برای انتخاب رشته چه معیارهایی مهم هستند؟').mode, 'general');
+  assert.strictEqual(intentPolicy.classifyQuestion('چند بار میشه انتخاب رشته رو ویرایش کرد؟').mode, 'university');
+  console.log('✓ تشخیص نوع سؤال: راهنمایی عمومی / اطلاعات رسمی دانشگاه / سؤال ترکیبی');
 
   // ۱) بدون کلید → ۵۰۰ تمیز (نه crash)
   let r = await call(chat, { body: { messages: [{ role: 'user', content: 'سلام' }] } });
@@ -151,6 +158,29 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.strictEqual(q.body.messages[0].role, 'system');
   assert.ok(/شهریه/.test(q.body.messages[0].content) && !/موارد ممنوعه/.test(q.body.messages[0].content));
   console.log('✓ درخواست با مدل icp-chat، Bearer، یک پیام system و دانش بازیابی‌شده (بدون بخش قوانین تکراری)');
+
+  // ۲-ب) مشاوره عمومی نباید به‌خاطر نبودن داده در Knowledge Base رد شود.
+  seen = [];
+  r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'من به برنامه نویسی علاقه دارم اما ریاضی ام متوسطه؛ مهندسی کامپیوتر برای من مناسبه؟' }] } });
+  assert.strictEqual(r.code, 200);
+  const generalSystem = seen.find(x => x.url.endsWith('/chat/completions')).body.messages[0].content;
+  assert.ok(generalSystem.includes('حالت پاسخ‌گویی: راهنمایی عمومی تحصیلی و شغلی'));
+  assert.ok(generalSystem.includes('خالی بودن یا ناقص بودن پایگاه دانش مجوز گفتن'));
+  assert.ok(!generalSystem.includes('اگر در مرجع نبود بنویس'));
+  process.env.LEAD_WEBHOOK_URL = base + '/hook';
+  r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'من به برنامه نویسی علاقه دارم اما ریاضی ام متوسطه؛ مهندسی کامپیوتر برای من مناسبه؟' }] } });
+  assert.strictEqual(r.json.lead, false, 'پرسش مشاوره عمومی نباید CTA تماس اجباری نشان دهد');
+  delete process.env.LEAD_WEBHOOK_URL;
+  console.log('✓ سؤال عمومی با دانش عمومی پاسخ‌پذیر است؛ بدون ارجاع یا CTA تماس اجباری');
+
+  // ۲-ج) سؤال ترکیبی باید دانش عمومی و واقعیت دانشگاه را تفکیک کند.
+  seen = [];
+  r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'مهندسی کامپیوتر در خوراسگان چه مزایا و بازار کاری دارد؟' }] } });
+  assert.strictEqual(r.code, 200);
+  const mixedSystem = seen.find(x => x.url.endsWith('/chat/completions')).body.messages[0].content;
+  assert.ok(mixedSystem.includes('حالت پاسخ‌گویی: ترکیبی از راهنمایی عمومی'));
+  assert.ok(mixedSystem.includes('بخش راهنمایی عمومی را پاسخ بده'));
+  console.log('✓ سؤال ترکیبی: پاسخ عمومی + تفکیک ادعاهای اختصاصی دانشگاه');
 
   // ۳) نوبت سوم نباید «نوبت اول» حساب شود (cid خالی) و تاریخچه کامل برود
   const a1 = 'پاسخ یک', a2 = 'پاسخ دو';
@@ -312,6 +342,10 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.strictEqual(cq.count, 2); assert.strictEqual(cq.similarPhrasings, 2);
   assert.ok(['knowledge', 'vector', 'general', 'no_info'].includes(cq.mainSource));
   assert.strictEqual(rep0.sourceOfReply('*به‌طور کلی', 'knowledge'), 'general');
+  assert.strictEqual(rep0.sourceOfReply('به‌طور کلی این رشته به علاقه به حل مسئله نیاز دارد.', 'no_info', 'general'), 'general');
+  assert.strictEqual(rep0.sourceOfReply('به‌طور کلی این رشته مناسب علاقه‌مندان به حل مسئله است.', 'no_info', 'mixed'), 'general');
+  assert.strictEqual(rep0.sourceOfReply('این سوال خارج از حوزه هدایت تحصیلی است.', 'no_info', 'general'), 'off_topic');
+  assert.strictEqual(rep0.sourceOfReply('اطلاعات این رشته رو ندارم.', 'no_info', 'general'), 'no_info');
   assert.strictEqual(rep0.sourceOfReply('این سوال خارج از حوزه هدایت تحصیلی است', 'knowledge'), 'off_topic');
   r = await call(admin, { method: 'GET', url: '/api/admin?report=csv', headers: AH });
   assert.ok(/^\ufeffپرسش,تعداد/.test(r.body) && /کامپیوتر/.test(r.body));

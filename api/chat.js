@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { sign, signCid, validSig, ipHash, originAllowed, rateLimited, baseHeaders, kv } = require('../lib/common');
 const { describe } = require('../lib/learn');
 const { retrieveKnowledge, RULES, REMINDER, getLearner } = require('../lib/prompt');
+const { classifyQuestion, instructionFor } = require('../lib/intent');
 const { faqAnswer, smallTalk } = require('../lib/knowledge');
 const { parseAttachment, AttError } = require('../lib/attachments');
 const report = require('../lib/report');
@@ -30,7 +31,7 @@ const BUDGETS = [
 // پیشنهاد «درخواست تماس» وقتی پاسخ به مرکز هدایت تحصیلی ارجاع می‌دهد —
 // فقط اگر جای ماندگاری برای ثبت هست (Redis یا webhook)؛ وگرنه درخواست‌ها گم می‌شوند و دکمه نشان داده نمی‌شود
 const leadAvailable = () => !!(kv.remote || process.env.LEAD_WEBHOOK_URL);
-const offerLead = (t) => leadAvailable() && /35354049|۳۵۳۵۴۰۴۹|ندارم/.test(String(t || ''));
+const offerLead = (t, intentMode) => intentMode !== 'general' && leadAvailable() && /35354049|۳۵۳۵۴۰۴۹/.test(String(t || ''));
 
 const LANG_NAMES = { fa: 'فارسی', en: 'English', ar: 'العربية' };
 
@@ -79,6 +80,7 @@ module.exports = async (req, res) => {
     // آخرین پیام کاربر برای سؤال/کش: با سقف هم‌اندازهٔ ورودی (نه سقف کوچک بودجه)
     const question0 = fullMessages[fullMessages.length - 1].content;
     const question = question0.slice(0, 500);
+    const intent = classifyQuestion(question);
     const wantStream = body.stream === true && C.llm.stream !== false;
     BUDGETS[0].knowledge = C.llm.knowledgeChars || 1800; BUDGETS[0].maxTokens = C.llm.maxTokens || 800;
     const shape = (b) => {
@@ -120,7 +122,7 @@ module.exports = async (req, res) => {
     }
 
     // ─── ۱) حافظه ───
-    if (!att && info.ok && (firstTurn || !info.deictic)) {
+    if (!att && intent.mode === 'university' && info.ok && (firstTurn || !info.deictic)) {
       const hit = await L.lookup(info);
       if (hit) {
         await L.recordHit(info, hit);
@@ -167,7 +169,7 @@ module.exports = async (req, res) => {
       for (let b = 0; b < BUDGETS.length; b++) {
         knowledge = b === 0 ? r0.text : cut(BUDGETS[b].knowledge);
         // یک پیام system واحد در ابتدا (چند پیام system و system در انتها روی همهٔ مدل‌ها مطمئن نیست)
-        const system = [RULES, langHint, 'اطلاعات مرجع:\n' + (knowledge || '(موردی یافت نشد)'), REMINDER].join('\n\n');
+        const system = [RULES, instructionFor(intent), langHint, 'اطلاعات مرجع:\n' + (knowledge || '(موردی یافت نشد)'), REMINDER].join('\n\n');
         try {
           const r = await llm.complete({
             messages: [{ role: 'system', content: system }].concat(withAtt(shape(b))),
@@ -258,7 +260,7 @@ module.exports = async (req, res) => {
     // ─── گزارش: پاسخ از کجا آمد ───
     await report.record(kv, {
       info, chunks: r0.ids || [],
-      source: report.sourceOfReply(reply, (r0.ids && r0.ids.length) ? (r0.viaVector ? 'vector' : 'knowledge') : 'no_info'),
+      source: report.sourceOfReply(reply, (r0.ids && r0.ids.length) ? (r0.viaVector ? 'vector' : 'knowledge') : 'no_info', intent.mode),
     });
 
     // ─── ۳) یادگیری ───
@@ -267,12 +269,12 @@ module.exports = async (req, res) => {
       try {
         const state = await L.observe({
           info, answer: reply, ipHash: ipHash(req), usedTokens: used,
-          retrievalScore: topScore, eligibleToStore: firstTurn && finish !== 'length',
+          retrievalScore: topScore, eligibleToStore: firstTurn && finish !== 'length' && intent.mode === 'university',
         });
         if (info.ok && firstTurn && state !== 'banned') cid = signCid(info.key);
       } catch (e) { console.warn('learn failed', e && e.message); }
     }
-    const out = { reply, sig: sign(reply), cid, lead: offerLead(reply) };
+    const out = { reply, sig: sign(reply), cid, lead: offerLead(reply, intent.mode) };
     if (wantStream) { sse({ done: true, ...out }); return res.end(); }
     return res.status(200).json(out);
   } catch (e) {
