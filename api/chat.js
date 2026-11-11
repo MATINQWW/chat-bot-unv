@@ -3,7 +3,7 @@ const { sign, signCid, validSig, ipHash, originAllowed, rateLimited, baseHeaders
 const { describe } = require('../lib/learn');
 const { retrieveKnowledge, RULES, REMINDER, getLearner } = require('../lib/prompt');
 const { classifyQuestion, instructionFor } = require('../lib/intent');
-const { GENERAL_POLICY, RESPONSE_STYLE_POLICY } = require('../lib/answer-policy');
+const { ASSISTANT_STYLE_POLICY, GENERAL_POLICY, RESPONSE_STYLE_POLICY } = require('../lib/answer-policy');
 const { faqAnswer, smallTalk } = require('../lib/knowledge');
 const { parseAttachment, AttError } = require('../lib/attachments');
 const report = require('../lib/report');
@@ -314,8 +314,9 @@ module.exports = async (req, res) => {
         // برای سؤال عمومی از ابتدا Prompt کم‌حجم استفاده می‌کنیم؛ نه اینکه پس از چند 413 به آن برسیم.
         // در سؤال رسمی/ترکیبی، قوانین کوتاه و فقط دانش مرتبط ارسال می‌شود.
         const system = generalMode
-          ? [GENERAL_POLICY, langHint].join('\n')
+          ? [ASSISTANT_STYLE_POLICY, GENERAL_POLICY, langHint].join('\n')
           : [
+              ASSISTANT_STYLE_POLICY,
               'دستیار هدایت تحصیلی دانشگاه آزاد اصفهان هستی. پاسخ دقیق، کوتاه و مفید بده.',
               'دانش عمومی را از اطلاعات رسمی دانشگاه جدا کن. اطلاعات رسمیِ بی‌منبع، شهریه، ظرفیت، تاریخ و قوانین پذیرش را هرگز حدس نزن.',
               instructionFor(intent), RESPONSE_STYLE_POLICY, langHint,
