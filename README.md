@@ -1,102 +1,72 @@
-# چت‌بات هدایت تحصیلی (دانشگاه آزاد اصفهان)
+# چت‌بات هدایت تحصیلی دانشگاه آزاد اصفهان
 
-فرانت‌اند ساده (HTML/CSS/JS) + APIهای Node در `api/`. اجرا روی **Vercel** (serverless) یا هر سرور Node با `server.js` (هاست cPanel، VPS).
-برنامهٔ رشد و تصمیم‌های زیرساخت: [`ROADMAP.md`](ROADMAP.md).
+نسخه آماده انتشار روی **GitHub + Vercel**. ظاهر سایت و فایل‌های فرانت‌اند در این بسته تغییر نکرده‌اند.
 
-## اصل طراحی: بدون وابستگی خارجی در سرور، به‌جز خود مدل زبانی
-| بخش | پیش‌فرض (بدون هیچ سرویس خارجی) | افزونهٔ اختیاری |
-|---|---|---|
-| جست‌وجوی دانش | کلمه‌ای محلی + گروه‌های هم‌معنی (`lib/synonyms.js`) | Upstash Vector (جست‌وجوی معنایی + کش معنایی) |
-| rate-limit و حافظهٔ یادگیری | حافظهٔ داخل همان instance | Upstash Redis (مشترک بین instanceها) |
-| درخواست تماس | **غیرفعال** (جایی برای نگه‌داری نیست، پس دکمه نشان داده نمی‌شود) | `LEAD_WEBHOOK_URL` یا Upstash Redis |
-| مدل زبانی | یک سرویس (`config.js`) | چند سرویس پشت سر هم (`fallback` در همان فایل) |
+## انتشار روی Vercel
 
-## تنظیمات: فقط `config.js`
-همهٔ تنظیمات در فایل `config.js` (ریشهٔ پروژه) است. در Vercel فقط کلیدها و رمزها.
+1. محتویات این پوشه را در ریشه یک مخزن GitHub قرار دهید.
+2. مخزن را در Vercel با گزینه **Add New Project → Import Git Repository** وارد کنید.
+3. Framework Preset را روی **Other** بگذارید؛ Root Directory همان ریشه مخزن باشد.
+4. Build Command و Output Directory را Override نکنید؛ این پروژه به Build اختصاصی نیاز ندارد.
+5. در **Project → Settings → Environment Variables** متغیرهای لازم را اضافه کنید.
+6. Deploy را اجرا کنید. با Pushهای بعدی به شاخه متصل‌شده، Vercel به‌صورت خودکار Deploy جدید می‌سازد.
 
-```js
-llm: {
-  use: 'ollama',               // سرویس فعال
-  fallback: [],                // مثلاً ['irancopilot'] → اگر فعال خطا داد یا پر بود
-  providers: {
-    ollama:      { url: 'https://ollama.com/v1',                 model: 'gemma4:31b', key: 'OLLAMA_API_KEY', vision: true },
-    irancopilot: { url: 'https://irancopilot.com/studio/pro/v1', model: 'icp-chat',   key: 'ICP_API_KEY' },
-  },
-  maxTokens: 800,              // سقف طول پاسخ
-  knowledgeChars: 1800,        // سقف متن دانش در هر درخواست
-  stream: true,                // پاسخ کلمه‌به‌کلمه
-  ...
-},
-search: { ... }, learn: { ... }, allowedOrigins: [], ...
-```
-- **عوض کردن سرویس، مدل یا آدرس:** همان فایل را در گیت‌هاب ویرایش و commit کنید؛ Vercel خودکار deploy می‌کند.
-- **سرویس جدید:** یک خط به `providers` اضافه کنید (هر API سازگار با OpenAI).
-- `key` **اسم** متغیر کلید است، نه خود کلید. خود کلید فقط در Vercel → Environment Variables.
-- این فایل در گیت‌هاب دیده می‌شود (روی سایت مسدود است)؛ هیچ کلیدی داخلش ننویسید.
-
-با `fallback`، اگر سرویس فعال محدود (429)، خراب (5xx) یا کند بود یا ظرفیتش (`maxConcurrent`) پر بود، درخواست به بعدی می‌رود؛ سرویسی که پشت سر هم خطا بدهد یک دقیقه کنار گذاشته می‌شود؛ اگر همه پر باشند کاربر پیام «شلوغ است» می‌بیند.
+Vercel از Node.js 26 برای Build و Functions پشتیبانی می‌کند؛ نسخه پروژه در `package.json` روی `26.x` تنظیم شده است.
 
 ## متغیرهای محیطی
-فقط کلیدها و رمزها؛ فهرست کامل در `.env.example`. حداقل لازم:
 
-| نام | توضیح |
-|---|---|
-| `OLLAMA_API_KEY` | کلید سرویس فعال (اسمش همان `key` در `config.js`) |
-| `CHAT_SIGNING_SECRET` | رشتهٔ تصادفی ≥ ۱۶ نویسه؛ یک‌بار بسازید و عوض نکنید |
-| `ADMIN_TOKEN` | اختیاری، برای `/api/admin` (≥ ۱۶ نویسه) |
+فایل `.env.example` فهرست متغیرها را بدون هیچ مقدار محرمانه نشان می‌دهد. حداقل متغیر لازم برای پاسخ‌گویی مدل پیش‌فرض:
 
-**فایل `.env` را هرگز در گیت‌هاب نگذارید.**
+- `ICP_API_KEY`
 
-فونت (IRANYekan) مثل قبل از `cdn.jsdelivr.net` در مرورگر کاربر بارگذاری می‌شود؛ اگر CDN در دسترس نباشد، مرورگر فونت جایگزین (Tahoma) را نشان می‌دهد و بات کار می‌کند.
+برای امضای مطمئن شناسه‌های حافظه، `CHAT_SIGNING_SECRET` را با یک مقدار تصادفی قوی تنظیم کنید. برای محدودیت درخواست و حافظه مشترک بین Instanceهای Serverless، اتصال Upstash Redis را نیز تنظیم کنید:
 
-## استقرار روی Vercel
-1. کد را در GitHub پوش کنید؛ Vercel خودکار deploy می‌کند.
-2. Settings → Environment Variables: متغیرهای بالا (برای Production و Preview).
-3. Redeploy.
-4. بررسی: `https://<دامنه>/knowledge/chunks.json` باید به `/` هدایت شود.
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
 
-## اجرا بدون Vercel (cPanel / VPS)
+`ADMIN_TOKEN` برای صفحه گزارش در `/report.html` اختیاری است. کلیدهای Vector، Webhook و Transcription فقط در صورت فعال‌سازی قابلیت مربوط لازم‌اند.
+
+**هیچ‌وقت `.env`، کلید API یا رمز واقعی را در GitHub Commit نکنید.**
+
+## GitHub Actions
+
+Workflow موجود در `.github/workflows/ingest.yml` روی Push به `main` و Pull Request اجرا می‌شود و تست‌های سرور، امنیت، منطق و ارزیابی بازیابی دانش را انجام می‌دهد.
+
+برای همگام‌سازی خودکار Upstash Vector، این دو Secret را در GitHub → Settings → Secrets and variables → Actions تعریف کنید:
+
+- `UPSTASH_VECTOR_REST_URL`
+- `UPSTASH_VECTOR_REST_TOKEN`
+
+بدون این Secrets، مرحله همگام‌سازی Vector اجرا نمی‌شود.
+
+## فایل‌های اصلی
+
+- `index.html`, `style.css`, `script.js`, `owl.png`, `assets/owl/`: رابط کاربری و تصاویر
+- `api/`: توابع Serverless
+- `lib/`: منطق چت، مدل، دانش، ذخیره‌سازی و گزارش
+- `knowledge/chunks.json`: پایگاه دانش بات؛ در مسیر عمومی مسدود شده و برای Functionها بسته‌بندی می‌شود
+- `report.html`, `report.js`: صفحه گزارش مدیریتی
+- `config.js`: تنظیمات غیرمحرمانه پروژه؛ کلید واقعی را فقط در Environment Variables بگذارید
+- `test/`, `scripts/`, `eval/`: تست و ابزارهای توسعه که در GitHub نگهداری می‌شوند اما از بسته ارسالی به Vercel کنار گذاشته شده‌اند
+
+## مسیرهای API
+
+- `POST /api/chat`
+- `GET /api/admin`
+- `POST /api/feedback`
+- `POST /api/lead`
+- `POST /api/transcribe`
+
+توابع API در `api/` قرار دارند و با قرارداد فعلی فرانت‌اند سازگار نگه داشته شده‌اند.
+
+## اجرای تست‌ها به‌صورت محلی
+
+به Node.js 26 و npm نیاز است:
+
+```bash
+npm ci
+npm run test:server
+npm run test:security
+npm test
+npm run eval -- --min 90
 ```
-npm install --omit=dev
-node server.js          # پورت: PORT یا 3000
-```
-- **cPanel:** Setup Node.js App → Application startup file: `server.js` · متغیرها را در همان صفحه بگذارید · «Run NPM Install» و Restart.
-- **VPS:** با `pm2 start server.js` یا systemd، پشت nginx (برای پاسخ جریانی در nginx `proxy_buffering off;`).
-
-## مسیر پاسخ به هر پیام (ارزان‌ترین اول)
-1. احوالپرسی/تشکر → پاسخ آماده (بدون مدل)
-2. سؤال‌های آماده (`type: faq`) → پاسخ مستقیم (بدون مدل)
-3. حافظهٔ یادگیری: پرسش‌هایی که چند کاربر مستقل پرسیده‌اند و پاسخ مستند گرفته‌اند (بدون مدل)
-4. جست‌وجوی دانش → فقط ۱ تا ۴ تکهٔ مرتبط به مدل می‌رود
-5. تاریخچه: فقط سؤال‌های قبلی کاربر + آخرین پاسخ بات (بریده به ۳۰۰ نویسه)
-6. پاسخ مدل به‌صورت جریانی (SSE) نمایش داده می‌شود
-
-## دانش بات
-در `knowledge/chunks.json`: هر رشته/موضوع یک «تکه» با `id` ثابت، `type`، `title`، `keywords` و `text`.
-- برای تکهٔ جدید `id` یکتا بدهید؛ `id` موجود را عوض نکنید.
-- اگر کاربران با کلمه‌ای می‌پرسند که در دانش نیست، آن را به `keywords` همان تکه یا به گروه مناسب در `lib/synonyms.js` اضافه کنید.
-- حافظهٔ یادگیری با تغییر دانش خودکار باطل می‌شود.
-- پرسش‌های بی‌پاسخ و پرتکرار: `GET /api/admin` (فیلدهای `topUnanswered` و `topAsked`).
-
-```
-npm test                    # تست‌ها (بدون شبکه)
-npm run eval                # سنجش بازیابی روی eval/questions.json (با -v جزئیات)
-npm run search -- "سؤال"    # دیدن تکه‌هایی که برای یک سؤال پیدا می‌شود
-```
-قبل و بعد از هر تغییر در دانش یا کد جست‌وجو `npm run eval` بزنید. GitHub Action روی هر push تست‌ها و eval (حداقل ۹۰٪) را اجرا می‌کند.
-
-## افزونهٔ اختیاری: Upstash
-فقط وقتی لازم شد (مثلاً rate-limit مشترک روی Vercel، یا جست‌وجوی معنایی):
-- **Redis:** `KV_REST_API_URL` و `KV_REST_API_TOKEN` (Vercel → Storage → Upstash Redis)
-- **Vector:** ایندکس Hybrid (dense: `openai/text-embedding-3-small`، sparse: `BM25`) و `UPSTASH_VECTOR_REST_URL` / `UPSTASH_VECTOR_REST_TOKEN`؛ سپس `npm run ingest`. با Secrets همین دو نام در GitHub، Action ایندکس را خودکار همگام می‌کند.
-
-اگر Upstash در دسترس نباشد یا کند باشد، بات بدون خطا به حالت محلی برمی‌گردد.
-
-## گزارش پرسش‌های کاربران (`/report.html`)
-صفحهٔ `/report.html` را باز کنید و `ADMIN_TOKEN` را وارد کنید. برای هر پرسش نشان می‌دهد:
-- متن پرسش و **چند بار** پرسیده شده؛ عبارت‌های مشابه («شهریه قسطی داره؟» و «شهریه قسطی هست؟») یک‌جا شمرده می‌شوند و فهرستشان قابل باز شدن است.
-- **منبع پاسخ:** پاسخ آمادهٔ پایگاه دانش، جست‌وجوی کلمه‌ای در پایگاه دانش، **پایگاه دادهٔ وکتور**، حافظهٔ پرسش‌های تکراری، دانش عمومی مدل (خارج از پایگاه دانش)، بی‌پاسخ، خارج از حوزه، خطا.
-- کدام تکه‌های `knowledge/chunks.json` استفاده شدند، آخرین زمان پرسش، آمار روزانه، و فهرست پرسش‌های بی‌جواب برای افزودن به پایگاه دانش.
-- دکمهٔ دانلود Excel (CSV). همین داده با `GET /api/admin?report=1` (یا `?report=csv`) هم در دسترس است.
-
-نکته‌ها: بات در اینترنت جست‌وجو نمی‌کند؛ ستون «جست‌وجوی اینترنت» برای آینده رزرو شده و صفر است. پرسش‌های حاوی شماره، ایمیل یا لینک فقط شمرده می‌شوند و متنشان ذخیره نمی‌شود. برای آمار ماندگار و مشترک بین سرورها، Redis یا `MYSQL_URL` لازم است؛ بدون آن آمار با ری‌استارت پاک می‌شود.

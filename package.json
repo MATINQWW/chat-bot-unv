@@ -1,16 +1,19 @@
 {
   "name": "chat-bot-unv",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
   "engines": {
-    "node": ">=20"
+    "node": "26.x"
   },
   "scripts": {
     "test": "node test/smoke.js",
     "ingest": "node scripts/ingest.js",
     "search": "node scripts/search.js",
     "eval": "node scripts/eval.js",
-    "test:mysql": "node test/mysql.js"
+    "test:mysql": "node test/mysql.js",
+    "test:server": "node test/server.js",
+    "test:all": "npm test && npm run test:server && npm run test:security && npm run eval -- --min 90",
+    "test:security": "node test/security.js"
   },
   "dependencies": {
     "@upstash/vector": "1.2.3",

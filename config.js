@@ -64,7 +64,7 @@ module.exports = {
   },
 
   // ─── دیگر ───
-  allowedOrigins: [],        // دامنه‌های دیگری که اجازهٔ صدا زدن API را دارند، مثلاً ['https://example.com']
+  allowedOrigins: String(process.env.ALLOWED_ORIGINS || '').split(',').map(x => x.trim()).filter(Boolean), // comma-separated exact origins
   leadAllowMemory: false,    // فقط برای توسعه: درخواست تماس در حافظه (با ری‌استارت پاک می‌شود)
   transcribe: {              // گفتار به متن (اختیاری؛ کلید در TRANSCRIBE_API_KEY)
     url: '',                 // مثلاً https://api.groq.com/openai/v1/audio/transcriptions

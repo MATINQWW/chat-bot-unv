@@ -5,6 +5,9 @@ const assert = require('assert');
 const Module = require('module');
 const path = require('path');
 
+// The test harness simulates Nginx on loopback; production trusts forwarded IPs only from a local proxy.
+process.env.TRUST_PROXY = '1';
+
 // اگر پکیج openai نصب نیست (محیط آفلاین)، یک جایگزین حداقلی با fetch استفاده می‌شود
 try { require.resolve('openai'); } catch {
   const orig = Module._load;
@@ -14,9 +17,51 @@ try { require.resolve('openai'); } catch {
         constructor(o) { this.o = o; this.chat = { completions: { create: async (body) => {
           const r = await fetch(this.o.baseURL + 'chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + this.o.apiKey }, body: JSON.stringify(body) });
           if (!r.ok) { const e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
+          if (body.stream) {
+            const raw = await r.text();
+            return { async *[Symbol.asyncIterator]() {
+              for (const line of raw.split(/\r?\n/)) {
+                if (!line.startsWith('data: ')) continue;
+                const value = line.slice(6).trim();
+                if (!value || value === '[DONE]') continue;
+                yield JSON.parse(value);
+              }
+            } };
+          }
           return r.json();
         } } }; }
       };
+    }
+    return orig.call(this, req, ...a);
+  };
+}
+
+// Offline fallback for @upstash/vector. The test server below verifies the HTTP contract
+// consumed by our adapter; production still uses the pinned official SDK from package-lock.
+try { require.resolve('@upstash/vector'); } catch {
+  const orig = Module._load;
+  Module._load = function (req, ...a) {
+    if (req === '@upstash/vector') {
+      class Index {
+        constructor(options, namespace = '') { this.options = options; this.ns = namespace; }
+        namespace(name) { return new Index(this.options, name); }
+        async post(path, body) {
+          const base = String(this.options.url || '').replace(/\/$/, '');
+          const signal = typeof this.options.signal === 'function' ? this.options.signal() : this.options.signal;
+          const response = await fetch(base + path, {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + this.options.token, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body), signal,
+          });
+          if (!response.ok) throw new Error('Vector HTTP ' + response.status);
+          const json = await response.json();
+          return json.result;
+        }
+        query(body) { return this.post('/query-data' + (this.ns ? '/' + this.ns : ''), body); }
+        upsert(value) { return this.post('/upsert-data' + (this.ns ? '/' + this.ns : ''), Array.isArray(value) ? value : [value]); }
+        delete(ids) { return this.post('/delete' + (this.ns ? '/' + this.ns : ''), { ids: Array.isArray(ids) ? ids : [ids] }); }
+      }
+      return { Index, QueryMode: { DENSE: 'DENSE', SPARSE: 'SPARSE', HYBRID: 'HYBRID' } };
     }
     return orig.call(this, req, ...a);
   };
@@ -68,7 +113,7 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
         const events = this.out.split('\n\n').filter(Boolean).map(l => JSON.parse(l.replace(/^data: /, '')));
         resolve({ code: this.code, json: null, events, h: this.h });
       } };
-    Promise.resolve(handler({ method, url, body, headers: { host: 'x.test', 'content-length': '100', 'x-real-ip': '10.0.0.' + (++ipN), ...headers }, socket: {} }, res)).catch(e => resolve({ code: 'THROW', err: e }));
+    Promise.resolve(handler({ method, url, body, headers: { host: 'x.test', 'content-length': '100', 'x-real-ip': '10.0.0.' + (++ipN), ...headers }, socket: { remoteAddress: '127.0.0.1' } }, res)).catch(e => resolve({ code: 'THROW', err: e }));
   });
 }
 
