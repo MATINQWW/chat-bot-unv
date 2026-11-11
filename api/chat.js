@@ -23,9 +23,11 @@ const LIMITS = {
 // پاسخ‌های بلند قبلی بات بیشترین سهم توکن تاریخچه را داشتند و برای فهم سؤال بعدی لازم نیستند.
 const C = require('../config');
 const BUDGETS = [
-  { knowledge: 0, maxTokens: 0, prevQ: 3, qChars: 200, aChars: 300, chars: 800 },   // ← از config.js (llm.maxTokens، llm.knowledgeChars)
-  { knowledge: 1000, maxTokens: 600, prevQ: 2, qChars: 150, aChars: 200, chars: 500 },
-  { knowledge: 500,  maxTokens: 450, prevQ: 1, qChars: 150, aChars: 0,   chars: 500 },
+  { knowledge: 0,    maxTokens: 0,   prevQ: 3, qChars: 200, aChars: 300, chars: 800, attachmentChars: 8000 }, // بودجهٔ معمول از config.js تکمیل می‌شود
+  { knowledge: 1000, maxTokens: 600, prevQ: 2, qChars: 150, aChars: 200, chars: 500, attachmentChars: 4000 },
+  { knowledge: 350,  maxTokens: 250, prevQ: 1, qChars: 100, aChars: 0,   chars: 350, attachmentChars: 1200 },
+  // آخرین تلاش: بدون دانش بازیابی‌شده و تاریخچه؛ فقط سؤال اصلی با دستورالعمل فشرده
+  { knowledge: 0,    maxTokens: 128, prevQ: 0, qChars: 0,   aChars: 0,   chars: 180, attachmentChars: 500, compact: true },
 ];
 
 // پیشنهاد «درخواست تماس» وقتی پاسخ به مرکز هدایت تحصیلی ارجاع می‌دهد —
@@ -86,7 +88,9 @@ module.exports = async (req, res) => {
     const shape = (b) => {
       const B = BUDGETS[b];
       const prior = fullMessages.slice(0, -1);
-      const prevQs = prior.filter(m => m.role === 'user').slice(-B.prevQ).map(m => m.content.slice(0, B.qChars).replace(/\s+/g, ' '));
+      const prevQs = B.prevQ > 0
+        ? prior.filter(m => m.role === 'user').slice(-B.prevQ).map(m => m.content.slice(0, B.qChars).replace(/\s+/g, ' '))
+        : [];
       const last = prior[prior.length - 1];
       const out = [];
       if (prevQs.length) {
@@ -133,10 +137,13 @@ module.exports = async (req, res) => {
 
     // ─── ۲) پاسخ مدل ───
     let knowledge = '', topScore = 0;
-    const withAtt = (msgs) => {
+    const withAtt = (msgs, budget) => {
       const m = msgs.map(x => ({ ...x })), last = m.length - 1;
       if (att && att.kind === 'text') {
-        m[last].content += `\n\n<attachment name="${att.name}">\n${att.text}\n</attachment>`;
+        const maxChars = budget.attachmentChars || 0;
+        const text = att.text.slice(0, maxChars);
+        const suffix = att.text.length > maxChars ? '\n[ادامهٔ پیوست به‌دلیل محدودیت حجم حذف شد]' : '';
+        m[last].content += `\n\n<attachment name="${att.name}">\n${text}${suffix}\n</attachment>`;
       } else if (att && att.kind === 'image') {
         m[last].content = [
           { type: 'text', text: m[last].content },
@@ -169,10 +176,21 @@ module.exports = async (req, res) => {
       for (let b = 0; b < BUDGETS.length; b++) {
         knowledge = b === 0 ? r0.text : cut(BUDGETS[b].knowledge);
         // یک پیام system واحد در ابتدا (چند پیام system و system در انتها روی همهٔ مدل‌ها مطمئن نیست)
-        const system = [RULES, instructionFor(intent), langHint, 'اطلاعات مرجع:\n' + (knowledge || '(موردی یافت نشد)'), REMINDER].join('\n\n');
+        const system = BUDGETS[b].compact
+          ? [
+              'تو مشاور هدایت تحصیلی هستی. کوتاه، روشن و به زبان کاربر پاسخ بده.',
+              'برای مشاوره عمومی از دانش عمومی معتبر استفاده کن و فقط وقتی سؤال واقعاً به اطلاعات رسمی دانشگاه وابسته است، نبود منبع را اعلام کن.',
+              intent.mode === 'university'
+                ? 'اطلاعات اختصاصی دانشگاه مانند شهریه، ظرفیت، تاریخ و پذیرش را حدس نزن؛ اگر منبعی نداری صریحاً بگو نیازمند تأیید رسمی است.'
+                : intent.mode === 'mixed'
+                  ? 'راهنمایی عمومی را پاسخ بده؛ ادعاهای اختصاصی دانشگاه را فقط با منبع معتبر بیان کن و حدس نزن.'
+                  : 'پرسش عمومی را مستقیماً پاسخ بده؛ شماره تماس یا ارجاع غیرضروری نده و آمار به‌روز بی‌منبع نساز.',
+              langHint,
+            ].join('\n')
+          : [RULES, instructionFor(intent), langHint, 'اطلاعات مرجع:\n' + (knowledge || '(موردی یافت نشد)'), REMINDER].join('\n\n');
         try {
           const r = await llm.complete({
-            messages: [{ role: 'system', content: system }].concat(withAtt(shape(b))),
+            messages: [{ role: 'system', content: system }].concat(withAtt(shape(b), BUDGETS[b])),
             maxTokens: BUDGETS[b].maxTokens, stream: wantStream, vision: !!(att && att.kind === 'image'),
             idempotencyKey: `${idempotencyKey}-${b}`,
           });
@@ -180,7 +198,7 @@ module.exports = async (req, res) => {
           break;
         } catch (e) {
           if (llm.kind(e) === 'too_big' && b < BUDGETS.length - 1) {
-            console.warn(`upstream too big — retry with smaller budget #${b + 1}`);
+            console.warn(`upstream too big — retry with smaller budget #${b + 1} (compact=${!!BUDGETS[b + 1].compact})`);
             continue;
           }
           throw e;
@@ -207,7 +225,12 @@ module.exports = async (req, res) => {
       }
       if (status === 404) console.error('Model not found — check model name');
       if (status === 413) {
-        return res.status(413).json({ error: 'context_too_large', message: 'پیام یا پیوست برای مدل بیش از حد بزرگ است. لطفاً کوتاه‌تر بنویسید یا پیوست را کوچک‌تر کنید.' });
+        const message = att && att.kind === 'image'
+          ? 'تصویر برای سرویس هوش مصنوعی بیش از حد بزرگ است. لطفاً تصویر را کوچک‌تر یا کم‌حجم‌تر کنید.'
+          : att && att.kind === 'text'
+            ? 'پیوست متنی حتی پس از خلاصه‌سازی در محدودیت سرویس جا نشد. لطفاً فایل کوتاه‌تر یا بخش مرتبط آن را ارسال کنید.'
+            : 'سرویس هوش مصنوعی درخواست را به‌دلیل محدودیت حجم یا Context نپذیرفت. لطفاً گفتگو را در یک چت تازه ادامه دهید یا سؤال را کوتاه‌تر کنید.';
+        return res.status(413).json({ error: 'context_too_large', message });
       }
       if (att && att.kind === 'image' && (status === 400 || status === 422)) {
         return res.status(422).json({ error: 'vision_unsupported', message: 'مدل فعلی تحلیل تصویر را پشتیبانی نمی‌کند. متن تصویر را تایپ کنید.' });

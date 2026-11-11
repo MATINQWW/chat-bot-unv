@@ -87,6 +87,10 @@ const server = http.createServer((rq, rs) => {
     if (rq.url.startsWith('/slow/')) return setTimeout(() => { rs.setHeader('content-type', 'application/json'); rs.end(JSON.stringify({ choices: [{ message: { content: 'پاسخ کند' }, finish_reason: 'stop' }] })); }, 400);
     if (mode === '401') { rs.statusCode = 401; return rs.end('{}'); }
     if (mode === '429once' && seen.filter(s => s.url.includes('chat')).length === 1) { rs.statusCode = 429; return rs.end('{}'); }
+    if (mode === '413untilsmall') {
+      const request = seen[seen.length - 1].body;
+      if (request.max_tokens > 128) { rs.statusCode = 413; return rs.end('{"error":"context too large"}'); }
+    }
     const content = mode === 'empty' ? '' : 'پاسخ آزمایشی: با مرکز هدایت تحصیلی تماس بگیرید ☎️ ۰۳۱-۳۵۳۵۴۰۴۹';
     const req = seen[seen.length - 1].body;
     if (req.stream) {   // SSE به سبک OpenAI
@@ -212,7 +216,13 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   mode = 'empty'; r = await call(chat, { body: { messages: [{ role: 'user', content: 'انتخاب رشته کنکور چطوره' }] } }); assert.strictEqual(r.code, 502);
   mode = '401'; r = await call(chat, { body: { messages: [{ role: 'user', content: 'انتخاب رشته کنکور چطوره' }] } }); assert.strictEqual(r.code, 500);
   mode = '429once'; seen = []; r = await call(chat, { body: { messages: [{ role: 'user', content: 'انتخاب رشته کنکور چطوره' }] } }); assert.strictEqual(r.code, 200);
-  mode = 'ok'; console.log('✓ مدیریت پاسخ خالی / کلید نامعتبر / 429 با retry');
+  mode = '413untilsmall'; seen = [];
+  r = await call(chat, { body: { messages: [{ role: 'user', content: 'برای انتخاب رشته چه معیارهایی مهم هستند؟' }] } });
+  assert.strictEqual(r.code, 200, 'upstream 413 should recover using the compact-context retry');
+  assert.strictEqual(seen.length, 4, 'three oversized attempts then one compact retry');
+  assert.strictEqual(seen[3].body.max_tokens, 128);
+  assert.ok(seen[3].body.messages[0].content.length < 900, 'compact system prompt must be short');
+  mode = 'ok'; console.log('✓ مدیریت پاسخ خالی / کلید نامعتبر / 429 و بازیابی خودکار 413 با Prompt فشرده');
 
   // ۶) feedback: cid بدون امضا رد می‌شود
   r = await call(feedback, { body: { cid: 'a'.repeat(16), vote: 'down' } }); assert.strictEqual(r.code, 400);
