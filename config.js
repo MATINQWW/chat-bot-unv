@@ -25,7 +25,7 @@ module.exports = {
         model: 'icp-chat',
         key: 'ICP_API_KEY',
         vision: false,
-        stream: false,
+        stream: true,
       },
       openrouter: {
         url: 'https://openrouter.ai/api/v1',
