@@ -8,7 +8,7 @@ module.exports = {
 
   // ─── مدل زبانی ───
   llm: {
-    use: 'ollama',           // سرویس فعال (یکی از providers)
+    use: 'openrouter',           // سرویس فعال (یکی از providers)
     fallback: [],            // اختیاری: اگر فعال خطا داد یا پر بود، به ترتیب این‌ها؛ مثلاً ['irancopilot']
 
     providers: {
@@ -25,6 +25,11 @@ module.exports = {
         model: 'icp-chat',
         key: 'ICP_API_KEY',
       },
+      openrouter: {
+        url: 'https://openrouter.ai/api/v1',
+        model: 'google/gemma-4-31b-it:free',
+        key: 'OPENROUTER_API_KEY',
+        vision: true,
     },
 
     maxTokens: 800,          // سقف طول پاسخ
