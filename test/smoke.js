@@ -89,12 +89,12 @@ const server = http.createServer((rq, rs) => {
     if (mode === '429once' && seen.filter(s => s.url.includes('chat')).length === 1) { rs.statusCode = 429; return rs.end('{}'); }
     if (mode === '413untilsmall') {
       const request = seen[seen.length - 1].body;
-      if (!String(request.messages?.[0]?.content || '').includes('تو مشاور هدایت تحصیلی هستی')) { rs.statusCode = 413; return rs.end('{"error":"context too large"}'); }
+      if (request.max_tokens > 400) { rs.statusCode = 413; return rs.end('{"error":"context too large"}'); }
     }
     const req = seen[seen.length - 1].body;
     const isContinuation = req.messages?.some(m => m.role === 'user' && (String(m.content).includes('انتهای پاسخ قبلی') || String(m.content).includes('فقط از بعد آخرین عبارت ادامه بده')));
     if (mode === 'lengthThenContinue' || mode === 'lengthStreamThenContinue' || mode === 'lengthContinuation413' || mode === 'lengthMultiContinue') {
-      if (mode === 'lengthContinuation413' && isContinuation && req.max_tokens > 64) { rs.statusCode = 413; return rs.end('{"error":"context too large"}'); }
+      if (mode === 'lengthContinuation413' && isContinuation && req.max_tokens > 200) { rs.statusCode = 413; return rs.end('{"error":"context too large"}'); }
       const continuationCount = seen.filter(x => x.body.messages?.some(m => m.role === 'user' && String(m.content).includes('انتهای پاسخ قبلی'))).length;
       const text = !isContinuation
         ? 'این پاسخ تا اینجا ناقص است و باید ادامه پیدا کند'
@@ -187,10 +187,14 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   seen = [];
   r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'من به برنامه نویسی علاقه دارم اما ریاضی ام متوسطه؛ مهندسی کامپیوتر برای من مناسبه؟' }] } });
   assert.strictEqual(r.code, 200);
-  const generalSystem = seen.find(x => x.url.endsWith('/chat/completions')).body.messages[0].content;
-  assert.ok(generalSystem.includes('حالت پاسخ‌گویی: راهنمایی عمومی تحصیلی و شغلی'));
-  assert.ok(generalSystem.includes('خالی بودن یا ناقص بودن پایگاه دانش مجوز گفتن'));
-  assert.ok(!generalSystem.includes('اگر در مرجع نبود بنویس'));
+  const generalRequest = seen.find(x => x.url.endsWith('/chat/completions')).body;
+  const generalSystem = generalRequest.messages[0].content;
+  assert.ok(generalSystem.includes('تو مشاور هدایت تحصیلی هستی'));
+  assert.ok(generalSystem.includes('نبودن موضوع در پایگاه دانشگاه دلیل امتناع نیست'));
+  assert.ok(!generalSystem.includes('اطلاعات مرجع دانشگاه'));
+  assert.ok(generalSystem.length < 800, 'general system prompt must stay compact');
+  assert.ok(generalRequest.max_tokens >= 650, 'general questions should retain enough output budget');
+  assert.strictEqual(generalRequest.messages.length, 2, 'generic first-turn question should send only system + current user question');
   process.env.LEAD_WEBHOOK_URL = base + '/hook';
   r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'من به برنامه نویسی علاقه دارم اما ریاضی ام متوسطه؛ مهندسی کامپیوتر برای من مناسبه؟' }] } });
   assert.strictEqual(r.json.lead, false, 'پرسش مشاوره عمومی نباید CTA تماس اجباری نشان دهد');
@@ -203,7 +207,7 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.strictEqual(r.code, 200);
   const mixedSystem = seen.find(x => x.url.endsWith('/chat/completions')).body.messages[0].content;
   assert.ok(mixedSystem.includes('حالت پاسخ‌گویی: ترکیبی از راهنمایی عمومی'));
-  assert.ok(mixedSystem.includes('بخش راهنمایی عمومی را پاسخ بده'));
+  assert.ok(mixedSystem.includes('ابتدا به بخش عمومی سؤال با دانش عمومی معتبر'));
   console.log('✓ سؤال ترکیبی: پاسخ عمومی + تفکیک ادعاهای اختصاصی دانشگاه');
 
   // ۳) نوبت سوم نباید «نوبت اول» حساب شود (cid خالی) و تاریخچه کامل برود
@@ -238,11 +242,11 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   mode = '429once'; seen = []; r = await call(chat, { body: { messages: [{ role: 'user', content: 'انتخاب رشته کنکور چطوره' }] } }); assert.strictEqual(r.code, 200);
   mode = '413untilsmall'; seen = [];
   r = await call(chat, { body: { messages: [{ role: 'user', content: 'برای انتخاب رشته چه معیارهایی مهم هستند؟' }] } });
-  assert.strictEqual(r.code, 200, 'upstream 413 should recover using the compact-context retry');
-  assert.strictEqual(seen.length, 4, 'three oversized attempts then one compact retry');
-  assert.strictEqual(seen[3].body.max_tokens, 128, 'compact retry must use a truly smaller output budget');
-  assert.ok(seen[0].body.max_tokens > seen[1].body.max_tokens && seen[1].body.max_tokens > seen[2].body.max_tokens && seen[2].body.max_tokens > seen[3].body.max_tokens, 'retry output budgets must decrease monotonically');
-  assert.ok(seen[3].body.messages[0].content.length < 900, 'compact system prompt must be short');
+  assert.strictEqual(r.code, 200, 'upstream 413 should recover using the compact general retry');
+  assert.strictEqual(seen.length, 3, 'general route should retry with progressively smaller 700/520/400-token budgets');
+  assert.deepStrictEqual(seen.map(x => x.body.max_tokens), [700, 520, 400]);
+  assert.ok(seen.every(x => x.body.messages[0].content.length < 800), 'general system prompt remains compact on every attempt');
+  assert.ok(seen[0].body.messages.reduce((n, m) => n + String(m.content).length, 0) < 1400, 'general request must avoid the multi-kilobyte university policy and RAG payload');
   mode = 'lengthThenContinue'; seen = [];
   r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'مزایا و چالش‌های مهندسی کامپیوتر چیست؟' }] } });
   assert.strictEqual(r.code, 200);
@@ -250,7 +254,7 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.ok(r.json.reply.includes('ادامهٔ پاسخ کامل شد'));
   assert.strictEqual(seen.length, 2, 'a length-limited non-stream answer must trigger one continuation call');
   assert.strictEqual(r.json.sig, sign(r.json.reply), 'the combined answer must be signed as one response');
-  assert.strictEqual(seen[1].body.max_tokens, 128);
+  assert.strictEqual(seen[1].body.max_tokens, 320);
   assert.ok(seen[1].body.messages[1].content.includes('انتهای پاسخ قبلی'));
 
   mode = 'lengthContinuation413'; seen = [];
@@ -258,8 +262,8 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.strictEqual(r.code, 200);
   assert.ok(r.json.reply.includes('ادامهٔ پاسخ کامل شد'));
   assert.strictEqual(seen.length, 3, 'a 413 continuation must retry once with a smaller prompt');
-  assert.strictEqual(seen[1].body.max_tokens, 128);
-  assert.strictEqual(seen[2].body.max_tokens, 64);
+  assert.strictEqual(seen[1].body.max_tokens, 320);
+  assert.strictEqual(seen[2].body.max_tokens, 200);
 
   mode = 'lengthMultiContinue'; seen = [];
   r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'یک پاسخ جامع درباره انتخاب رشته می‌خواهم' }] } });
@@ -297,11 +301,11 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   process.env.UPSTASH_VECTOR_REST_URL = base + '/vec';
   process.env.UPSTASH_VECTOR_REST_TOKEN = 'vtok';
   vector._reset(); seen = []; vecSeen = [];
-  r = await call(chat, { body: { messages: [{ role: 'user', content: 'برای دانشجوها شغل هم پیدا میکنید؟' }] } });
+  r = await call(chat, { body: { messages: [{ role: 'user', content: 'طرح پویش در دانشگاه خوراسگان برای پیدا کردن شغل دانشجوها چطور است؟' }] } });
   assert.strictEqual(r.code, 200);
   const kq = vecSeen.filter(v => v.url === '/vec/query-data');
   assert.ok(kq.length === 1 && kq[0].auth === 'Bearer vtok');
-  assert.strictEqual(kq[0].body.data, 'برای دانشجوها شغل هم پیدا میکنید؟');
+  assert.strictEqual(kq[0].body.data, 'طرح پویش در دانشگاه خوراسگان برای پیدا کردن شغل دانشجوها چطور است؟');
   assert.ok(/طرح پویش/.test(seen[0].body.messages[0].content));
   console.log('✓ Vector صدا زده شد و تکهٔ «طرح پویش» (بدون هم‌پوشانی کلمه‌ای) وارد پرامپت شد');
 
@@ -327,7 +331,7 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.strictEqual(seen.length, 1); // سؤال واقعی بعد از سلام → مدل
   seen = [];
   r = await call(chat, { body: { messages: [{ role: 'user', content: 'یه چیزی بگو' }] } });
-  assert.ok(/موردی یافت نشد/.test(seen[0].body.messages[0].content));
+  assert.ok(!/اطلاعات مرجع دانشگاه/.test(seen[0].body.messages[0].content)); assert.ok(seen[0].body.messages[0].content.length < 800);
   console.log('✓ احوالپرسی/تشکر بدون مدل؛ پیام بی‌محتوا بدون تزریق دانش');
 
   // ۱۱) Streaming: تکه‌ها و رویداد پایانی با امضا
@@ -450,7 +454,7 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   // extra به بدنه اضافه می‌شود؛ maxTokens از config
   llm._setConfig({ use: 'b', providers: { b: { url: base + '/v1', key: 'BACKUP_KEY', model: 'mb', extra: { think: false } } } });
   const mt = CFG.llm.maxTokens; CFG.llm.maxTokens = 321; seen = [];
-  r = await call(chat, { body: { messages: [{ role: 'user', content: 'رشته علوم تربیتی' }] } });
+  r = await call(chat, { body: { messages: [{ role: 'user', content: 'شهریه رشته علوم تربیتی' }] } });
   assert.strictEqual(seen[0].body.model, 'mb'); assert.strictEqual(seen[0].body.think, false);
   assert.strictEqual(seen[0].body.max_tokens, 321); CFG.llm.maxTokens = mt;
   llm._setConfig(testCfg);

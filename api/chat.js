@@ -26,8 +26,23 @@ const BUDGETS = [
   { knowledge: 0,    maxTokens: 0,   prevQ: 3, qChars: 200, aChars: 300, chars: 800, attachmentChars: 8000 }, // بودجهٔ معمول از config.js تکمیل می‌شود
   { knowledge: 1000, maxTokens: 600, prevQ: 2, qChars: 150, aChars: 200, chars: 500, attachmentChars: 4000 },
   { knowledge: 350,  maxTokens: 250, prevQ: 1, qChars: 100, aChars: 0,   chars: 350, attachmentChars: 1200 },
-  // آخرین تلاش باید واقعاً از نظر سقف خروجی هم کوچک‌تر باشد؛ ادامهٔ پاسخ در قطعه‌های جدا انجام می‌شود.
-  { knowledge: 0,    maxTokens: 128, prevQ: 0, qChars: 0,   aChars: 0,   chars: 220, attachmentChars: 300, compact: true },
+  // برای اطلاعات رسمی، در آخرین تلاش فقط سیاست کوتاه + پرسش کوتاه می‌رود؛ دادهٔ رسمی حدس زده نمی‌شود.
+  { knowledge: 0,    maxTokens: 300, prevQ: 0, qChars: 0,   aChars: 0,   chars: 500, attachmentChars: 300, compact: true },
+];
+
+// سؤال‌های عمومی نباید بار ۲KB دستورها و بازیابی دانش را حمل کنند.
+// مسیر مستقل و کم‌حجم باعث می‌شود فضای کافی برای پاسخ کامل باقی بماند.
+const GENERAL_POLICY = [
+  'تو مشاور هدایت تحصیلی هستی. مستقیماً به پرسش کاربر پاسخ بده.',
+  'برای راهنمایی عمومی از دانش معتبر خود استفاده کن؛ نبودن موضوع در پایگاه دانشگاه دلیل امتناع نیست.',
+  'شهریه، پذیرش، ظرفیت، تاریخ و قوانین اختصاصی دانشگاه را بدون منبع رسمی حدس نزن.',
+  'درباره تناسب رشته حکم قطعی نده؛ مزایا، چالش‌ها، مهارت‌های لازم و یک راه عملی برای آزمودن علاقه را بگو.',
+  'آمار دقیق و متغیر حقوق یا اشتغال را بدون منبع نیاور. به فارسی، منظم و کامل اما بدون تکرار بنویس.',
+].join('\n');
+const GENERAL_BUDGETS = [
+  { maxTokens: 700, chars: 1200, attachmentChars: 1800, prevQ: 1, qChars: 180 },
+  { maxTokens: 520, chars: 900,  attachmentChars: 1200, prevQ: 1, qChars: 140 },
+  { maxTokens: 400, chars: 700,  attachmentChars: 800,  prevQ: 0, qChars: 0 },
 ];
 
 // پیشنهاد «درخواست تماس» وقتی پاسخ به مرکز هدایت تحصیلی ارجاع می‌دهد —
@@ -72,16 +87,16 @@ async function readCompletion(result, streamed) {
 async function continueTruncatedReply({ reply, question, langHint, stream, idempotencyKey }) {
   // پاسخ را در قطعه‌های کوچک ادامه می‌دهیم تا محدودیت سخت Provider دور زده نشود.
   // کل زمان ادامه محدود است تا تابع Vercel از maxDuration عبور نکند.
-  const deadline = Date.now() + 14000;
-  const maxSegments = 3;
+  const deadline = Date.now() + 18000;
+  const maxSegments = 2;
   let combined = String(reply || '');
   let finish = 'length';
   let provider = '';
 
   for (let segment = 0; segment < maxSegments && Date.now() < deadline; segment++) {
     const variants = [
-      { tail: 480, question: 180, maxTokens: 128, timeoutMs: 4500 },
-      { tail: 240, question: 100, maxTokens: 64, timeoutMs: 3000 },
+      { tail: 700, question: 220, maxTokens: 320, timeoutMs: 7000 },
+      { tail: 360, question: 140, maxTokens: 200, timeoutMs: 5000 },
     ];
     let part = null;
 
@@ -205,9 +220,19 @@ module.exports = async (req, res) => {
       const last = prior[prior.length - 1];
       const out = [];
       if (prevQs.length) {
-        out.push({ role: 'user', content: 'سؤال‌های قبلی من در این گفتگو:\n' + prevQs.map(q => '- ' + q).join('\n') });
+        out.push({ role: 'user', content: 'سؤال قبلی برای حفظ زمینه: ' + prevQs.join(' | ') });
         const a = last && last.role === 'assistant' && B.aChars ? last.content.slice(0, B.aChars) : '';
-        out.push({ role: 'assistant', content: a ? a + (last.content.length > B.aChars ? ' …' : '') : '(پاسخ داده شد)' });
+        if (a) out.push({ role: 'assistant', content: a });
+      }
+      out.push({ role: 'user', content: question0.slice(0, B.chars) });
+      return out;
+    };
+    const shapeGeneral = (b) => {
+      const B = GENERAL_BUDGETS[b];
+      const out = [];
+      const priorUsers = fullMessages.slice(0, -1).filter(m => m.role === 'user');
+      if (priorUsers.length && (info.deictic || question.length < 45) && B.prevQ) {
+        out.push({ role: 'user', content: 'زمینهٔ پرسش قبلی: ' + priorUsers[priorUsers.length - 1].content.slice(0, B.qChars) });
       }
       out.push({ role: 'user', content: question0.slice(0, B.chars) });
       return out;
@@ -273,7 +298,10 @@ module.exports = async (req, res) => {
     // برای سؤال‌های پیگیری کوتاه («بازار کارش چطوره؟») سؤال قبلی کاربر هم به جست‌وجو اضافه می‌شود
     const prevUser = fullMessages.length > 2 ? fullMessages[fullMessages.length - 3].content.slice(0, 200) : '';
     const searchQ = (prevUser && (info.deictic || question.length < 40)) ? prevUser + '\n' + question : question;
-    const r0 = await retrieveKnowledge(searchQ, BUDGETS[0].knowledge);
+    // در سؤال عمومی، RAG دانشگاه فقط نویز و توکن اضافه می‌سازد؛ منبع رسمی فقط برای university/mixed لازم است.
+    const r0 = intent.mode === 'general'
+      ? { text: '', ids: [], topScore: 0, viaVector: false }
+      : await retrieveKnowledge(searchQ, BUDGETS[0].knowledge);
     topScore = r0.topScore;
     const cut = (limit) => {
       const parts = r0.text ? r0.text.split('\n\n---\n\n') : [];
@@ -284,32 +312,37 @@ module.exports = async (req, res) => {
 
     let completion, streamed = false, release = () => {};
     try {
-      for (let b = 0; b < BUDGETS.length; b++) {
-        knowledge = b === 0 ? r0.text : cut(BUDGETS[b].knowledge);
-        // یک پیام system واحد در ابتدا (چند پیام system و system در انتها روی همهٔ مدل‌ها مطمئن نیست)
-        const system = BUDGETS[b].compact
-          ? [
-              'تو مشاور هدایت تحصیلی هستی. کوتاه، روشن و به زبان کاربر پاسخ بده.',
-              'برای مشاوره عمومی از دانش عمومی معتبر استفاده کن و فقط وقتی سؤال واقعاً به اطلاعات رسمی دانشگاه وابسته است، نبود منبع را اعلام کن.',
-              intent.mode === 'university'
-                ? 'اطلاعات اختصاصی دانشگاه مانند شهریه، ظرفیت، تاریخ و پذیرش را حدس نزن؛ اگر منبعی نداری صریحاً بگو نیازمند تأیید رسمی است.'
-                : intent.mode === 'mixed'
-                  ? 'راهنمایی عمومی را پاسخ بده؛ ادعاهای اختصاصی دانشگاه را فقط با منبع معتبر بیان کن و حدس نزن.'
-                  : 'پرسش عمومی را مستقیماً پاسخ بده؛ شماره تماس یا ارجاع غیرضروری نده و آمار به‌روز بی‌منبع نساز.',
-              langHint,
-            ].join('\n')
-          : [RULES, instructionFor(intent), langHint, 'اطلاعات مرجع:\n' + (knowledge || '(موردی یافت نشد)'), REMINDER].join('\n\n');
+      const generalMode = intent.mode === 'general';
+      const plans = generalMode ? GENERAL_BUDGETS : BUDGETS;
+      for (let b = 0; b < plans.length; b++) {
+        const plan = plans[b];
+        knowledge = generalMode ? '' : (b === 0 ? r0.text : cut(plan.knowledge));
+        // برای سؤال عمومی از ابتدا Prompt کم‌حجم استفاده می‌کنیم؛ نه اینکه پس از چند 413 به آن برسیم.
+        // در سؤال رسمی/ترکیبی، قوانین کوتاه و فقط دانش مرتبط ارسال می‌شود.
+        const system = generalMode
+          ? [GENERAL_POLICY, langHint].join('\n')
+          : [
+              'دستیار هدایت تحصیلی دانشگاه آزاد اصفهان هستی. پاسخ دقیق، کوتاه و مفید بده.',
+              'دانش عمومی را از اطلاعات رسمی دانشگاه جدا کن. اطلاعات رسمیِ بی‌منبع، شهریه، ظرفیت، تاریخ و قوانین پذیرش را هرگز حدس نزن.',
+              instructionFor(intent), langHint,
+              'اطلاعات مرجع دانشگاه (فقط منبع ادعاهای اختصاصی):\n' + (knowledge || '(اطلاعات رسمی مرتبط پیدا نشد)'),
+            ].join('\n\n');
+        const requestMessages = [{ role: 'system', content: system }].concat(
+          withAtt(generalMode ? shapeGeneral(b) : shape(b), plan)
+        );
+        const requestChars = requestMessages.reduce((n, m) => n + (typeof m.content === 'string' ? m.content.length : JSON.stringify(m.content || '').length), 0);
+        console.info('chat request plan', { intent: intent.mode, tier: b + 1, maxTokens: plan.maxTokens || C.llm.maxTokens || 800, inputChars: requestChars });
         try {
           const r = await llm.complete({
-            messages: [{ role: 'system', content: system }].concat(withAtt(shape(b), BUDGETS[b])),
-            maxTokens: BUDGETS[b].maxTokens, stream: wantStream, vision: !!(att && att.kind === 'image'),
-            idempotencyKey: `${idempotencyKey}-${b}`,
+            messages: requestMessages,
+            maxTokens: plan.maxTokens || C.llm.maxTokens || 800, stream: wantStream, vision: !!(att && att.kind === 'image'),
+            idempotencyKey: `${idempotencyKey}-${intent.mode}-${b}`,
           });
           completion = r.result; streamed = r.streamed; release = r.release;
           break;
         } catch (e) {
-          if (llm.kind(e) === 'too_big' && b < BUDGETS.length - 1) {
-            console.warn(`upstream too big — retry with smaller budget #${b + 1} (compact=${!!BUDGETS[b + 1].compact})`);
+          if (llm.kind(e) === 'too_big' && b < plans.length - 1) {
+            console.warn(`upstream too big — retry with smaller budget #${b + 1} (intent=${intent.mode})`);
             continue;
           }
           throw e;
@@ -403,7 +436,7 @@ module.exports = async (req, res) => {
         }
         finish = extra.finish;
       }
-      truncated = isLengthFinish(finish) || !extra.text;
+      truncated = isLengthFinish(finish) || extra.finish === 'incomplete' || !extra.text;
       if (truncated) {
         const note = '\n\nادامهٔ پاسخ به‌دلیل محدودیت سرویس کامل دریافت نشد.';
         if (!reply.includes(note.trim())) reply += note;
