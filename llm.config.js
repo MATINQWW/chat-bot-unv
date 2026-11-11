@@ -15,7 +15,7 @@
 // بدون ویرایش فایل هم می‌شود سرویس فعال را عوض کرد: متغیر LLM_USE را در Vercel بگذارید (مثلاً irancopilot).
 // ═══════════════════════════════════════════════════════════
 module.exports = {
-  use: 'ollama',
+  use: 'openrouter',
   fallback: [],
 
   providers: {
@@ -29,6 +29,12 @@ module.exports = {
       url: 'https://irancopilot.com/studio/pro/v1',
       model: 'icp-chat',
       key: 'ICP_API_KEY',
+    },
+       openrouter: {
+      url: 'https://openrouter.ai/api/v1',
+      model: 'google/gemma-4-31b-it:free',
+      key: 'OPENROUTER_API_KEY',
+      vision: true,
     },
   },
 };
