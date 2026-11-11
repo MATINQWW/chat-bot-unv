@@ -17,7 +17,7 @@ const BLOCK = (vcfg.redirects || []).map(r => new RegExp('^' + r.source + '$'));
 const HEADERS = ((vcfg.headers || [])[0] || {}).headers || [];
 const API = new Set(fs.readdirSync(path.join(ROOT, 'api')).filter(f => f.endsWith('.js')).map(f => f.slice(0, -3)));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
-  '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8' };
+  '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8' };
 const MAX_JSON = 4.5 * 1024 * 1024; // همان سقف بدنهٔ Vercel
 
 const handlers = {};

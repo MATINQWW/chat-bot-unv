@@ -634,12 +634,12 @@ function owlSVG(mode,cls){
   return `<svg class="owl ${cls||''}" data-mode="${mode}" viewBox="0 0 816 800" aria-hidden="true" focusable="false">`+
     `<defs><clipPath id="${id}"><circle cx="0" cy="0" r="66"/></clipPath></defs>`+
     `<ellipse class="o-shadow" cx="408" cy="758" rx="165" ry="14" fill="rgba(42,80,140,.14)"/>`+
-    `<image href="assets/owl/body.png" x="160" y="408" width="495" height="371"/>`+
-    `<g class="o-head o-v"><image href="assets/owl/head.png" x="-5" y="32" width="825" height="470"/>`+
-    `<image class="o-pupil" href="assets/owl/pupilL.png" x="264" y="320" width="98" height="98"/>`+
-    `<image class="o-pupil" href="assets/owl/pupilR.png" x="453" y="320" width="98" height="98"/>${lids}</g>`+
-    `<g class="o-tapL o-v"><image href="assets/owl/wingL.png" x="167" y="455" width="125" height="234"/></g>`+
-    `<g class="o-wave o-v"><g class="o-tapR o-v"><image href="assets/owl/wingR.png" x="524" y="459" width="123" height="233"/></g></g>`+
+    `<image href="assets/owl/body.webp" x="160" y="408" width="495" height="371"/>`+
+    `<g class="o-head o-v"><image href="assets/owl/head.webp" x="-5" y="32" width="825" height="470"/>`+
+    `<image class="o-pupil" href="assets/owl/pupilL.webp" x="264" y="320" width="98" height="98"/>`+
+    `<image class="o-pupil" href="assets/owl/pupilR.webp" x="453" y="320" width="98" height="98"/>${lids}</g>`+
+    `<g class="o-tapL o-v"><image href="assets/owl/wingL.webp" x="167" y="455" width="125" height="234"/></g>`+
+    `<g class="o-wave o-v"><g class="o-tapR o-v"><image href="assets/owl/wingR.webp" x="524" y="459" width="123" height="233"/></g></g>`+
     `<g class="o-laptop" transform="translate(82,127) scale(.8)"><g class="o-lap o-v">`+
     `<rect x="268" y="556" width="280" height="146" rx="16" fill="#9b80cf"/><rect x="277" y="565" width="262" height="128" rx="10" fill="#b39ae8"/>`+
     `<g class="o-logo"><path d="M408 596L416 622L442 630L416 638L408 664L400 638L374 630L400 622Z" fill="#fff"/></g>`+
