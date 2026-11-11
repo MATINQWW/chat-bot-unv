@@ -32,7 +32,7 @@ module.exports = {
     },
        openrouter: {
       url: 'https://openrouter.ai/api/v1',
-      model: 'google/gemma-4-31b-it:free',
+      model: 'baidu/ernie-5.5-flash-preview:free',
       key: 'OPENROUTER_API_KEY',
       vision: true,
     },
