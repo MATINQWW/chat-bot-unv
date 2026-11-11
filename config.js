@@ -30,6 +30,7 @@ module.exports = {
         model: 'baidu/ernie-5.5-flash-preview:free',
         key: 'OPENROUTER_API_KEY',
         vision: true,
+      },
     },
 
     maxTokens: 800,          // سقف طول پاسخ
