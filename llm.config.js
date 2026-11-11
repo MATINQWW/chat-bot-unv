@@ -21,7 +21,7 @@ module.exports = {
   providers: {
     ollama: {
       url: 'https://ollama.com/v1',
-      model: 'gemma4',
+      model: 'beam:cloud',
       key: 'OLLAMA_API_KEY',
       vision: true,
     },
