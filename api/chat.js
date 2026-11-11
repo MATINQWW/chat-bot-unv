@@ -26,8 +26,8 @@ const BUDGETS = [
   { knowledge: 0,    maxTokens: 0,   prevQ: 3, qChars: 200, aChars: 300, chars: 800, attachmentChars: 8000 }, // بودجهٔ معمول از config.js تکمیل می‌شود
   { knowledge: 1000, maxTokens: 600, prevQ: 2, qChars: 150, aChars: 200, chars: 500, attachmentChars: 4000 },
   { knowledge: 350,  maxTokens: 250, prevQ: 1, qChars: 100, aChars: 0,   chars: 350, attachmentChars: 1200 },
-  // آخرین تلاش: بدون دانش بازیابی‌شده و تاریخچه؛ فقط سؤال اصلی با دستورالعمل فشرده
-  { knowledge: 0,    maxTokens: 128, prevQ: 0, qChars: 0,   aChars: 0,   chars: 180, attachmentChars: 500, compact: true },
+  // آخرین تلاش: بدون دانش و تاریخچه؛ Prompt فشرده و پاسخ کافی برای جلوگیری از قطع جمله
+  { knowledge: 0,    maxTokens: 400, prevQ: 0, qChars: 0,   aChars: 0,   chars: 320, attachmentChars: 500, compact: true },
 ];
 
 // پیشنهاد «درخواست تماس» وقتی پاسخ به مرکز هدایت تحصیلی ارجاع می‌دهد —

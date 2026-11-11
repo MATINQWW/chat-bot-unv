@@ -89,7 +89,7 @@ const server = http.createServer((rq, rs) => {
     if (mode === '429once' && seen.filter(s => s.url.includes('chat')).length === 1) { rs.statusCode = 429; return rs.end('{}'); }
     if (mode === '413untilsmall') {
       const request = seen[seen.length - 1].body;
-      if (request.max_tokens > 128) { rs.statusCode = 413; return rs.end('{"error":"context too large"}'); }
+      if (!String(request.messages?.[0]?.content || '').includes('تو مشاور هدایت تحصیلی هستی')) { rs.statusCode = 413; return rs.end('{"error":"context too large"}'); }
     }
     const content = mode === 'empty' ? '' : 'پاسخ آزمایشی: با مرکز هدایت تحصیلی تماس بگیرید ☎️ ۰۳۱-۳۵۳۵۴۰۴۹';
     const req = seen[seen.length - 1].body;
@@ -220,7 +220,7 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   r = await call(chat, { body: { messages: [{ role: 'user', content: 'برای انتخاب رشته چه معیارهایی مهم هستند؟' }] } });
   assert.strictEqual(r.code, 200, 'upstream 413 should recover using the compact-context retry');
   assert.strictEqual(seen.length, 4, 'three oversized attempts then one compact retry');
-  assert.strictEqual(seen[3].body.max_tokens, 128);
+  assert.strictEqual(seen[3].body.max_tokens, 400, 'compact retry must preserve enough output budget');
   assert.ok(seen[3].body.messages[0].content.length < 900, 'compact system prompt must be short');
   mode = 'ok'; console.log('✓ مدیریت پاسخ خالی / کلید نامعتبر / 429 و بازیابی خودکار 413 با Prompt فشرده');
 
