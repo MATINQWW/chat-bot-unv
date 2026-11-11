@@ -26,8 +26,8 @@ const BUDGETS = [
   { knowledge: 0,    maxTokens: 0,   prevQ: 3, qChars: 200, aChars: 300, chars: 800, attachmentChars: 8000 }, // بودجهٔ معمول از config.js تکمیل می‌شود
   { knowledge: 1000, maxTokens: 600, prevQ: 2, qChars: 150, aChars: 200, chars: 500, attachmentChars: 4000 },
   { knowledge: 350,  maxTokens: 250, prevQ: 1, qChars: 100, aChars: 0,   chars: 350, attachmentChars: 1200 },
-  // آخرین تلاش: بدون دانش و تاریخچه؛ Prompt فشرده و پاسخ کافی برای جلوگیری از قطع جمله
-  { knowledge: 0,    maxTokens: 400, prevQ: 0, qChars: 0,   aChars: 0,   chars: 320, attachmentChars: 500, compact: true },
+  // آخرین تلاش باید واقعاً از نظر سقف خروجی هم کوچک‌تر باشد؛ ادامهٔ پاسخ در قطعه‌های جدا انجام می‌شود.
+  { knowledge: 0,    maxTokens: 128, prevQ: 0, qChars: 0,   aChars: 0,   chars: 220, attachmentChars: 300, compact: true },
 ];
 
 // پیشنهاد «درخواست تماس» وقتی پاسخ به مرکز هدایت تحصیلی ارجاع می‌دهد —
@@ -70,47 +70,82 @@ async function readCompletion(result, streamed) {
 }
 
 async function continueTruncatedReply({ reply, question, langHint, stream, idempotencyKey }) {
-  // یک بخش ادامه؛ در صورت 413 فقط یک بار با Context و سقف کوچک‌تر تلاش می‌شود.
-  const variants = [
-    { tail: 1400, question: 500, maxTokens: 600, timeoutMs: 12000 },
-    { tail: 650, question: 320, maxTokens: 350, timeoutMs: 8000 },
-  ];
-  for (let i = 0; i < variants.length; i++) {
-    const v = variants[i];
-    const prompt = [
-      `پرسش اصلی کاربر: ${String(question || '').slice(0, v.question)}`,
-      'انتهای پاسخ قبلی (فقط برای حفظ پیوستگی؛ آن را تکرار نکن):',
-      String(reply || '').slice(-v.tail),
-      'پاسخ قبلی به سقف خروجی رسیده است. دقیقاً از بعد آخرین عبارت ادامه بده، از تکرار مطالب قبلی خودداری کن و پاسخ را با جمع‌بندی طبیعی تمام کن.',
-    ].join('\n\n');
-    let result;
-    try {
-      result = await llm.complete({
-        messages: [
-          { role: 'system', content: `تو دستیار هدایت تحصیلی هستی. این فقط ادامهٔ پاسخ ناتمام است؛ موضوع و زبان پاسخ قبلی را حفظ کن. اطلاعات رسمی دانشگاه، آمار حقوق و نرخ اشتغال را بدون منبع نساز. ${langHint || ''}` },
-          { role: 'user', content: prompt },
-        ],
-        maxTokens: v.maxTokens,
-        stream: !!stream,
-        idempotencyKey: `${idempotencyKey}-continue-${i}`,
-        timeoutMs: v.timeoutMs,
-      });
+  // پاسخ را در قطعه‌های کوچک ادامه می‌دهیم تا محدودیت سخت Provider دور زده نشود.
+  // کل زمان ادامه محدود است تا تابع Vercel از maxDuration عبور نکند.
+  const deadline = Date.now() + 14000;
+  const maxSegments = 3;
+  let combined = String(reply || '');
+  let finish = 'length';
+  let provider = '';
+
+  for (let segment = 0; segment < maxSegments && Date.now() < deadline; segment++) {
+    const variants = [
+      { tail: 480, question: 180, maxTokens: 128, timeoutMs: 4500 },
+      { tail: 240, question: 100, maxTokens: 64, timeoutMs: 3000 },
+    ];
+    let part = null;
+
+    for (let attempt = 0; attempt < variants.length; attempt++) {
+      const v = variants[attempt];
+      if (Date.now() + v.timeoutMs > deadline) break;
+      const prompt = [
+        `پرسش اصلی: ${String(question || '').slice(0, v.question)}`,
+        'انتهای پاسخ قبلی (برای حفظ پیوستگی؛ تکرار نکن):',
+        String(combined).slice(-v.tail),
+        'فقط از بعد آخرین عبارت ادامه بده. کوتاه و مفید بنویس و پاسخ را طبیعی تمام کن.',
+      ].join('\n\n');
+      let result;
       try {
-        const part = await readCompletion(result.result, result.streamed);
-        return { ...part, provider: result.provider };
-      } finally {
-        result.release();
+        result = await llm.complete({
+          messages: [
+            { role: 'system', content: `ادامه‌دهندهٔ پاسخ فارسی. فقط ادامهٔ متن را بنویس؛ تکرار نکن. اطلاعات رسمی یا آمار بی‌منبع نساز. ${langHint || ''}` },
+            { role: 'user', content: prompt },
+          ],
+          maxTokens: v.maxTokens,
+          stream: !!stream,
+          idempotencyKey: `${idempotencyKey}-continue-${segment}-${attempt}`,
+          timeoutMs: v.timeoutMs,
+        });
+        try {
+          part = await readCompletion(result.result, result.streamed);
+          provider = result.provider || provider;
+        } finally {
+          result.release();
+        }
+        break;
+      } catch (error) {
+        if (llm.kind(error) === 'too_big' && attempt === 0) {
+          console.warn(`continuation segment ${segment + 1} too big; retrying with ${variants[1].maxTokens} output tokens`);
+          continue;
+        }
+        console.warn('answer continuation failed', {
+          status: error && (error.status || (error.response && error.response.status)),
+          message: String(error && error.message || 'unknown').slice(0, 180),
+          segment: segment + 1,
+          attempt: attempt + 1,
+        });
+        return { text: combined.slice(String(reply || '').length), finish: 'incomplete', provider };
       }
-    } catch (error) {
-      if (llm.kind(error) === 'too_big' && i === 0) {
-        console.warn('continuation context too big — retrying with a smaller continuation prompt');
-        continue;
-      }
-      console.warn('answer continuation failed', error && (error.status || error.message));
-      return { text: '', finish: 'incomplete' };
+    }
+
+    if (!part || !part.text) {
+      return { text: combined.slice(String(reply || '').length), finish: 'incomplete', provider };
+    }
+
+    const delta = continuationDelta(combined, part.text);
+    if (delta) combined += (combined && !/[\s\n]$/.test(combined) && !/^[،؛.!?؟]/.test(delta) ? '\n' : '') + delta;
+    finish = part.finish || 'unknown';
+
+    if (!isLengthFinish(finish)) {
+      return { text: combined.slice(String(reply || '').length), finish, provider };
     }
   }
-  return { text: '', finish: 'incomplete' };
+
+  return {
+    text: combined.slice(String(reply || '').length),
+    finish: isLengthFinish(finish) ? 'length' : 'incomplete',
+    provider,
+  };
 }
 
 module.exports = async (req, res) => {

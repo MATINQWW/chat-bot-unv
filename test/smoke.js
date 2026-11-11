@@ -92,11 +92,18 @@ const server = http.createServer((rq, rs) => {
       if (!String(request.messages?.[0]?.content || '').includes('تو مشاور هدایت تحصیلی هستی')) { rs.statusCode = 413; return rs.end('{"error":"context too large"}'); }
     }
     const req = seen[seen.length - 1].body;
-    const isContinuation = req.messages?.some(m => m.role === 'user' && String(m.content).includes('پاسخ قبلی به سقف خروجی رسیده است'));
-    if (mode === 'lengthThenContinue' || mode === 'lengthStreamThenContinue' || mode === 'lengthContinuation413') {
-      if (mode === 'lengthContinuation413' && isContinuation && req.max_tokens > 350) { rs.statusCode = 413; return rs.end('{\"error\":\"context too large\"}'); }
-      const text = isContinuation ? 'ادامهٔ پاسخ کامل شد و پیشنهاد عملی ارائه شد.' : 'این پاسخ تا اینجا ناقص است و باید ادامه پیدا کند';
-      const finish = isContinuation ? 'stop' : 'length';
+    const isContinuation = req.messages?.some(m => m.role === 'user' && (String(m.content).includes('انتهای پاسخ قبلی') || String(m.content).includes('فقط از بعد آخرین عبارت ادامه بده')));
+    if (mode === 'lengthThenContinue' || mode === 'lengthStreamThenContinue' || mode === 'lengthContinuation413' || mode === 'lengthMultiContinue') {
+      if (mode === 'lengthContinuation413' && isContinuation && req.max_tokens > 64) { rs.statusCode = 413; return rs.end('{"error":"context too large"}'); }
+      const continuationCount = seen.filter(x => x.body.messages?.some(m => m.role === 'user' && String(m.content).includes('انتهای پاسخ قبلی'))).length;
+      const text = !isContinuation
+        ? 'این پاسخ تا اینجا ناقص است و باید ادامه پیدا کند'
+        : mode === 'lengthMultiContinue' && continuationCount === 2
+          ? 'بخش دوم ادامهٔ پاسخ و جمع‌بندی نهایی.'
+          : mode === 'lengthMultiContinue'
+            ? 'بخش اول ادامهٔ پاسخ؛ هنوز یک بخش باقی مانده.'
+            : 'ادامهٔ پاسخ کامل شد و پیشنهاد عملی ارائه شد.';
+      const finish = !isContinuation ? 'length' : (mode === 'lengthMultiContinue' && continuationCount === 2 ? 'stop' : (mode === 'lengthMultiContinue' ? 'length' : 'stop'));
       rs.setHeader('content-type', req.stream ? 'text/event-stream' : 'application/json');
       if (req.stream) {
         rs.write('data: ' + JSON.stringify({ choices: [{ delta: { content: text }, finish_reason: null }] }) + '\n\n');
@@ -233,7 +240,8 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   r = await call(chat, { body: { messages: [{ role: 'user', content: 'برای انتخاب رشته چه معیارهایی مهم هستند؟' }] } });
   assert.strictEqual(r.code, 200, 'upstream 413 should recover using the compact-context retry');
   assert.strictEqual(seen.length, 4, 'three oversized attempts then one compact retry');
-  assert.strictEqual(seen[3].body.max_tokens, 400, 'compact retry must preserve enough output budget');
+  assert.strictEqual(seen[3].body.max_tokens, 128, 'compact retry must use a truly smaller output budget');
+  assert.ok(seen[0].body.max_tokens > seen[1].body.max_tokens && seen[1].body.max_tokens > seen[2].body.max_tokens && seen[2].body.max_tokens > seen[3].body.max_tokens, 'retry output budgets must decrease monotonically');
   assert.ok(seen[3].body.messages[0].content.length < 900, 'compact system prompt must be short');
   mode = 'lengthThenContinue'; seen = [];
   r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'مزایا و چالش‌های مهندسی کامپیوتر چیست؟' }] } });
@@ -242,16 +250,23 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.ok(r.json.reply.includes('ادامهٔ پاسخ کامل شد'));
   assert.strictEqual(seen.length, 2, 'a length-limited non-stream answer must trigger one continuation call');
   assert.strictEqual(r.json.sig, sign(r.json.reply), 'the combined answer must be signed as one response');
-  assert.strictEqual(seen[1].body.max_tokens, 600);
-  assert.ok(seen[1].body.messages[1].content.includes('پاسخ قبلی به سقف خروجی رسیده است'));
+  assert.strictEqual(seen[1].body.max_tokens, 128);
+  assert.ok(seen[1].body.messages[1].content.includes('انتهای پاسخ قبلی'));
 
   mode = 'lengthContinuation413'; seen = [];
   r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'مزایا و چالش‌های مهندسی کامپیوتر چیست؟' }] } });
   assert.strictEqual(r.code, 200);
   assert.ok(r.json.reply.includes('ادامهٔ پاسخ کامل شد'));
   assert.strictEqual(seen.length, 3, 'a 413 continuation must retry once with a smaller prompt');
-  assert.strictEqual(seen[1].body.max_tokens, 600);
-  assert.strictEqual(seen[2].body.max_tokens, 350);
+  assert.strictEqual(seen[1].body.max_tokens, 128);
+  assert.strictEqual(seen[2].body.max_tokens, 64);
+
+  mode = 'lengthMultiContinue'; seen = [];
+  r = await call(chat, { body: { lang: 'fa', stream: false, messages: [{ role: 'user', content: 'یک پاسخ جامع درباره انتخاب رشته می‌خواهم' }] } });
+  assert.strictEqual(r.code, 200);
+  assert.ok(r.json.reply.includes('بخش اول ادامهٔ پاسخ'));
+  assert.ok(r.json.reply.includes('بخش دوم ادامهٔ پاسخ'));
+  assert.strictEqual(seen.length, 3, 'a length-limited continuation should continue for a second small segment');
 
   mode = 'lengthStreamThenContinue'; seen = [];
   r = await call(chat, { body: { lang: 'fa', stream: true, messages: [{ role: 'user', content: 'مزایا و چالش‌های مهندسی کامپیوتر چیست؟' }] } });
