@@ -40,6 +40,11 @@ const html = invoke({ env: { VERCEL_ENV: 'preview', ADMIN_PREVIEW_ENABLED: '1' }
 assert.equal(html.status, 200);
 assert.match(html.headers['content-type'], /text\/html/);
 assert.match(html.body, /نسخه نمایشی/);
+assert.match(html.body, /id=\"loginForm\"/);
+assert.match(html.body, /id=\"loginEmail\"/);
+assert.match(html.body, /id=\"loginPassword\"/);
+assert.match(html.body, /data-demo-account=\"super\"/);
+assert.match(html.body, /data-demo-account=\"admin\"/);
 assert.match(html.body, /\/api\/admin-preview\?asset=js/);
 assert.equal(html.headers['cache-control'], 'private, no-store, max-age=0');
 const css = invoke({ env: { VERCEL_ENV: 'preview', ADMIN_PREVIEW_ENABLED: '1' }, url: '/?asset=css' });
@@ -50,6 +55,12 @@ const js = invoke({ env: { VERCEL_ENV: 'preview', ADMIN_PREVIEW_ENABLED: '1' }, 
 assert.equal(js.status, 200);
 assert.match(js.headers['content-type'], /javascript/);
 assert.match(js.body, /temporaryKnowledge/);
+assert.match(js.body, /owner@nooka\.demo/);
+assert.match(js.body, /admin@nooka\.demo/);
+assert.match(js.body, /function isSuperAdmin/);
+assert.match(js.body, /views: \['dashboard','requests','tokens','knowledge'\]/);
+assert.match(js.body, /logoutButton/);
+assert.doesNotMatch(js.body, /localStorage|sessionStorage/);
 assert.equal(invoke({ env: { VERCEL_ENV: 'preview', ADMIN_PREVIEW_ENABLED: '1' }, url: '/?asset=other' }).status, 404);
 assert.equal(invoke({ env: { VERCEL_ENV: 'preview', ADMIN_PREVIEW_ENABLED: '1' }, method: 'POST' }).status, 405);
 console.log('✓ admin preview gating, assets, cache and method checks passed');
