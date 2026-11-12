@@ -404,6 +404,11 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
 
   delete process.env.LEAD_WEBHOOK_URL;
 
+  // Reject malformed attachment shapes before granting the larger attachment body budget.
+  r = await call(chat, { body: { attachment: 'not-an-attachment', messages: [{ role: 'user', content: 'سلام' }] } });
+  assert.strictEqual(r.code, 400); assert.strictEqual(r.json.error, 'bad_attachment');
+  console.log('✓ پیوست نامعتبر قبل از دریافت بودجهٔ بدنهٔ بزرگ رد می‌شود');
+
   // ۱۳-ب) گزارش پرسش‌ها: تعداد، ادغام عبارت‌های مشابه، منبع پاسخ، CSV
   const rep0 = require('../lib/report');
   await rep0.reset(require('../lib/common').kv);
@@ -429,6 +434,13 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.strictEqual(rep0.sourceOfReply('این سوال خارج از حوزه هدایت تحصیلی است', 'knowledge'), 'off_topic');
   r = await call(admin, { method: 'GET', url: '/api/admin?report=csv', headers: AH });
   assert.ok(/^\ufeffپرسش,تعداد/.test(r.body) && /کامپیوتر/.test(r.body));
+  const hostileCsv = rep0.csv({ questions: [{
+    question: '=HYPERLINK("https://example.invalid","click")', count: 1, similarPhrasings: 1,
+    mainSource: 'general', fromKnowledgeRate: 0, sources: {}, knowledgeChunks: [],
+    variants: [{ q: '+cmd|/C calc', n: 1 }], lastAskedAt: ''
+  }] });
+  assert.ok(hostileCsv.includes('"\t=HYPERLINK('), 'formula-leading question must be neutralized in CSV');
+  assert.ok(hostileCsv.includes('"\t+cmd'), 'formula-leading variant must be neutralized in CSV');
   r = await call(admin, { method: 'POST', body: { resetReport: true }, headers: AH }); assert.ok(r.json.ok);
   console.log('✓ گزارش پرسش‌ها: شمارش، ادغام عبارت‌های مشابه، منبع پاسخ (پایگاه دانش/وکتور/مدل)، بدون اطلاعات شخصی، CSV');
 

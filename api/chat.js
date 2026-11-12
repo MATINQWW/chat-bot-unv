@@ -162,8 +162,13 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
   if (!originAllowed(req)) return res.status(403).json({ error: 'forbidden' });
 
-  const body = (req.body && typeof req.body === 'object') ? req.body : {};
-  const hasAtt = !!body.attachment;
+  const body = (req.body && typeof req.body === 'object' && !Array.isArray(req.body)) ? req.body : {};
+  const attachmentProvided = Object.prototype.hasOwnProperty.call(body, 'attachment') && body.attachment != null;
+  const hasAtt = attachmentProvided;
+  if (hasAtt && (!body.attachment || typeof body.attachment !== 'object' || Array.isArray(body.attachment) ||
+      !['image', 'document'].includes(body.attachment.type))) {
+    return res.status(400).json({ error: 'bad_attachment', message: 'ساختار فایل پیوست معتبر نیست.' });
+  }
   // اگر Content-Length نبود (chunked)، اندازهٔ واقعی را از روی بدنهٔ parse‌شده حساب می‌کنیم
   let len = parseInt((req.headers && req.headers['content-length']) || '0', 10);
   if (!len) { try { len = Buffer.byteLength(JSON.stringify(body)); } catch { len = 0; } }
