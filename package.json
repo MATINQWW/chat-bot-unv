@@ -1,6 +1,6 @@
 {
   "name": "chat-bot-unv",
-  "version": "1.6.9",
+  "version": "1.6.10",
   "private": true,
   "engines": {
     "node": "26.x"
@@ -12,13 +12,14 @@
     "eval": "node scripts/eval.js",
     "test:mysql": "node test/mysql.js",
     "test:server": "node test/server.js",
-    "test:all": "npm test && npm run test:server && npm run test:security && npm run eval -- --min 90",
+    "test:all": "npm test && npm run test:server && npm run test:security && npm run test:admin-preview && npm run eval -- --min 90",
     "test:security": "node test/security.js",
-    "test:load:local": "node scripts/load-test-local.cjs"
+    "test:load:local": "node scripts/load-test-local.cjs",
+    "test:admin-preview": "node test/admin-preview.js"
   },
   "dependencies": {
     "@upstash/vector": "1.2.3",
-    "mysql2": "3.11.3",
+    "mysql2": "3.24.6",
     "openai": "4.104.0",
     "pdf-parse": "1.1.1"
   }

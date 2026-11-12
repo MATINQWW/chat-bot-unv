@@ -120,3 +120,12 @@ npm run eval -- --min 90
 - تست‌های امنیتی، سرور، سیاست پاسخ و ارزیابی دانش با `npm run test:all` اجرا می‌شوند.
 - تست بار محلی با Provider ساختگی و بدون ارسال درخواست به سرویس واقعی اجرا می‌شود: `npm run test:load:local`.
 - قبل از انتشار عمومی، Redis مشترک و `RATE_LIMIT_FAIL_CLOSED=1` را تنظیم کنید و سقف هم‌زمانی/هزینهٔ Provider را با محدودیت سراسری کنترل کنید.
+
+## Admin Preview (UI only)
+
+- The first admin interface is a non-persistent preview shell at `/admin`.
+- To expose it on a Vercel Preview deployment, set `ADMIN_PREVIEW_ENABLED=1` in the **Preview** environment only.
+- The route also checks `VERCEL_ENV=preview` and returns 404 on Production. Do not set `ADMIN_PREVIEW_ENABLED` for Production.
+- All rows and charts in this preview are fictional demo data. UI interactions such as adding a knowledge item or an admin exist only in browser memory and are lost on reload. No admin write API or MySQL connection is used by this preview.
+- Protect Preview deployments with Vercel Deployment Protection when available. The production chat interface and its existing API routes are not changed by this preview UI.
+- The next phase will implement server-side admin authentication/RBAC, durable MySQL logging and knowledge storage on the VPS. The demo interface is not an operational admin panel and must not be used to manage real data.

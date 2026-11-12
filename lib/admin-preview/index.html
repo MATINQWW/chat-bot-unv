@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F6F4EF">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>مدیریت نوکا | Nooka Admin</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css">
+  <link rel="stylesheet" href="/api/admin-preview?asset=css">
+  <script src="/api/admin-preview?asset=js" defer></script>
+</head>
+<body>
+  <div class="demo-ribbon"><span class="demo-dot"></span> نسخه نمایشی · اطلاعات ساختگی هستند · هیچ تغییری ذخیره دائمی نمی‌شود</div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="/owl.png" alt="نوکا"></div>
+        <div class="brand-copy"><strong>نوکا</strong><span>مرکز مدیریت</span></div>
+        <button class="icon-button sidebar-close" id="sidebarClose" aria-label="بستن منو">×</button>
+      </div>
+      <div class="workspace"><span class="workspace-mark">N</span><div><strong>دانشگاه خوراسگان</strong><small>فضای مدیریتی</small></div><span class="chevron">⌄</span></div>
+      <div class="nav-label">مدیریت</div>
+      <nav class="main-nav" aria-label="منوی مدیریت">
+        <button class="nav-item active" data-view="dashboard"><span class="nav-icon">▦</span><span>داشبورد</span></button>
+        <button class="nav-item" data-view="requests"><span class="nav-icon">⌕</span><span>درخواست‌ها و گفتگوها</span><span class="nav-count">۱۲</span></button>
+        <button class="nav-item" data-view="tokens"><span class="nav-icon">◉</span><span>مصرف توکن</span></button>
+        <button class="nav-item" data-view="knowledge"><span class="nav-icon">▤</span><span>مدیریت دانش</span></button>
+      </nav>
+      <div class="nav-label nav-label-spaced">مدیریت دسترسی</div>
+      <nav class="main-nav" aria-label="دسترسی و امنیت">
+        <button class="nav-item" data-view="admins"><span class="nav-icon">♙</span><span>ادمین‌ها و دسترسی‌ها</span></button>
+        <button class="nav-item" data-view="audit"><span class="nav-icon">≋</span><span>گزارش فعالیت‌ها</span></button>
+        <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span><span>تنظیمات</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="security-note"><span class="security-icon">◇</span><div><strong>حالت امن نمایشی</strong><small>اتصال به داده واقعی غیرفعال است</small></div></div>
+        <div class="profile-row"><div class="avatar avatar-blue">م</div><div class="profile-copy"><strong>مدیر اصلی</strong><small>Super Admin · Demo</small></div><span class="online-dot"></span></div>
+      </div>
+    </aside>
+    <div class="sidebar-scrim" id="sidebarScrim"></div>
+    <main class="main-area">
+      <header class="topbar">
+        <div class="topbar-start"><button class="icon-button mobile-menu" id="mobileMenu" aria-label="بازکردن منو">☰</button><div class="breadcrumb"><span>نوکا</span><b>/</b><strong id="breadcrumbTitle">داشبورد</strong></div></div>
+        <div class="topbar-actions"><span class="preview-pill"><i></i> Preview</span><button class="icon-button" id="themeToggle" aria-label="تغییر پوسته" title="تغییر پوسته">◐</button><button class="icon-button notification-button" id="notifications" aria-label="اعلان‌ها">♧<i></i></button><div class="top-avatar">م</div></div>
+      </header>
+      <section class="page-content" id="pageContent" aria-live="polite"></section>
+      <footer class="footer-note"><span>NOOKA ADMIN</span><span>نسخه نمایشی رابط مدیریت · v0.1</span><span>محیط آزمایشی</span></footer>
+    </main>
+  </div>
+  <div id="modalRoot"></div>
+  <div id="toastRoot" class="toast-root" aria-live="polite"></div>
+</body>
+</html>

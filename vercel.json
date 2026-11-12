@@ -3,6 +3,10 @@
     "api/*.js": {
       "includeFiles": "knowledge/chunks.json",
       "maxDuration": 60
+    },
+    "api/admin-preview.js": {
+      "includeFiles": "lib/admin-preview/**",
+      "maxDuration": 10
     }
   },
   "redirects": [
@@ -41,6 +45,16 @@
           "value": "max-age=63072000; includeSubDomains"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "/api/admin-preview"
+    },
+    {
+      "source": "/admin/",
+      "destination": "/api/admin-preview"
     }
   ]
 }
