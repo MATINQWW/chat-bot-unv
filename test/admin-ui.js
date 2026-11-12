@@ -1,50 +1,47 @@
 'use strict';
+// رابط پنل مدیریت اکنون فایل استاتیک در admin/ است (دیگر تابع Serverless نیست).
+// این تست از مسیر server.js آن را بررسی می‌کند؛ ورود و نقش‌ها در test/admin-auth.js تست می‌شوند.
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const handler = require('../api/admin-ui');
-const retiredPreviewHandler = require('../api/admin-preview');
-const assets = require('../lib/admin-panel/assets');
+const server = require('../server');
 
-for (const name of ['html', 'css', 'js']) {
-  const file = name === 'html' ? 'index.html' : name === 'css' ? 'style.css' : 'app.js';
-  assert.equal(assets[name], fs.readFileSync(path.join(__dirname, '..', 'lib', 'admin-panel', file), 'utf8'));
-}
+(async () => {
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const get = (p, method = 'GET') => fetch(base + p, { method, headers: { Connection: 'close' }, redirect: 'manual' });
 
-function invoke({ method = 'GET', url = '/' } = {}) {
-  const headers = {};
-  const res = {
-    statusCode: 200,
-    body: undefined,
-    setHeader(k, v) { headers[k.toLowerCase()] = v; return this; },
-    status(code) { this.statusCode = code; return this; },
-    end(body) { this.body = body; return this; },
-  };
-  handler({ method, url }, res);
-  return { status: res.statusCode, body: res.body, headers };
-}
+  try {
+    let r = await get('/admin');
+    assert.equal(r.status, 302, '/admin must redirect to /admin/ so relative asset paths resolve');
+    assert.equal(r.headers.get('location'), '/admin/');
+    r = await get('/admin/');
+    assert.equal(r.status, 200, 'admin login page must be available');
+    assert.match(r.headers.get('content-type'), /text\/html/);
+    assert.match(r.headers.get('cache-control'), /no-store/);
+    assert.match(r.headers.get('x-robots-tag'), /noindex/);
+    const html = await r.text();
+    assert.match(html, /id="loginForm"/);
+    assert.match(html, /ورود امن و نقش‌محور/);
+    assert.doesNotMatch(html, /data-demo-account/);
 
-let r = invoke({ url: '/admin' });
-assert.equal(r.status, 200, 'admin login page must be available on main and preview deployments');
-assert.match(r.headers['content-type'], /text\/html/);
-assert.match(r.body, /id="loginForm"/);
-assert.match(r.body, /ورود امن و نقش‌محور/);
-assert.doesNotMatch(r.body, /data-demo-account/);
-assert.doesNotMatch(r.body, /data-demo-account/);
+    r = await get('/admin/style.css');
+    assert.equal(r.status, 200);
+    assert.match(r.headers.get('content-type'), /text\/css/);
 
-r = invoke({ url: '/admin?asset=css' });
-assert.equal(r.status, 200);
-assert.match(r.headers['content-type'], /text\/css/);
+    r = await get('/admin/app.js');
+    assert.equal(r.status, 200);
+    assert.match(r.headers.get('content-type'), /javascript/);
+    const js = await r.text();
+    assert.match(js, /fetch\('\/api\/admin-auth'/);
+    assert.doesNotMatch(js, /owner@nooka\.demo|nooka-preview-super|data-demo-account/);
 
-r = invoke({ url: '/admin?asset=js' });
-assert.equal(r.status, 200);
-assert.match(r.headers['content-type'], /javascript/);
-assert.match(r.body, /fetch\('\/api\/admin-auth'/);
-assert.doesNotMatch(r.body, /owner@nooka\.demo|nooka-preview-super|data-demo-account/);
+    assert.equal((await get('/admin', 'POST')).status, 405);
+    assert.equal((await get('/admin/unknown.js')).status, 404);
+    // نقاط پایانی قدیمی دیگر وجود ندارند
+    for (const gone of ['/api/admin-ui', '/api/admin-preview']) assert.equal((await get(gone)).status, 404, gone);
 
-assert.equal(invoke({ method: 'POST' }).status, 405);
-assert.equal(invoke({ url: '/admin?asset=unknown' }).status, 404);
-const retiredRes = { statusCode: 200, setHeader() { return this; }, status(code) { this.statusCode = code; return this; }, end() { return this; } };
-retiredPreviewHandler({ method: 'GET' }, retiredRes);
-assert.equal(retiredRes.statusCode, 404, 'legacy demo endpoint must stay disabled');
-console.log('✓ admin UI: production-safe login page, assets, server auth integration, no client-side demo accounts, legacy demo endpoint retired');
+    console.log('✓ admin UI: صفحهٔ استاتیک /admin، هدرهای no-store، اتصال به /api/admin-auth، بدون حساب نمایشی، نقاط پایانی قدیمی حذف‌شده');
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+    if (typeof server.closeAllConnections === 'function') server.closeAllConnections();
+  }
+})().catch(e => { console.error(e); process.exit(1); });

@@ -15,7 +15,6 @@
     "test:all": "npm test && npm run test:server && npm run test:security && npm run test:admin-auth && npm run test:admin-ui && npm run eval -- --min 90",
     "test:security": "node test/security.js",
     "test:load:local": "node scripts/load-test-local.cjs",
-    "build:admin": "node scripts/build-admin-assets.js",
     "test:admin-auth": "node test/admin-auth.js",
     "test:admin-ui": "node test/admin-ui.js"
   },

@@ -1423,3 +1423,104 @@ body:has(#loader:not(.hide)) .owl *{ animation-play-state:paused !important; }
 .owl--typing{ width:64px; height:63px; margin:-14px -12px -14px; }
 .msg-avatar.owl-av{ width:60px; height:59px; margin:-12px -12px -11px; overflow:visible; }
 @media (max-width:480px){ .welcome-mascot{ width:128px; height:125px; } }
+
+/* ── ورود / ثبت نام ── */
+.auth-btns{ display:flex; gap:8px; padding:0 8px 8px; }
+.auth-btns[hidden]{ display:none; }
+.auth-btn{ flex:1; font:inherit; font-weight:700; font-size:.875rem; padding:9px 12px; border-radius:var(--r-lg); border:1px solid var(--border); background:transparent; color:inherit; cursor:pointer; transition:background-color .2s,border-color .2s,transform .1s; }
+.auth-btn:hover{ background:var(--accent); }
+.auth-btn:active{ transform:scale(.98); }
+.auth-btn--primary{ background:var(--primary); color:var(--primary-foreground,#fff); border-color:transparent; }
+.auth-btn--primary:hover{ background:var(--primary); filter:brightness(1.08); }
+.auth-btn[disabled]{ opacity:.6; cursor:progress; }
+.auth-tabs{ display:flex; gap:6px; margin-bottom:12px; padding:4px; border-radius:var(--r-xl); background:var(--accent); }
+.auth-tab{ flex:1; font:inherit; font-weight:700; font-size:.875rem; padding:8px; border:0; border-radius:var(--r-lg); background:transparent; color:var(--muted-foreground); cursor:pointer; }
+.auth-tab.active{ background:var(--background); color:inherit; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+.auth-form{ display:flex; flex-direction:column; gap:10px; }
+.auth-form [hidden]{ display:none; }
+.auth-submit{ flex:none; width:100%; padding:11px; }
+.auth-error{ margin:0; font-size:.8125rem; color:#dc2626; line-height:1.7; }
+.auth-hint{ margin:0; font-size:.75rem; color:var(--muted-foreground); text-align:center; line-height:1.8; }
+.guest-name[hidden],.guest-sub[hidden]{ display:none; }
+/* برچسب نوع کاربر روی فرم تیکت/درخواست تماس */
+.lead-form__who{ align-self:flex-start; display:inline-flex; align-items:center; gap:6px; font-size:.75rem; font-weight:700; padding:4px 10px; border-radius:999px; background:var(--accent); color:var(--muted-foreground); }
+.lead-form__who--user{ background:var(--glow-soft,var(--accent)); color:var(--glow-ink,inherit); }
+
+/* ═══ آیکون‌های منوی کناری: تنظیمات (چرخان) · پشتیبانی (در حال تایپ) · دربارهٔ ما (پالس) ═══ */
+.sidebar-tool:hover svg{ transform:none; }              /* چرخش عمومی قبلی برای این سه آیکون غیرفعال؛ هر کدام حرکت خودش را دارد */
+.tool-settings:hover,.tool-support:hover,.tool-about:hover{ color:var(--primary); }
+
+/* تنظیمات: چرخ‌دنده آرام می‌چرخد و با هاور سریع‌تر */
+.tool-settings svg{ animation:tool-spin 9s linear infinite; transform-origin:50% 50%; }
+.tool-settings:hover svg{ animation-duration:1.6s; }
+.tool-settings:active svg{ animation-duration:.6s; }
+@keyframes tool-spin{ to{ transform:rotate(360deg); } }
+
+/* پشتیبانی: حباب پیام با سه نقطهٔ پشت‌سرهم (مثل «در حال تایپ…») */
+.tool-support .sp-dot{ transform-box:fill-box; transform-origin:center; animation:tool-type 1.3s ease-in-out infinite; }
+.tool-support .sp-dot--2{ animation-delay:.16s; }
+.tool-support .sp-dot--3{ animation-delay:.32s; }
+.tool-support:hover .sp-dot{ animation-duration:.8s; }
+.tool-support .sp-bubble{ transform-box:fill-box; transform-origin:30% 100%; transition:transform .3s var(--ease-out-expo); }
+.tool-support:hover .sp-bubble{ transform:scale(1.06); }
+@keyframes tool-type{
+  0%,60%,100%{ transform:translateY(0); opacity:.4; }
+  30%{ transform:translateY(-2.6px); opacity:1; }
+}
+
+/* دربارهٔ ما: حلقهٔ پالس‌شونده دور آیکون و نقطهٔ «i» که آرام می‌پرد */
+.tool-about svg{ overflow:visible; }
+.tool-about .ab-ring{ fill:none; stroke:currentColor; transform-box:fill-box; transform-origin:center; opacity:0; animation:tool-pulse 2.8s ease-out infinite; }
+.tool-about .ab-dot{ transform-box:fill-box; transform-origin:center; animation:tool-hop 2.8s ease-in-out infinite; }
+.tool-about:hover .ab-ring{ animation-duration:1.4s; }
+.tool-about:hover .ab-main{ fill:color-mix(in oklab,var(--primary) 14%,transparent); }
+.tool-about .ab-main{ transition:fill .25s ease; }
+@keyframes tool-pulse{
+  0%{ transform:scale(.9); opacity:.55; }
+  70%,100%{ transform:scale(1.45); opacity:0; }
+}
+@keyframes tool-hop{
+  0%,70%,100%{ transform:translateY(0) scale(1); }
+  78%{ transform:translateY(-1.6px) scale(1.2); }
+  88%{ transform:translateY(0) scale(.95); }
+}
+@media (prefers-reduced-motion:reduce){
+  .tool-settings svg,.tool-support .sp-dot,.tool-about .ab-ring,.tool-about .ab-dot{ animation:none; }
+  .tool-about .ab-ring{ opacity:0; }
+}
+
+/* ── دکمه‌ی همبرگری روی سایدبار می‌ماند و به ✕ تبدیل می‌شود ── */
+/* قبلاً سایدبار (z-index:42) روی هدر (z-index:20) می‌آمد و دکمه را می‌پوشاند؛
+   حالا هنگام باز بودن، هدر بالاتر می‌رود (فقط دکمه دیده می‌شود) و با بسته شدن،
+   بعد از پایان انیمیشن سایدبار به حالت عادی برمی‌گردد. */
+@media (max-width:767.98px){
+  header.hdr{
+    transition:z-index 0s linear .45s, background-color .2s ease .45s, border-color .2s ease .45s,
+               backdrop-filter .2s ease .45s, -webkit-backdrop-filter .2s ease .45s;
+  }
+  .hdr-brand,.hdr-actions{ transition:visibility 0s linear .45s; }
+  body.sb-open header.hdr{
+    z-index:45; pointer-events:none;
+    background-color:transparent; border-bottom-color:transparent;
+    backdrop-filter:blur(0px); -webkit-backdrop-filter:blur(0px);
+    transition-delay:0s;
+  }
+  body.sb-open .hdr-brand, body.sb-open .hdr-actions{ visibility:hidden; transition-delay:0s; }
+  body.sb-open #sb-toggle{ pointer-events:auto; }
+
+  /* جای دکمه‌ی ✕ در سطر برند سایدبار؛ دکمه‌ی بستن قدیمی لازم نیست */
+  #sidebar{ padding-top:calc(env(safe-area-inset-top,0px) + 8px); }
+  #sidebar .sb-brand{ min-height:40px; padding-inline-start:52px; padding-bottom:16px; }
+  #sidebar .sb-brand__close{ display:none; }
+}
+
+/* ── آیکون جدید پشتیبانی (هدست): نوار بالای هدست و میکروفن کمی تکان می‌خورند ── */
+.tool-support svg{ overflow:visible; }
+.tool-support .hs-mic{ transform-box:fill-box; transform-origin:100% 0%; animation:tool-mic 3.2s ease-in-out infinite; }
+.tool-support:hover .hs-mic{ animation-duration:1.2s; }
+@keyframes tool-mic{
+  0%,60%,100%{ transform:rotate(0); }
+  72%{ transform:rotate(-8deg); }
+  84%{ transform:rotate(5deg); }
+}
+@media (prefers-reduced-motion:reduce){ .tool-support .hs-mic{ animation:none; } }

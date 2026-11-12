@@ -7,6 +7,8 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = fs.realpathSync(__dirname);
+// فقط همین فایل‌ها به‌صورت استاتیک سرو می‌شوند؛ بقیهٔ ریشهٔ پروژه (config.js، lib، ...) هرگز
+const STATIC_OK = /^(index\.html|style\.css|script\.js|report\.html|report\.js|owl\.png|assets\/.+|admin\/.+)$/;
 process.chdir(ROOT);
 const vcfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
 const BLOCK = (vcfg.redirects || []).map(r => new RegExp('^' + r.source + '$'));
@@ -67,7 +69,8 @@ function sendError(res, error) {
 async function staticFile(req, res, pathname) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(405).end();
 
-  const rel = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+  const rel = pathname.replace(/^\/+/, '');
+  if (rel === 'admin') { res.statusCode = 302; res.setHeader('Location', '/admin/'); return res.end(); }   // مسیرهای نسبیِ پنل به اسلش پایانی نیاز دارند
   if (BLOCK.some(regex => regex.test('/' + rel)) || rel.split('/').some(part =>
     part.startsWith('.') || part === 'node_modules' || part === 'api' || part === 'test')) {
     res.statusCode = 302;
@@ -75,10 +78,12 @@ async function staticFile(req, res, pathname) {
     return res.end();
   }
 
-  const file = path.resolve(ROOT, rel);
-  if (file !== ROOT && !file.startsWith(ROOT + path.sep)) return res.status(404).end();
+  const target = rel === '' ? 'index.html' : rel === 'admin/' ? 'admin/index.html' : rel;   // «/» و «/admin»
+  if (!STATIC_OK.test(target)) return res.status(404).end();
+  const file = path.resolve(ROOT, target);
+  if (!file.startsWith(ROOT + path.sep)) return res.status(404).end();
   const ext = path.extname(file).toLowerCase();
-  if (!MIME[ext] || (ext === '.js' && rel !== 'script.js' && rel !== 'report.js')) return res.status(404).end();
+  if (!MIME[ext]) return res.status(404).end();
 
   let realPath;
   let stat;
@@ -92,6 +97,11 @@ async function staticFile(req, res, pathname) {
   res.setHeader('Content-Type', MIME[ext]);
   res.setHeader('Content-Length', stat.size);
   res.setHeader('Cache-Control', ext === '.woff2' ? 'public, max-age=31536000, immutable' : 'public, max-age=300');
+  if (rel === 'admin' || rel.startsWith('admin/')) {   // همان هدرهای قبلیِ /api/admin-ui برای صفحهٔ پنل
+    res.setHeader('Cache-Control', 'private, no-store, max-age=0');
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+  }
   if (req.method === 'HEAD') return res.end();
 
   const stream = fs.createReadStream(realPath);

@@ -41,15 +41,19 @@ Workflow موجود در `.github/workflows/ingest.yml` روی Push به `main` 
 
 بدون این Secrets، مرحله همگام‌سازی Vector اجرا نمی‌شود.
 
-## فایل‌های اصلی
+## ساختار پروژه
 
-- `index.html`, `style.css`, `script.js`, `owl.png`, `assets/owl/`: رابط کاربری و تصاویر
-- `api/`: توابع Serverless
+- ریشهٔ پروژه (فایل‌های سایت):
+  - `index.html`, `style.css`, `script.js`, `owl.png`, `assets/owl/`: رابط کاربری چت و تصاویر
+  - `report.html`, `report.js`: صفحه گزارش مدیریتی (با `ADMIN_TOKEN`)
+  - `admin/`: رابط پنل مدیریت (`/admin`) — فقط HTML/CSS/JS؛ ورود و نقش‌ها سمت سرور در `api/admin-auth.js` انجام می‌شود
+- `api/`: فقط توابع Serverless (نقاط پایانی): `chat`, `auth`, `lead`, `feedback`, `transcribe`, `admin` (گزارش با توکن), `admin-auth` (ورود پنل)
 - `lib/`: منطق چت، مدل، دانش، ذخیره‌سازی و گزارش
-- `knowledge/chunks.json`: پایگاه دانش بات؛ در مسیر عمومی مسدود شده و برای Functionها بسته‌بندی می‌شود
-- `report.html`, `report.js`: صفحه گزارش مدیریتی
-- `config.js`: تنظیمات غیرمحرمانه پروژه؛ کلید واقعی را فقط در Environment Variables بگذارید
-- `test/`, `scripts/`, `eval/`: تست و ابزارهای توسعه که در GitHub نگهداری می‌شوند اما از بسته ارسالی به Vercel کنار گذاشته شده‌اند
+- `knowledge/chunks.json`: پایگاه دانش بات؛ در مسیر عمومی مسدود شده و برای Functionها بسته‌بندی می‌شود. `knowledge/knowledge.txt` متن مرجع اولیه است و در کد استفاده نمی‌شود
+- `config.js`: تنظیمات غیرمحرمانه پروژه (از جمله بخش `llm`)؛ کلید واقعی را فقط در Environment Variables بگذارید
+- `server.js`, `deploy/`: اجرای مستقل روی VPS
+- `test/`, `scripts/`, `eval/`: تست و ابزارهای توسعه که از بسته ارسالی به Vercel کنار گذاشته شده‌اند
+- `docs/`: مستندات، نقشه راه، گزارش‌های امنیتی و `release-notes/`
 
 ## سیاست پاسخ‌گویی تحصیلی (نسخه 1.6.3 و بالاتر)
 

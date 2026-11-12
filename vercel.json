@@ -7,8 +7,13 @@
   },
   "redirects": [
     {
-      "source": "/(knowledge/.*|scripts/.*|eval/.*|test/.*|server\\.js|config\\.js|ROADMAP\\.md|DATA_ISSUES\\.md|\\.github/.*|package\\.json|package-lock\\.json|vercel\\.json|README\\.md|\\.env.*|\\.nvmrc|\\.gitignore|lib/.*)",
+      "source": "/(knowledge/.*|scripts/.*|eval/.*|test/.*|docs/.*|deploy/.*|server\\.js|config\\.js|README\\.md|\\.github/.*|package\\.json|package-lock\\.json|vercel\\.json|\\.env.*|\\.nvmrc|\\.gitignore|lib/.*)",
       "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin/",
       "permanent": false
     }
   ],
@@ -41,16 +46,23 @@
           "value": "max-age=63072000; includeSubDomains"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/admin",
-      "destination": "/api/admin-ui"
     },
     {
-      "source": "/admin/",
-      "destination": "/api/admin-ui"
+      "source": "/admin(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, noarchive"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        }
+      ]
     }
   ]
 }
