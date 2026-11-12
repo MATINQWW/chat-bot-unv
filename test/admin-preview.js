@@ -1,6 +1,13 @@
 'use strict';
 const assert = require('node:assert/strict');
 const handler = require('../api/admin-preview');
+const bundledAssets = require('../lib/admin-preview/assets');
+const fs = require('node:fs');
+const path = require('node:path');
+for (const name of ['html', 'css', 'js']) {
+  const file = name === 'html' ? 'index.html' : name === 'css' ? 'style.css' : 'app.js';
+  assert.equal(bundledAssets[name], fs.readFileSync(path.join(__dirname, '..', 'lib', 'admin-preview', file), 'utf8'), 'bundled ' + name + ' asset must match source');
+}
 
 function invoke({ env = {}, url = '/', method = 'GET' } = {}) {
   const keys = ['VERCEL_ENV', 'ADMIN_PREVIEW_ENABLED'];

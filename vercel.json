@@ -3,10 +3,6 @@
     "api/*.js": {
       "includeFiles": "knowledge/chunks.json",
       "maxDuration": 60
-    },
-    "api/admin-preview.js": {
-      "includeFiles": "lib/admin-preview/**",
-      "maxDuration": 10
     }
   },
   "redirects": [
