@@ -46,11 +46,11 @@
   "rewrites": [
     {
       "source": "/admin",
-      "destination": "/api/admin-preview"
+      "destination": "/api/admin-ui"
     },
     {
       "source": "/admin/",
-      "destination": "/api/admin-preview"
+      "destination": "/api/admin-ui"
     }
   ]
 }

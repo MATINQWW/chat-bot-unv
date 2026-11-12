@@ -1,6 +1,6 @@
 {
   "name": "chat-bot-unv",
-  "version": "1.6.12",
+  "version": "1.6.13",
   "private": true,
   "engines": {
     "node": "26.x"
@@ -12,10 +12,12 @@
     "eval": "node scripts/eval.js",
     "test:mysql": "node test/mysql.js",
     "test:server": "node test/server.js",
-    "test:all": "npm test && npm run test:server && npm run test:security && npm run test:admin-preview && npm run eval -- --min 90",
+    "test:all": "npm test && npm run test:server && npm run test:security && npm run test:admin-auth && npm run test:admin-ui && npm run eval -- --min 90",
     "test:security": "node test/security.js",
     "test:load:local": "node scripts/load-test-local.cjs",
-    "test:admin-preview": "node test/admin-preview.js"
+    "build:admin": "node scripts/build-admin-assets.js",
+    "test:admin-auth": "node test/admin-auth.js",
+    "test:admin-ui": "node test/admin-ui.js"
   },
   "dependencies": {
     "@upstash/vector": "1.2.3",

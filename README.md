@@ -121,11 +121,29 @@ npm run eval -- --min 90
 - تست بار محلی با Provider ساختگی و بدون ارسال درخواست به سرویس واقعی اجرا می‌شود: `npm run test:load:local`.
 - قبل از انتشار عمومی، Redis مشترک و `RATE_LIMIT_FAIL_CLOSED=1` را تنظیم کنید و سقف هم‌زمانی/هزینهٔ Provider را با محدودیت سراسری کنترل کنید.
 
-## Admin Preview (UI only)
+## پنل مدیریت نوکا (1.6.13)
 
-- The first admin interface is a non-persistent preview shell at `/admin`.
-- To expose it on a Vercel Preview deployment, set `ADMIN_PREVIEW_ENABLED=1` in the **Preview** environment only.
-- The route also checks `VERCEL_ENV=preview` and returns 404 on Production. Do not set `ADMIN_PREVIEW_ENABLED` for Production.
-- All rows and charts in this preview are fictional demo data. UI interactions such as adding a knowledge item or an admin exist only in browser memory and are lost on reload. No admin write API or MySQL connection is used by this preview.
-- Protect Preview deployments with Vercel Deployment Protection when available. The production chat interface and its existing API routes are not changed by this preview UI.
-- The next phase will implement server-side admin authentication/RBAC, durable MySQL logging and knowledge storage on the VPS. The demo interface is not an operational admin panel and must not be used to manage real data.
+مسیر پنل: `/admin`
+
+رابط پنل روی دامنه اصلی قابل مشاهده است، اما ورود فقط با احراز هویت سمت سرور انجام می‌شود. نقش‌ها از روی حساب‌های تنظیم‌شده در Environment Variables تعیین می‌شوند؛ انتخاب نقش در مرورگر یا حساب نمایشی وجود ندارد. نشست‌ها در Redis مشترک Upstash ذخیره می‌شوند و با خروج از حساب از Redis حذف می‌شوند. اگر Redis مشترک در دسترس نباشد، ورود عمداً با خطا متوقف می‌شود.
+
+متغیرهای لازم در محیط Production و Preview:
+
+- `NOOKA_SUPERADMIN_EMAIL`
+- `NOOKA_SUPERADMIN_PASSWORD_HASH`
+- `NOOKA_SUPERADMIN_NAME` (اختیاری)
+- `NOOKA_ADMIN_EMAIL` (اختیاری تا زمان ساخت حساب Admin)
+- `NOOKA_ADMIN_PASSWORD_HASH` (اختیاری تا زمان ساخت حساب Admin)
+- `NOOKA_ADMIN_NAME` (اختیاری)
+
+همچنین برای نشست‌ها باید `KV_REST_API_URL` و `KV_REST_API_TOKEN` با دسترسی خواندن/نوشتن Redis تنظیم باشند. از توکن فقط‌خواندنی استفاده نکنید.
+
+برای ساخت Hash رمز عبور، در ترمینال محلی اجرا کنید:
+
+```bash
+node scripts/hash-admin-password.js
+```
+
+رمز حداقل ۱۲ کاراکتر است. اسکریپت رمز خام را نمایش نمی‌دهد و فقط Hash مبتنی بر scrypt تولید می‌کند. Hash خروجی را در متغیر مربوط به همان نقش قرار دهید. رمز خام یا Hash را در Git، ZIP عمومی، کد منبع یا پیام ارسال نکنید. پس از افزودن یا تغییر Environment Variables، Deployment جدید بسازید.
+
+نقش `Super Admin` همه بخش‌های رابط را می‌بیند. نقش `Admin` به داشبورد، درخواست‌ها، مصرف توکن و مدیریت دانش محدود است. در این نسخه فهرست‌ها و داده‌های داخل داشبورد هنوز نمونه هستند؛ APIهای واقعی مدیریت دانش، درخواست‌ها و تغییر مجوزها به مرحله مهاجرت MySQL روی VPS تعلق دارند. کنترل‌های مربوط به داده عملیاتی نباید تا آن زمان به‌عنوان عملیات واقعی تلقی شوند.
