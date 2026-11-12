@@ -7,6 +7,7 @@
 const crypto = require('crypto');
 const { kv, ipHash, originAllowed, rateLimited, baseHeaders } = require('../lib/common');
 const { digits } = require('../lib/learn');
+const { currentUser } = require('./auth');
 
 const clean = (s, n) => String(s || '').replace(/[\u0000-\u001F<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
 
@@ -32,10 +33,16 @@ module.exports = async (req, res) => {
   const phone = normPhone(b.phone);
   if (!phone) return res.status(400).json({ error: 'bad_phone', message: 'شمارهٔ تماس معتبر نیست.' });
   if (b.consent !== true) return res.status(400).json({ error: 'no_consent', message: 'برای ثبت، رضایت تماس لازم است.' });
+  // کاربر واردشده → ثبت با نام حساب؛ در غیر این صورت تیکت «کاربر مهمان» است
+  const acct = await currentUser(req).catch(() => null);
   const lead = {
     id: crypto.randomUUID().slice(0, 8),
     at: new Date().toISOString(),
-    name: clean(b.name, 60),
+    userType: acct ? 'registered' : 'guest',
+    userLabel: acct ? 'کاربر ثبت‌نام‌شده' : 'کاربر مهمان',
+    accountUsername: acct ? acct.username : '',
+    accountEmail: acct ? acct.email : '',
+    name: clean(b.name, 60) || (acct ? acct.username : ''),
     phone,
     major: clean(b.major, 80),
     question: clean(b.question, 300),   // آخرین سؤالی که بات جوابش را نداشت
