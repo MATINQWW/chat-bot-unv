@@ -13,13 +13,13 @@ const I18N={
   fa:{
     'app.title':'همیار دانشجو نوکا','app.name':'همیار دانشجو نوکا',
     'auth.login':'ورود','auth.register':'ثبت نام','auth.logout':'خروج از حساب','auth.subtitle':'به حساب همیار دانشجو','auth.loggedIn':'وارد شده‌اید',
-    'auth.username':'نام کاربری (انگلیسی، ۳ تا ۳۰ نویسه)','auth.email':'ایمیل','auth.identifier':'نام کاربری یا ایمیل','auth.password':'رمز عبور (حداقل ۶ نویسه)',
-    'auth.guestHint':'بدون ورود هم می‌توانید به‌عنوان کاربر مهمان از چت‌بات استفاده کنید.','auth.welcome':'خوش آمدید','auth.bye':'از حساب خارج شدید','auth.fillAll':'لطفاً همهٔ فیلدها را پر کنید',
-    'lead.whoGuest':'کاربر مهمان','lead.whoUser':'کاربر',
+    'auth.username':'نام کاربری (انگلیسی، ۳ تا ۳۰ نویسه)','auth.email':'ایمیل (فقط @gmail.com)','auth.identifier':'نام کاربری یا شماره همراه','auth.password':'رمز عبور',
+    'auth.phone':'شماره همراه (مثال: 09123456789)','auth.err.id':'نام کاربری (انگلیسی) یا شماره همراه معتبر وارد کنید','auth.err.user':'نام کاربری باید انگلیسی، ۳ تا ۳۰ نویسه، با حرف شروع شود و فقط حرف، عدد و _ داشته باشد','auth.err.phone':'شماره همراه معتبر نیست؛ مثل 09123456789','auth.err.email':'ایمیل باید معتبر و از نوع gmail.com باشد؛ مثل name@gmail.com','auth.err.passSym':'رمز عبور نباید هیچ علامتی داشته باشد؛ مثل - _ ? ( ) [ ] { } < > / & * ^ $ % و نظایر آن. فقط حروف انگلیسی و عدد مجاز است','auth.err.passUpper':'رمز عبور باید حداقل یک حرف بزرگ انگلیسی (A-Z) داشته باشد','auth.err.passDigit':'رمز عبور باید حداقل یک عدد داشته باشد','auth.err.passLen':'رمز عبور باید حداقل ۶ نویسه باشد','auth.rule.len':'حداقل ۶ نویسه','auth.rule.upper':'یک حرف بزرگ انگلیسی (A-Z)','auth.rule.digit':'یک عدد','auth.rule.sym':'بدون هیچ علامت یا نماد (- _ ? ( ) [ ] { } < > / & * ^ $ %)','auth.welcome':'خوش آمدید','auth.bye':'از حساب خارج شدید','auth.fillAll':'لطفاً همهٔ فیلدها را پر کنید',
+    'lead.whoUser':'کاربر',
     'sidebar.newChat':'مشاوره جدید','sidebar.search':'جستجو در مشاوره‌ها...',
     'sidebar.recent':'مشاوره‌های اخیر','sidebar.results':'نتایج جستجو',
     'sidebar.noChats':'هنوز مشاوره‌ای نیست','sidebar.noResults':'نتیجه‌ای یافت نشد',
-    'sidebar.noArchived':'آرشیو خالی است','sidebar.guest':'کاربر مهمان',
+    'sidebar.noArchived':'آرشیو خالی است',
     'sidebar.free':'مشاوره رایگان','sidebar.settings':'تنظیمات',
     'sidebar.support':'پشتیبانی','sidebar.about':'درباره ما',
     'sidebar.delete':'حذف','sidebar.archive':'آرشیو','sidebar.unarchive':'بازگردانی',
@@ -80,11 +80,11 @@ const I18N={
   ar:{
     'app.title':'مرافق الطالب نوكا','app.name':'مرافق الطالب نوكا',
     'auth.login':'تسجيل الدخول','auth.register':'إنشاء حساب','auth.logout':'تسجيل الخروج','auth.subtitle':'إلى حساب همیار دانشجو','auth.loggedIn':'تم تسجيل الدخول',
-    'auth.username':'اسم المستخدم (إنجليزي، ٣–٣٠ حرفاً)','auth.email':'البريد الإلكتروني','auth.identifier':'اسم المستخدم أو البريد الإلكتروني','auth.password':'كلمة المرور (٦ أحرف على الأقل)',
-    'auth.guestHint':'يمكنك استخدام الروبوت كزائر دون تسجيل الدخول.','auth.welcome':'أهلاً بك','auth.bye':'تم تسجيل الخروج','auth.fillAll':'يرجى ملء جميع الحقول',
-    'lead.whoGuest':'طالب زائر','lead.whoUser':'مستخدم',
+    'auth.username':'اسم المستخدم (إنجليزي، ٣–٣٠ حرفاً)','auth.email':'البريد (@gmail.com فقط)','auth.identifier':'اسم المستخدم أو رقم الجوال','auth.password':'كلمة المرور',
+    'auth.phone':'رقم الجوال (مثال: 09123456789)','auth.err.id':'أدخل اسم مستخدم (إنجليزي) أو رقم جوال صحيح','auth.err.user':'اسم المستخدم إنجليزي من ٣ إلى ٣٠ حرفاً، يبدأ بحرف ويحوي حروفاً وأرقاماً و _ فقط','auth.err.phone':'رقم الجوال غير صالح؛ مثل 09123456789','auth.err.email':'يجب أن يكون البريد من نوع gmail.com مثل name@gmail.com','auth.err.passSym':'يجب ألا تحتوي كلمة المرور على أي رموز مثل - _ ? ( ) [ ] { } < > / & * ^ $ %؛ الحروف الإنجليزية والأرقام فقط','auth.err.passUpper':'يجب أن تحتوي كلمة المرور على حرف إنجليزي كبير واحد على الأقل','auth.err.passDigit':'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل','auth.err.passLen':'يجب ألا تقل كلمة المرور عن ٦ أحرف','auth.rule.len':'٦ أحرف على الأقل','auth.rule.upper':'حرف إنجليزي كبير (A-Z)','auth.rule.digit':'رقم واحد','auth.rule.sym':'بدون أي رموز (- _ ? ( ) [ ] { } < > / & * ^ $ %)','auth.welcome':'أهلاً بك','auth.bye':'تم تسجيل الخروج','auth.fillAll':'يرجى ملء جميع الحقول',
+    'lead.whoUser':'مستخدم',
     'sidebar.newChat':'استشارة جديدة','sidebar.search':'البحث...','sidebar.recent':'الأخيرة','sidebar.results':'النتائج',
-    'sidebar.noChats':'لا توجد استشارات','sidebar.noResults':'لا نتائج','sidebar.noArchived':'الأرشيف فارغ','sidebar.guest':'طالب زائر',
+    'sidebar.noChats':'لا توجد استشارات','sidebar.noResults':'لا نتائج','sidebar.noArchived':'الأرشيف فارغ',
     'sidebar.free':'مجاني','sidebar.settings':'الإعدادات','sidebar.support':'الدعم','sidebar.about':'من نحن','sidebar.delete':'حذف','sidebar.archive':'أرشفة','sidebar.unarchive':'استعادة',
     'sidebar.tab.active':'الاستشارات','sidebar.tab.archived':'الأرشيف','bottom.chats':'الاستشارات','bottom.archive':'الأرشيف','bottom.settings':'الإعدادات','bottom.support':'الدعم','bottom.about':'من نحن',
     'welcome.badge':'مجاني بالكامل','welcome.title':'مرافق الطالب نوكا',
@@ -119,11 +119,11 @@ const I18N={
   en:{
     'app.title':'Noka Student Assistant','app.name':'Noka Student Assistant',
     'auth.login':'Log in','auth.register':'Sign up','auth.logout':'Log out','auth.subtitle':'to your student helper account','auth.loggedIn':'Signed in',
-    'auth.username':'Username (English, 3–30 characters)','auth.email':'Email','auth.identifier':'Username or email','auth.password':'Password (min 6 characters)',
-    'auth.guestHint':'You can also keep using the chatbot as a guest without logging in.','auth.welcome':'Welcome','auth.bye':'Logged out','auth.fillAll':'Please fill in all fields',
-    'lead.whoGuest':'Guest user','lead.whoUser':'User',
+    'auth.username':'Username (English, 3–30 characters)','auth.email':'Email (@gmail.com only)','auth.identifier':'Username or mobile number','auth.password':'Password',
+    'auth.phone':'Mobile number (e.g. 09123456789)','auth.err.id':'Enter a valid username (English) or mobile number','auth.err.user':'Username: English, 3–30 characters, starts with a letter, only letters, digits and _','auth.err.phone':'Invalid mobile number; e.g. 09123456789','auth.err.email':'Email must be a valid gmail.com address, e.g. name@gmail.com','auth.err.passSym':'Password must not contain any symbols such as - _ ? ( ) [ ] { } < > / & * ^ $ % — English letters and digits only','auth.err.passUpper':'Password needs at least one English uppercase letter (A-Z)','auth.err.passDigit':'Password needs at least one digit','auth.err.passLen':'Password must be at least 6 characters','auth.rule.len':'At least 6 characters','auth.rule.upper':'One uppercase letter (A-Z)','auth.rule.digit':'One digit','auth.rule.sym':'No symbols at all (- _ ? ( ) [ ] { } < > / & * ^ $ %)','auth.welcome':'Welcome','auth.bye':'Logged out','auth.fillAll':'Please fill in all fields',
+    'lead.whoUser':'User',
     'sidebar.newChat':'New Consultation','sidebar.search':'Search...','sidebar.recent':'Recent','sidebar.results':'Results',
-    'sidebar.noChats':'No consultations yet','sidebar.noResults':'No results','sidebar.noArchived':'Archive empty','sidebar.guest':'Guest Student',
+    'sidebar.noChats':'No consultations yet','sidebar.noResults':'No results','sidebar.noArchived':'Archive empty',
     'sidebar.free':'Free consultation','sidebar.settings':'Settings','sidebar.support':'Support','sidebar.about':'About','sidebar.delete':'Delete','sidebar.archive':'Archive','sidebar.unarchive':'Restore',
     'sidebar.tab.active':'Consultations','sidebar.tab.archived':'Archive','bottom.chats':'Chats','bottom.archive':'Archive','bottom.settings':'Settings','bottom.support':'Support','bottom.about':'About',
     'welcome.badge':'Completely free','welcome.title':'Noka Student Assistant',
@@ -876,26 +876,59 @@ el.chat.addEventListener('click',async e=>{
 const AUTH={user:null,mode:'login',busy:false};
 function updateAccountUI(){
   const u=AUTH.user;
-  $('#acc-guest').hidden=!!u;$('#acc-sub-guest').hidden=!!u;
-  $('#acc-user').hidden=!u;$('#acc-sub-user').hidden=!u;
-  if(u)$('#acc-user').textContent=u.username;
+  $('#account-card').hidden=!u;
+  if(u){
+    $('#acc-user').textContent=u.username;
+    $('#acc-avatar').textContent=(Array.from(u.username||'?')[0]||'?').toUpperCase();
+  }
   $('#auth-btns').hidden=!!u;$('#auth-out').hidden=!u;
+}
+/* لغزندهٔ شیشه‌ای ورود ⇄ ثبت نام (همان استایل مشاوره‌ها ⇄ آرشیو) */
+const authTabsEl=$('#auth-tabs');
+const authGliderEl=authTabsEl?authTabsEl.querySelector('.tabs__glider'):null;
+function placeAuthGlider(animate){
+  if(!authTabsEl||!authGliderEl)return;
+  const a=authTabsEl.querySelector('.tab.active');
+  if(!a||!a.offsetWidth)return;                       // مودال هنوز دیده نمی‌شود
+  const first=!authTabsEl.classList.contains('has-glider');
+  const move=animate&&!first;
+  if(!move)authGliderEl.style.transition='none';
+  authGliderEl.style.width=a.offsetWidth+'px';
+  authGliderEl.style.translate=a.offsetLeft+'px 0';
+  authTabsEl.dataset.view=AUTH.mode;
+  if(!move){
+    void authGliderEl.offsetWidth;authGliderEl.style.transition='';
+    authGliderEl.classList.add('on');authTabsEl.classList.add('has-glider');
+  }else{
+    authGliderEl.classList.remove('squish');void authGliderEl.offsetWidth;authGliderEl.classList.add('squish');
+  }
+}
+if(authGliderEl){
+  authGliderEl.addEventListener('animationend',()=>authGliderEl.classList.remove('squish'));
+  if('ResizeObserver' in window){
+    const aro=new ResizeObserver(()=>placeAuthGlider(false));
+    aro.observe(authTabsEl);$$('.tab',authTabsEl).forEach(tb=>aro.observe(tb));
+  }
 }
 function setAuthMode(mode){
   AUTH.mode=mode;
   $$('[data-auth-tab]').forEach(b=>b.classList.toggle('active',b.dataset.authTab===mode));
   const reg=mode==='register';
-  $('#auth-id').hidden=reg;$('#auth-username').hidden=!reg;$('#auth-email').hidden=!reg;
-  $('#auth-pass').autocomplete=mode==='register'?'new-password':'current-password';
-  const label=t(mode==='register'?'auth.register':'auth.login');
+  $('#auth-id').hidden=reg;$('#auth-username').hidden=!reg;$('#auth-phone').hidden=!reg;$('#auth-email').hidden=!reg;
+  $('#pass-rules').hidden=!reg;
+  $('#auth-pass').autocomplete=reg?'new-password':'current-password';
+  const label=t(reg?'auth.register':'auth.login');
   $('#auth-title').textContent=label;$('#auth-submit').textContent=label;
-  const e=$('#auth-error');e.hidden=true;e.textContent='';
+  placeAuthGlider(true);
+  clearAuthErrors();updatePassRules();
 }
 function openAuth(mode){
   setAuthMode(mode||'login');
-  $('#auth-pass').value='';
+  $$('#auth-form .lead-form__in').forEach(i=>{delete i.dataset.touched;});
+  $('#auth-pass').value='';updatePassRules();
   closeSidebarIfMobile();
   openModal('m-auth');
+  requestAnimationFrame(()=>placeAuthGlider(false));
   setTimeout(()=>($(AUTH.mode==='register'?'#auth-username':'#auth-id')).focus({preventScroll:true}),60);
 }
 function closeSidebarIfMobile(){try{if(window.innerWidth<768&&$('#sidebar').classList.contains('open'))toggleSidebar(false);}catch{}}
@@ -904,20 +937,76 @@ async function authCall(body){
   const d=await res.json().catch(()=>({}));
   return {ok:res.ok,d};
 }
+/* ─── اعتبارسنجی فرم ورود / ثبت نام ─── */
+const FA_DIGITS='۰۱۲۳۴۵۶۷۸۹',AR_DIGITS='٠١٢٣٤٥٦٧٨٩';
+const normDigits=v=>String(v||'').replace(/[۰-۹]/g,c=>FA_DIGITS.indexOf(c)).replace(/[٠-٩]/g,c=>AR_DIGITS.indexOf(c));
+const RX_USER=/^[A-Za-z][A-Za-z0-9_]{2,29}$/;
+const RX_PHONE=/^09\d{9}$/;
+const RX_GMAIL=/^[A-Za-z0-9][A-Za-z0-9.]{4,29}@gmail\.com$/i;
+function passChecks(p){return{len:p.length>=6,upper:/[A-Z]/.test(p),digit:/\d/.test(p),sym:p.length>0&&/^[A-Za-z0-9]+$/.test(p)};}
+function passError(p){
+  if(/[^A-Za-z0-9]/.test(p))return t('auth.err.passSym');
+  const c=passChecks(p);
+  if(!c.upper)return t('auth.err.passUpper');
+  if(!c.digit)return t('auth.err.passDigit');
+  if(!c.len)return t('auth.err.passLen');
+  return '';
+}
+function authFieldError(input){
+  const id=input.id,v=input.value.trim();
+  if(id==='auth-id'){const n=normDigits(v);return(RX_USER.test(v)||RX_PHONE.test(n))?'':t('auth.err.id');}
+  if(id==='auth-username')return RX_USER.test(v)?'':t('auth.err.user');
+  if(id==='auth-phone')return RX_PHONE.test(normDigits(v))?'':t('auth.err.phone');
+  if(id==='auth-email')return RX_GMAIL.test(v)?'':t('auth.err.email');
+  if(id==='auth-pass')return AUTH.mode==='register'?passError(input.value):(input.value?'':t('auth.fillAll'));
+  return '';
+}
+function setFieldError(input,msg){
+  let p=input.nextElementSibling;
+  if(!p||!p.classList.contains('field-err')){p=document.createElement('p');p.className='field-err';input.after(p);}
+  p.textContent=msg||'';p.hidden=!msg;
+  input.classList.toggle('is-invalid',!!msg);
+  input.setAttribute('aria-invalid',msg?'true':'false');
+}
+function clearAuthErrors(){
+  $$('#auth-form .lead-form__in').forEach(i=>setFieldError(i,''));
+  const e=$('#auth-error');e.hidden=true;e.textContent='';
+}
+function updatePassRules(){
+  const box=$('#pass-rules');if(!box)return;
+  const v=$('#auth-pass').value,c=passChecks(v);
+  $$('li',box).forEach(li=>{
+    const r=li.dataset.rule;
+    li.classList.toggle('ok',v.length>0&&!!c[r]);
+    li.classList.toggle('bad',v.length>0&&!c[r]);
+  });
+}
+function shakeAuth(){
+  const f=$('#auth-form');f.classList.remove('shake');void f.offsetWidth;f.classList.add('shake');
+}
+function visibleAuthFields(){
+  return $$('#auth-form .lead-form__in').filter(i=>!i.hidden);
+}
 async function submitAuth(){
   if(AUTH.busy)return;
   const reg=AUTH.mode==='register';
-  const identifier=$('#auth-id').value.trim(),username=$('#auth-username').value.trim(),email=$('#auth-email').value.trim(),password=$('#auth-pass').value;
-  const err=$('#auth-error');
-  if(!password||(reg?(!username||!email):!identifier)){err.textContent=t('auth.fillAll');err.hidden=false;return;}
-  AUTH.busy=true;const btn=$('#auth-submit');btn.disabled=true;
+  const err=$('#auth-error');err.hidden=true;err.textContent='';
+  let firstBad=null;
+  visibleAuthFields().forEach(i=>{
+    const m=authFieldError(i);setFieldError(i,m);
+    if(m&&!firstBad)firstBad=i;
+  });
+  if(firstBad){shakeAuth();firstBad.focus({preventScroll:true});return;}
+  const identifier=normDigits($('#auth-id').value.trim()),username=$('#auth-username').value.trim(),
+        phone=normDigits($('#auth-phone').value.trim()),email=$('#auth-email').value.trim().toLowerCase(),password=$('#auth-pass').value;
+  AUTH.busy=true;const btn=$('#auth-submit');btn.disabled=true;btn.classList.add('is-loading');
   try{
-    const {ok,d}=await authCall(reg?{action:'register',username,email,password}:{action:'login',identifier,password});
-    if(!ok){err.textContent=d.message||t('toast.serverError');err.hidden=false;return;}
+    const {ok,d}=await authCall(reg?{action:'register',username,phone,email,password}:{action:'login',identifier,password});
+    if(!ok){err.textContent=d.message||t('toast.serverError');err.hidden=false;shakeAuth();return;}
     AUTH.user=d.user;updateAccountUI();$('#auth-pass').value='';
     closeModal('m-auth');toast(t('auth.welcome')+' '+d.user.username,'success');
-  }catch{err.textContent=t('toast.serverError');err.hidden=false;}
-  finally{AUTH.busy=false;btn.disabled=false;}
+  }catch{err.textContent=t('toast.serverError');err.hidden=false;shakeAuth();}
+  finally{AUTH.busy=false;btn.disabled=false;btn.classList.remove('is-loading');}
 }
 async function logout(){
   try{await authCall({action:'logout'});}catch{}
@@ -931,6 +1020,16 @@ async function initAuth(){
     if(e.target.closest('#auth-logout')){logout();}
   });
   $('#auth-form').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitAuth();}});
+  const af=$('#auth-form');
+  af.addEventListener('input',e=>{
+    const i=e.target.closest('.lead-form__in');if(!i)return;
+    if(i.id==='auth-pass')updatePassRules();
+    if(i.classList.contains('is-invalid')||i.dataset.touched)setFieldError(i,authFieldError(i));
+  });
+  af.addEventListener('focusout',e=>{
+    const i=e.target.closest('.lead-form__in');if(!i||!i.value)return;
+    i.dataset.touched='1';setFieldError(i,authFieldError(i));
+  });
   try{const {ok,d}=await authCall({action:'me'});if(ok&&d.user){AUTH.user=d.user;}}catch{}
   updateAccountUI();
 }
@@ -946,7 +1045,7 @@ function openLeadForm(group){
   const body=group.querySelector('.msg-body');
   body.insertAdjacentHTML('beforeend',`
     <div class="lead-form" role="form" aria-label="${escAttr(t('lead.cta'))}">
-      <span class="lead-form__who${AUTH.user?' lead-form__who--user':''}">👤 ${esc(AUTH.user?(t('lead.whoUser')+': '+AUTH.user.username):t('lead.whoGuest'))}</span>
+      ${AUTH.user?`<span class="lead-form__who lead-form__who--user">👤 ${esc(t('lead.whoUser')+': '+AUTH.user.username)}</span>`:''}
       <p class="lead-form__hint">${esc(t('lead.hint'))}</p>
       <input class="lead-form__in" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="${escAttr(t('lead.phone'))}" maxlength="20" dir="ltr">
       <input class="lead-form__in" name="name" type="text" autocomplete="name" placeholder="${escAttr(t('lead.name'))}" maxlength="60">
@@ -1219,7 +1318,7 @@ el.list.addEventListener('click',e=>{
 $('#search-chats').addEventListener('input',debounce(e=>renderChatList(e.target.value),150));
 
 /* ── سوییچ مشاوره‌ها ⇄ آرشیو: لغزنده‌ی شیشه‌ای ساده + ورود نرم لیست ── */
-const tabsEl=$('.tabs');
+const tabsEl=$('#sidebar .tabs');
 const gliderEl=tabsEl?tabsEl.querySelector('.tabs__glider'):null;
 function placeGlider(animate){
   if(!tabsEl||!gliderEl)return;
