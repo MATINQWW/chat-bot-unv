@@ -4,6 +4,8 @@ const { smallTalk } = require('../lib/knowledge');
 const { instructionFor } = require('../lib/intent');
 assert.ok(GENERAL_POLICY.includes('منبع معتبر و تاریخ‌دار'));
 assert.ok(GENERAL_POLICY.includes('امنیت شغلی'));
+assert.ok(GENERAL_POLICY.includes('فقط مشاوره تحصیلی'));
+assert.ok(GENERAL_POLICY.includes('پرسش نامرتبط'));
 assert.ok(GENERAL_POLICY.includes('چارت و ترم دقیق'));
 assert.ok(ASSISTANT_STYLE_POLICY.includes('نوکا'));
 assert.ok(ASSISTANT_STYLE_POLICY.includes('دوستانه'));

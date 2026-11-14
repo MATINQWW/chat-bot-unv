@@ -176,12 +176,6 @@ module.exports = async (req, res) => {
     return res.status(413).json({ error: 'payload_too_large', message: 'پیام ارسالی بیش از حد بزرگ است.' });
   }
 
-  // پیش از هر کاری: کلید API و کلید امضا
-  if (!llm.configured()) {
-    console.error('no LLM provider configured — check config.js (llm) and its key variable in Environment Variables');
-    return res.status(500).json({ error: 'server_error', message: 'سرویس در حال حاضر در دسترس نیست.' });
-  }
-
   const limited = hasAtt
     ? await rateLimited(req, 'att', LIMITS.attPerMinute, LIMITS.attPerHour)
     : await rateLimited(req, 'chat', LIMITS.perMinute, LIMITS.perHour);
@@ -207,7 +201,6 @@ module.exports = async (req, res) => {
     // آخرین پیام کاربر برای سؤال/کش: با سقف هم‌اندازهٔ ورودی (نه سقف کوچک بودجه)
     const question0 = fullMessages[fullMessages.length - 1].content;
     const question = question0.slice(0, 500);
-    const intent = classifyQuestion(question);
     const wantStream = body.stream === true && C.llm.stream !== false;
     BUDGETS[0].knowledge = C.llm.knowledgeChars || 1800; BUDGETS[0].maxTokens = C.llm.maxTokens || 800;
     const shape = (b) => {
@@ -244,20 +237,38 @@ module.exports = async (req, res) => {
       throw e;
     }
 
-    const L = getLearner();
     const info = describe(question);
 
-    // ─── ۰) FAQ آماده: صفر توکن، بدون شبکه ───
+    // احوالپرسی و تشکر کوتاه خارج از دسته‌بندی موضوعی، اما مجاز است.
     if (!att) {
       const st = smallTalk(question);
       if (st) { await report.record(kv, { info, source: 'smalltalk' }); return res.status(200).json({ reply: st, sig: sign(st), cid: '', cached: 'smalltalk', lead: false }); }
     }
+
+    const priorContext = fullMessages.slice(0, -1).filter(m => m.role === 'user').slice(-2).map(m => m.content).join('\n');
+    const scopeText = att && att.kind === 'text' ? question + '\n' + att.text.slice(0, 5000) : question;
+    const intent = classifyQuestion(scopeText, priorContext);
+    if (intent.mode === 'out_of_scope') {
+      const reply = 'من دستیار مشاوره تحصیلی نوکا هستم و فقط در زمینه انتخاب رشته، معرفی رشته‌ها، تحصیل، امور دانشگاهی و مسیر شغلی مرتبط با رشته‌های دانشگاهی می‌توانم راهنمایی‌تان کنم. اگر درباره این موضوعات سؤالی دارید، خوشحال می‌شوم کمک کنم.';
+      await report.record(kv, { info, source: 'out_of_scope' });
+      return res.status(200).json({ reply, sig: sign(reply), cid: '', cached: 'scope', lead: false });
+    }
+
+    // ─── ۰) FAQ آماده: صفر توکن، بدون شبکه ───
     if (!att && (firstTurn || !info.deictic)) {
       const faq = faqAnswer(question);
       if (faq) {
         await report.record(kv, { info, source: 'faq', chunks: faq.id ? [faq.id] : [] });
         return res.status(200).json({ reply: faq.answer, sig: sign(faq.answer), cid: '', cached: 'faq', lead: offerLead(faq.answer) });
       }
+    }
+
+    const L = getLearner();
+
+    // پیش از فراخوانی مدل، تنظیم بودن Provider را بررسی کن؛ پاسخ‌های ثابت و رد موضوع نامرتبط به مدل نیاز ندارند.
+    if (!llm.configured()) {
+      console.error('no LLM provider configured — check config.js (llm) and its key variable in Environment Variables');
+      return res.status(500).json({ error: 'server_error', message: 'سرویس در حال حاضر در دسترس نیست.' });
     }
 
     // ─── ۱) حافظه ───
