@@ -1433,9 +1433,7 @@ body:has(#loader:not(.hide)) .owl *{ animation-play-state:paused !important; }
 .auth-btn--primary{ background:var(--primary); color:var(--primary-foreground,#fff); border-color:transparent; }
 .auth-btn--primary:hover{ background:var(--primary); filter:brightness(1.08); }
 .auth-btn[disabled]{ opacity:.6; cursor:progress; }
-.auth-tabs{ display:flex; gap:6px; margin-bottom:12px; padding:4px; border-radius:var(--r-xl); background:var(--accent); }
-.auth-tab{ flex:1; font:inherit; font-weight:700; font-size:.875rem; padding:8px; border:0; border-radius:var(--r-lg); background:transparent; color:var(--muted-foreground); cursor:pointer; }
-.auth-tab.active{ background:var(--background); color:inherit; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+.auth-switch{ margin:0 0 12px; }
 .auth-form{ display:flex; flex-direction:column; gap:10px; }
 .auth-form [hidden]{ display:none; }
 .auth-submit{ flex:none; width:100%; padding:11px; }
@@ -1524,3 +1522,94 @@ body:has(#loader:not(.hide)) .owl *{ animation-play-state:paused !important; }
   84%{ transform:rotate(5deg); }
 }
 @media (prefers-reduced-motion:reduce){ .tool-support .hs-mic{ animation:none; } }
+
+
+/* ═══ دکمه‌های پاستیلی: مشاوره جدید · ورود · ثبت نام ═══ */
+:root{ --pastel-bg:color-mix(in oklab,var(--primary) 16%,var(--surface)); --pastel-bg-hover:color-mix(in oklab,var(--primary) 26%,var(--surface)); --pastel-ink:var(--primary-hover); --pastel-ring:color-mix(in oklab,var(--primary) 28%,transparent); }
+.dark{ --pastel-bg:color-mix(in oklab,var(--primary) 18%,var(--surface)); --pastel-bg-hover:color-mix(in oklab,var(--primary) 28%,var(--surface)); --pastel-ink:var(--primary); }
+.btn-new{
+  background:var(--pastel-bg); color:var(--pastel-ink);
+  border:1px solid var(--pastel-ring); box-shadow:none !important; filter:none;
+}
+.btn-new:hover{ background:var(--pastel-bg-hover); color:var(--pastel-ink); filter:none; }
+.btn-new:active{ transform:scale(.98); filter:none; }
+
+/* بخش مجزای ورود زیر کاربر مهمان */
+.auth-section{ margin-top:8px; padding-top:10px; border-top:1px solid var(--border); }
+.auth-section .auth-btns{ padding:0; }
+.auth-section .auth-btn{ padding:11px 12px; border-radius:var(--r-lg); }
+
+/* ═══ ترتیب پایین منوی کناری: کاربر مهمان · ورود · سپس تنظیمات/پشتیبانی/درباره ما ═══ */
+.sb-account{ padding-top:10px; border-top:1px solid var(--border); }
+.sb-account .guest-card{ margin-top:0; }
+.sidebar-tools{ margin-top:10px; }
+
+
+/* ═══ دکمهٔ ورود / ثبت نام: ساده، تخت و یکدست ═══ */
+.auth-btn--pastel{
+  position:relative; display:flex; align-items:center; justify-content:center; gap:8px;
+  background:color-mix(in oklab,var(--primary) 12%,var(--surface,var(--background)));
+  color:var(--primary-hover);
+  border:1px solid color-mix(in oklab,var(--primary) 22%,transparent);
+  border-radius:var(--r-xl); min-height:42px; padding:10px 16px;
+  font-weight:700; font-size:.9rem; box-shadow:none;
+  transition:background-color .2s ease, border-color .2s ease, transform .12s ease, opacity .2s ease;
+}
+.auth-btn--pastel:hover{
+  background:color-mix(in oklab,var(--primary) 20%,var(--surface,var(--background)));
+  border-color:color-mix(in oklab,var(--primary) 35%,transparent);
+  color:var(--primary-hover); transform:none; box-shadow:none;
+}
+.auth-btn--pastel:active{ transform:scale(.98); }
+.auth-btn--pastel:focus-visible{ outline:2px solid color-mix(in oklab,var(--primary) 55%,transparent); outline-offset:2px; }
+.auth-btn--pastel.is-loading,.auth-btn--pastel[disabled]{ opacity:.8; cursor:progress; transform:none; }
+.auth-btn--pastel.is-loading::before{
+  content:""; display:inline-block; width:14px; height:14px;
+  border:2px solid color-mix(in oklab,currentColor 30%,transparent); border-top-color:currentColor; border-radius:50%;
+  animation:authSpin .7s linear infinite;
+}
+@keyframes authSpin{ to{ transform:rotate(360deg); } }
+
+/* دکمهٔ «ورود» در منوی کناری: تمام‌عرض با آیکن کوچک */
+.auth-section{ border-top:0; margin-top:0; padding-top:0; }
+#auth-btns .auth-btn--pastel::before{
+  content:""; width:18px; height:18px; flex-shrink:0; background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4'/%3E%3Cpath d='m10 17 5-5-5-5'/%3E%3Cpath d='M15 12H3'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4'/%3E%3Cpath d='m10 17 5-5-5-5'/%3E%3Cpath d='M15 12H3'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+[dir="rtl"] #auth-btns .auth-btn--pastel::before{ transform:scaleX(-1); }
+
+/* دکمهٔ خروج: ساده و کم‌رنگ */
+#auth-logout{ border:1px solid var(--border); border-radius:var(--r-xl); min-height:40px; font-weight:600; color:var(--muted-foreground); }
+#auth-logout:hover{ background:var(--accent); color:inherit; }
+
+/* مودال ورود: فیلدهای آرام‌تر و تمیزتر */
+#m-auth .auth-form{ gap:12px; }
+#m-auth .lead-form__in{ padding:12px 14px; border-radius:var(--r-xl); background:var(--surface,transparent); transition:border-color .2s, box-shadow .2s; }
+#m-auth .lead-form__in:focus{ border-color:var(--primary); box-shadow:0 0 0 3px color-mix(in oklab,var(--primary) 18%,transparent); }
+#m-auth .auth-submit{ margin-top:4px; min-height:46px; font-size:.95rem; }
+
+/* ═══ خطاهای فیلدها و راهنمای رمز عبور ═══ */
+.lead-form__in.is-invalid{ border-color:#dc2626; background:color-mix(in oklab,#dc2626 5%,var(--surface)); }
+.field-err{ margin:-4px 2px 0; font-size:.75rem; line-height:1.7; color:#dc2626; animation:fieldErrIn .22s ease; }
+.field-err[hidden]{ display:none; }
+@keyframes fieldErrIn{ from{ opacity:0; transform:translateY(-3px); } to{ opacity:1; transform:none; } }
+.pass-rules{ list-style:none; margin:-2px 0 0; padding:0 2px; display:grid; gap:3px; font-size:.75rem; color:var(--muted-foreground); }
+.pass-rules[hidden]{ display:none; }
+.pass-rules li{ display:flex; align-items:center; gap:6px; transition:color .2s; }
+.pass-rules li::before{ content:"○"; font-size:.7rem; width:14px; text-align:center; }
+.pass-rules li.ok{ color:#16a34a; }
+.pass-rules li.ok::before{ content:"✓"; font-weight:700; }
+.pass-rules li.bad{ color:#dc2626; }
+.pass-rules li.bad::before{ content:"✕"; font-weight:700; }
+.auth-form.shake{ animation:authShake .38s cubic-bezier(.36,.07,.19,.97); }
+@keyframes authShake{ 10%,90%{ transform:translateX(-1px); } 20%,80%{ transform:translateX(3px); } 30%,50%,70%{ transform:translateX(-5px); } 40%,60%{ transform:translateX(5px); } }
+@media (prefers-reduced-motion:reduce){
+  .auth-btn--pastel,.auth-btn--pastel::after{ transition:none; }
+  .auth-btn--pastel:hover{ transform:none; }
+  .auth-form.shake,.field-err,.auth-btn--pastel.is-loading::before{ animation:none; }
+}
+
+/* حساب کاربری: بدون کاربر مهمان؛ فقط پس از ورود نمایش داده می‌شود */
+.guest-card[hidden]{ display:none; }
+.guest-avatar{ font-weight:800; font-size:.95rem; line-height:1; }

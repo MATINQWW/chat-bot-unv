@@ -22,7 +22,7 @@
 <!-- Vazirmatn (طراحی جدید) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css">
 
-<link rel="stylesheet" href="style.css?v=20261112ui1">
+<link rel="stylesheet" href="style.css?v=20261113auth4">
 </head>
 
 <body>
@@ -124,18 +124,25 @@
       <button class="modal-close" data-close="m-auth" aria-label="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="auth-tabs" role="tablist">
-        <button type="button" class="auth-tab active" data-auth-tab="login" role="tab" data-i18n="auth.login">ورود</button>
-        <button type="button" class="auth-tab" data-auth-tab="register" role="tab" data-i18n="auth.register">ثبت نام</button>
+      <div class="tabs auth-switch" id="auth-tabs" data-view="login" role="tablist">
+        <span class="tabs__glider" aria-hidden="true"></span>
+        <button type="button" class="tab active" data-auth-tab="login" role="tab"><span data-i18n="auth.login">ورود</span></button>
+        <button type="button" class="tab" data-auth-tab="register" role="tab"><span data-i18n="auth.register">ثبت نام</span></button>
       </div>
       <div class="auth-form" id="auth-form" role="form">
-        <input class="lead-form__in" id="auth-id" name="identifier" type="text" autocomplete="username" maxlength="100" dir="ltr" data-i18n-placeholder="auth.identifier" placeholder="نام کاربری یا ایمیل">
+        <input class="lead-form__in" id="auth-id" name="identifier" type="text" autocomplete="username" maxlength="30" dir="ltr" data-i18n-placeholder="auth.identifier" placeholder="نام کاربری یا شماره همراه">
         <input class="lead-form__in" id="auth-username" name="username" type="text" autocomplete="username" maxlength="30" dir="ltr" data-i18n-placeholder="auth.username" placeholder="نام کاربری (انگلیسی، ۳ تا ۳۰ نویسه)" hidden>
-        <input class="lead-form__in" id="auth-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="100" dir="ltr" data-i18n-placeholder="auth.email" placeholder="ایمیل" hidden>
-        <input class="lead-form__in" id="auth-pass" name="password" type="password" autocomplete="current-password" maxlength="100" dir="ltr" data-i18n-placeholder="auth.password" placeholder="رمز عبور (حداقل ۶ نویسه)">
+        <input class="lead-form__in" id="auth-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="11" dir="ltr" data-i18n-placeholder="auth.phone" placeholder="شماره همراه (مثال: 09123456789)" hidden>
+        <input class="lead-form__in" id="auth-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="40" dir="ltr" data-i18n-placeholder="auth.email" placeholder="ایمیل (فقط @gmail.com)" hidden>
+        <input class="lead-form__in" id="auth-pass" name="password" type="password" autocomplete="current-password" maxlength="64" dir="ltr" data-i18n-placeholder="auth.password" placeholder="رمز عبور">
+        <ul class="pass-rules" id="pass-rules" hidden>
+          <li data-rule="len" data-i18n="auth.rule.len">حداقل ۶ نویسه</li>
+          <li data-rule="upper" data-i18n="auth.rule.upper">یک حرف بزرگ انگلیسی (A-Z)</li>
+          <li data-rule="digit" data-i18n="auth.rule.digit">یک عدد</li>
+          <li data-rule="sym" data-i18n="auth.rule.sym">بدون هیچ علامت یا نماد</li>
+        </ul>
         <p class="auth-error" id="auth-error" role="alert" hidden></p>
-        <button type="button" class="auth-btn auth-btn--primary auth-submit" id="auth-submit" data-no-ripple data-i18n="auth.login">ورود</button>
-        <p class="auth-hint" data-i18n="auth.guestHint">بدون ورود هم می‌توانید به‌عنوان کاربر مهمان از چت‌بات استفاده کنید.</p>
+        <button type="button" class="auth-btn auth-btn--pastel auth-submit" id="auth-submit" data-no-ripple data-i18n="auth.login">ورود</button>
       </div>
     </div>
   </div>
@@ -146,7 +153,7 @@
   <div class="modal-card" role="dialog" aria-modal="true" tabindex="-1" data-modal-panel>
     <div class="modal-head">
       <div class="flex items-center gap-3 min-w-0">
-        <div class="modal-icon" style="background:#2A7FC1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.42-4.03 8-9 8a9.86 9.86 0 0 1-4.26-.95L3 20l1.4-3.72C3.51 15.04 3 13.57 3 12c0-4.42 4.03-8 9-8s9 3.58 9 8z"/></svg></div>
+        <div class="modal-icon" style="background:#2A7FC1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z"/><path d="M21 16v2a4 4 0 0 1-4 4h-5"/></svg></div>
         <div class="min-w-0"><div class="modal-title" data-i18n="support.title">پشتیبانی</div><div class="modal-subtitle" data-i18n="support.subtitle">در خدمت شما</div></div>
       </div>
       <button class="modal-close" data-close="m-support" aria-label="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -251,27 +258,28 @@
       <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     </div>
     <div id="chat-list"></div>
+    <div class="sb-account">
+    <div class="guest-card" id="account-card" hidden>
+      <div class="guest-avatar" id="acc-avatar" aria-hidden="true">?</div>
+      <div class="guest-info">
+        <span class="guest-name" id="acc-user"></span>
+        <span class="guest-sub" id="acc-sub-user" data-i18n="auth.loggedIn">وارد شده‌اید</span>
+      </div>
+      <span class="pulse-dot"></span>
+    </div>
+    <div class="auth-section" id="auth-section">
+      <div class="auth-btns" id="auth-btns">
+        <button type="button" class="auth-btn auth-btn--pastel" data-auth="login" data-no-ripple data-i18n="auth.login">ورود</button>
+      </div>
+      <div class="auth-btns" id="auth-out" hidden>
+        <button type="button" class="auth-btn" id="auth-logout" data-no-ripple data-i18n="auth.logout">خروج از حساب</button>
+      </div>
+    </div>
+    </div>
     <div class="sidebar-tools">
       <button class="sidebar-tool tool-settings" data-open="m-settings" data-no-ripple aria-label="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="sidebar-tooltip" data-i18n="sidebar.settings">تنظیمات</span></button>
       <button class="sidebar-tool tool-support" data-open="m-support" data-no-ripple aria-label="support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="hs-band" d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z"/><path class="hs-mic" d="M21 16v2a4 4 0 0 1-4 4h-5"/></svg><span class="sidebar-tooltip" data-i18n="sidebar.support">پشتیبانی</span></button>
       <button class="sidebar-tool tool-about" data-open="m-about" data-no-ripple aria-label="about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle class="ab-ring" cx="12" cy="12" r="10"/><circle class="ab-main" cx="12" cy="12" r="10"/><path class="ab-bar" d="M12 16v-4"/><circle class="ab-dot" cx="12" cy="8" r="1.2" fill="currentColor" stroke="none"/></svg><span class="sidebar-tooltip" data-i18n="sidebar.about">درباره ما</span></button>
-    </div>
-    <div class="guest-card" id="account-card">
-      <div class="guest-avatar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
-      <div class="guest-info">
-        <span class="guest-name" id="acc-guest" data-i18n="sidebar.guest">کاربر مهمان</span>
-        <span class="guest-name" id="acc-user" hidden></span>
-        <span class="guest-sub" id="acc-sub-guest" data-i18n="sidebar.free">مشاوره رایگان</span>
-        <span class="guest-sub" id="acc-sub-user" data-i18n="auth.loggedIn" hidden>وارد شده‌اید</span>
-      </div>
-      <span class="pulse-dot"></span>
-    </div>
-    <div class="auth-btns" id="auth-btns">
-      <button type="button" class="auth-btn auth-btn--primary" data-auth="login" data-no-ripple data-i18n="auth.login">ورود</button>
-      <button type="button" class="auth-btn" data-auth="register" data-no-ripple data-i18n="auth.register">ثبت نام</button>
-    </div>
-    <div class="auth-btns" id="auth-out" hidden>
-      <button type="button" class="auth-btn" id="auth-logout" data-no-ripple data-i18n="auth.logout">خروج از حساب</button>
     </div>
   </aside>
 
@@ -315,6 +323,6 @@
   <button class="bottom-item tool-support" data-bottom="support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="hs-band" d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z"/><path class="hs-mic" d="M21 16v2a4 4 0 0 1-4 4h-5"/></svg><span data-i18n="bottom.support">پشتیبانی</span></button>
 </nav>
 
-<script src="script.js?v=20261112auth2"></script>
+<script src="script.js?v=20261113auth4"></script>
 </body>
 </html>
