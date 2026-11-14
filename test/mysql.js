@@ -72,15 +72,17 @@ if (!URL) { console.log('TEST_MYSQL_URL تنظیم نشده؛ تست MySQL رد 
   }); });
   await new Promise(r => llmSrv.listen(0, r));
   process.chdir(require('path').join(__dirname, '..'));
-  process.env.T_KEY = 'k'.repeat(20); process.env.CHAT_SIGNING_SECRET = 's'.repeat(32); process.env.ADMIN_TOKEN = 'a'.repeat(20);
+  process.env.T_KEY = 'k'.repeat(20); process.env.CHAT_SIGNING_SECRET = 's'.repeat(32);
+  process.env.NOOKA_SUPERADMIN_EMAIL = 'mysql-root@nooka.test'; process.env.NOOKA_SUPERADMIN_NAME = 'مدیر اصلی MySQL';
+  const crypto = require('crypto'); const auth = require('../api/admin-auth'); const salt = crypto.randomBytes(16);
+  process.env.NOOKA_SUPERADMIN_PASSWORD_HASH = 'scrypt$' + salt.toString('hex') + '$' + crypto.scryptSync('Mysql-Super-Password-2026!', salt, 64).toString('hex');
   require('../lib/llm')._setConfig({ use: 't', providers: { t: { url: `http://127.0.0.1:${llmSrv.address().port}/v1`, model: 'm', key: 'T_KEY' } } });
   const { kv } = require('../lib/common');
   assert.strictEqual(kv.driver, 'mysql');
   const chat = require('../api/chat.js'), lead = require('../api/lead.js'), admin = require('../api/admin.js');
   const call = (h, { body, headers = {}, method = 'POST', ip }) => new Promise(resolve => {
     const res = { code: 200, setHeader() {}, status(c) { this.code = c; return this; }, json(o) { resolve({ code: this.code, json: o }); }, end() { resolve({ code: this.code }); }, write() {} };
-    // از 1.6.9 هدر x-real-ip بدون TRUST_PROXY نادیده گرفته می‌شود؛ آی‌پی مشتری از socket می‌آید
-    h({ method, body, headers: { host: 'x', 'content-length': '100', ...headers }, socket: { remoteAddress: ip || '10.1.1.1' } }, res);
+    h({ method, body, headers: { host: 'x', 'content-length': '100', 'x-real-ip': ip || '10.1.1.1', ...headers }, socket: {} }, res);
   });
   const Q = 'ترمیم معدل در کدام ماه انجام میشه';
   let r = await call(chat, { body: { messages: [{ role: 'user', content: Q }] }, ip: '10.9.0.1' });
@@ -93,7 +95,11 @@ if (!URL) { console.log('TEST_MYSQL_URL تنظیم نشده؛ تست MySQL رد 
   assert.ok(limited >= 2, 'rate-limit مشترک (۸ در دقیقه) باید اعمال شود: ' + limited);
   r = await call(lead, { body: { phone: '09121112233', consent: true, major: 'عمران' }, ip: '10.9.0.7' });
   assert.strictEqual(r.code, 200, JSON.stringify(r.json));
-  r = await call(admin, { method: 'GET', headers: { authorization: 'Bearer ' + 'a'.repeat(20) } });
+  const adminToken = crypto.randomBytes(32).toString('base64url');
+  await kv.exec([['SET', auth.sessionKey(adminToken), JSON.stringify({ email: process.env.NOOKA_SUPERADMIN_EMAIL, key: 'super', credentialVersion: auth.credentialFingerprint({ passwordHash: process.env.NOOKA_SUPERADMIN_PASSWORD_HASH }) }), 'EX', 3600]]);
+  r = await call(admin, { method: 'GET', headers: { authorization: 'Bearer legacy-token-is-ignored' } });
+  assert.strictEqual(r.code, 401, 'legacy bearer token alone must not authenticate the report endpoint');
+  r = await call(admin, { method: 'GET', headers: { cookie: auth.cookieName + '=' + adminToken, authorization: 'Bearer legacy-token-is-ignored' } });
   assert.strictEqual(r.json.leads[0].phone, '09121112233');
   assert.ok(r.json.stats && +r.json.stats.hit >= 1 && r.json.entries.length >= 1);
   console.log('✓ جریان کامل بات روی MySQL: یادگیری، rate-limit مشترک، درخواست تماس، پنل مدیر');

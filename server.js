@@ -163,9 +163,9 @@ const server = http.createServer(async (req, res) => {
       const name = apiMatch[1];
       if (!API.has(name)) return res.status(404).json({ error: 'not_found' });
       req.query = Object.fromEntries(url.searchParams);
-      // /api/transcribe consumes raw audio; the other JSON endpoints receive parsed JSON.
-      if (req.method === 'POST' && /application\/json/i.test(req.headers['content-type'] || '')) req.body = await readJson(req);
-      else if (req.method !== 'POST') req.body = {};
+      // /api/transcribe consumes raw audio; all JSON methods (POST/PUT/PATCH/DELETE) are parsed.
+      if (!['GET', 'HEAD'].includes(req.method) && /application\/json/i.test(req.headers['content-type'] || '')) req.body = await readJson(req);
+      else if (['GET', 'HEAD'].includes(req.method)) req.body = {};
       return await handler(name)(req, res);
     }
 

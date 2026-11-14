@@ -12,7 +12,7 @@
   <script src="app.js" defer></script>
 </head>
 <body>
-  <div class="demo-ribbon"><span class="demo-dot"></span> پنل مدیریت نوکا · ورود امن با حساب تأییدشده</div>
+  <div class="demo-ribbon"><span class="demo-dot"></span> پنل مدیریت نوکا · داده‌های عملیاتی</div>
   <main class="login-screen" id="loginScreen">
     <section class="login-card" aria-labelledby="loginTitle">
       <div class="login-brand">
@@ -49,7 +49,7 @@
       <div class="nav-label">مدیریت</div>
       <nav class="main-nav" aria-label="منوی مدیریت">
         <button class="nav-item active" data-view="dashboard"><span class="nav-icon">▦</span><span>داشبورد</span></button>
-        <button class="nav-item" data-view="requests"><span class="nav-icon">⌕</span><span>درخواست‌ها و گفتگوها</span><span class="nav-count">۱۲</span></button>
+        <button class="nav-item" data-view="requests"><span class="nav-icon">⌕</span><span>درخواست‌ها و گفتگوها</span></button>
         <button class="nav-item" data-view="tokens"><span class="nav-icon">◉</span><span>مصرف توکن</span></button>
         <button class="nav-item" data-view="knowledge"><span class="nav-icon">▤</span><span>مدیریت دانش</span></button>
       </nav>
@@ -60,7 +60,7 @@
         <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span><span>تنظیمات</span></button>
       </nav>
       <div class="sidebar-bottom">
-        <div class="security-note"><span class="security-icon">◇</span><div><strong>ورود امن و نقش‌محور</strong><small>داده‌های مدیریتی در فاز بعد متصل می‌شوند</small></div></div>
+        <div class="security-note"><span class="security-icon">◇</span><div><strong>ورود امن و نقش‌محور</strong><small>داده‌ها از سرویس‌های متصل خوانده می‌شوند</small></div></div>
         <div class="profile-row"><div class="avatar avatar-blue" id="profileInitial">م</div><div class="profile-copy"><strong id="profileName">مدیر اصلی</strong><small id="profileRole">در انتظار ورود</small></div><span class="online-dot"></span></div>
       </div>
     </aside>
@@ -68,10 +68,10 @@
     <main class="main-area">
       <header class="topbar">
         <div class="topbar-start"><button class="icon-button mobile-menu" id="mobileMenu" aria-label="بازکردن منو">☰</button><div class="breadcrumb"><span>نوکا</span><b>/</b><strong id="breadcrumbTitle">داشبورد</strong></div></div>
-        <div class="topbar-actions"><span class="preview-pill"><i></i> نمونه داده</span><span class="role-pill" id="currentRoleBadge">Demo</span><button class="icon-button" id="themeToggle" aria-label="تغییر پوسته" title="تغییر پوسته">◐</button><button class="icon-button notification-button" id="notifications" aria-label="اعلان‌ها">♧<i></i></button><div class="top-avatar" id="topAvatar">م</div><button class="logout-button" id="logoutButton" type="button">خروج</button></div>
+        <div class="topbar-actions"><span class="preview-pill"><i></i> زنده</span><span class="role-pill" id="currentRoleBadge">Demo</span><button class="icon-button" id="themeToggle" aria-label="تغییر پوسته" title="تغییر پوسته">◐</button><button class="icon-button notification-button" id="notifications" aria-label="اعلان‌ها">♧<i></i></button><div class="top-avatar" id="topAvatar">م</div><button class="logout-button" id="logoutButton" type="button">خروج</button></div>
       </header>
       <section class="page-content" id="pageContent" aria-live="polite"></section>
-      <footer class="footer-note"><span>NOOKA ADMIN</span><span>رابط مدیریت · فاز اتصال داده‌ها</span><span>اطلاعات نمایشی تا اتصال MySQL</span></footer>
+      <footer class="footer-note"><span>NOOKA ADMIN</span><span>رابط مدیریت نوکا</span><span>نمایش داده‌های ثبت‌شده</span></footer>
     </main>
   </div>
   <div id="modalRoot"></div>
