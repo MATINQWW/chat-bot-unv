@@ -22,6 +22,11 @@ const server = require('../server');
     assert.equal(response.status, 404);
     assert.deepEqual(await response.json(), { error: 'not_found' });
 
+    response = await fetch(base + '/api/admin-users', { method: 'PUT', headers: { 'Content-Type': 'application/json', Connection: 'close' }, body: '{invalid' });
+    assert.equal(response.status, 400, 'PUT JSON bodies must be parsed and rejected when malformed');
+    response = await fetch(base + '/api/admin-users', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Connection: 'close' }, body: '{invalid' });
+    assert.equal(response.status, 400, 'DELETE JSON bodies must be parsed and rejected when malformed');
+
     response = await request('/%E0%A4%A');
     assert.equal(response.status, 400, 'malformed percent-encoding must not crash the request handler');
 
@@ -46,6 +51,7 @@ const server = require('../server');
 
     console.log('✓ live health endpoint');
     console.log('✓ unknown API route returns JSON 404');
+    console.log('✓ JSON request bodies are parsed for PUT and DELETE');
     console.log('✓ malformed URL is handled as 400');
     console.log('✓ dotfiles remain inaccessible');
     console.log('✓ HEAD and static path handling');

@@ -50,7 +50,6 @@ function configuredAccounts(env) {
   const accounts = [];
   const definitions = [
     { key: 'super', role: 'Super Admin', email: env.NOOKA_SUPERADMIN_EMAIL, hash: env.NOOKA_SUPERADMIN_PASSWORD_HASH, name: env.NOOKA_SUPERADMIN_NAME || 'مدیر اصلی' },
-    { key: 'admin', role: 'Admin', email: env.NOOKA_ADMIN_EMAIL, hash: env.NOOKA_ADMIN_PASSWORD_HASH, name: env.NOOKA_ADMIN_NAME || 'ادمین نوکا' },
   ];
   const seenEmails = new Set();
   for (const item of definitions) {
@@ -117,6 +116,38 @@ async function auditRecord(store, action, req, email, role, hashIp = ipHash) {
   } catch { return false; }
 }
 
+async function allAccounts(store, env = process.env) {
+  const accounts = configuredAccounts(env);
+  const r = await store.exec([['HGETALL', 'nooka:admin:users']]);
+  if (!r) throw new Error('admin user store unavailable');
+  const flat = r[0] || [];
+  for (let i = 0; i < flat.length; i += 2) {
+    try {
+      const u = JSON.parse(flat[i + 1]);
+      if (!u || u.active === false || !u.email || !u.key || !/^scrypt\$[a-f0-9]{32}\$[a-f0-9]{128}$/i.test(u.passwordHash || '')) continue;
+      if (!Array.isArray(u.views) || accounts.some(a => a.email === u.email)) continue;
+      accounts.push({ key: u.key, role: 'Admin', email: String(u.email).toLowerCase(), name: String(u.name || 'ادمین').slice(0, 80), passwordHash: u.passwordHash, views: u.views.filter(v => ROLE_VIEWS.super.includes(v) && v !== 'admins') });
+    } catch {}
+  }
+  return accounts;
+}
+
+function credentialFingerprint(account) { return crypto.createHash('sha256').update(String(account.passwordHash) + ':' + String(account.sessionVersion || 0)).digest('hex'); }
+
+async function resolveSession(req, store = defaultStore, env = process.env) {
+  const token = readToken(req);
+  if (!token || !/^[A-Za-z0-9_-]{40,60}$/.test(token)) return null;
+  const result = await store.exec([['GET', sessionKey(token)]]);
+  if (!result) throw new Error('session store unavailable');
+  if (typeof result[0] !== 'string') return null;
+  let saved;
+  try { saved = JSON.parse(result[0]); } catch { return null; }
+  const account = (await allAccounts(store, env)).find(a => a.email === saved.email && a.key === saved.key);
+  const credentialVersion = account ? credentialFingerprint(account) : '';
+  if (!account || saved.credentialVersion !== credentialVersion) { await store.exec([['DEL', sessionKey(token)]]).catch(() => null); return null; }
+  return { token, account };
+}
+
 function createHandler(deps = {}) {
   const store = deps.kv || defaultStore;
   const checkRate = deps.rateLimited || null;
@@ -124,21 +155,7 @@ function createHandler(deps = {}) {
   const hashIp = deps.ipHash || ipHash;
   const env = deps.env || process.env;
 
-  async function getSession(req) {
-    const token = readToken(req);
-    if (!token || !/^[A-Za-z0-9_-]{40,60}$/.test(token)) return null;
-    const result = await store.exec([['GET', sessionKey(token)]]);
-    if (!result) throw new Error('session store unavailable');
-    if (typeof result[0] !== 'string') return null;
-    let session;
-    try { session = JSON.parse(result[0]); } catch { return null; }
-    const account = configuredAccounts(env).find(a => a.email === session.email && a.key === session.key);
-    if (!account) {
-      await store.exec([['DEL', sessionKey(token)]]).catch(() => null);
-      return null;
-    }
-    return { token, account };
-  }
+  async function getSession(req) { return resolveSession(req, store, env); }
 
   return async function adminAuth(req, res) {
     res.setHeader('Cache-Control', 'private, no-store, max-age=0');
@@ -187,7 +204,8 @@ function createHandler(deps = {}) {
     }
 
     if (body.action !== 'login') return res.status(400).json({ error: 'invalid_action' });
-    const accounts = configuredAccounts(env);
+    let accounts;
+    try { accounts = await allAccounts(store, env); } catch { return res.status(503).json({ error: 'session_store_unavailable' }); }
     if (!accounts.some(a => a.key === 'super')) return res.status(503).json({ error: 'admin_auth_not_configured' });
 
     let limited = false;
@@ -230,7 +248,7 @@ function createHandler(deps = {}) {
     }
 
     const token = crypto.randomBytes(32).toString('base64url');
-    const session = JSON.stringify({ email: account.email, key: account.key, createdAt: Date.now() });
+    const session = JSON.stringify({ email: account.email, key: account.key, credentialVersion: credentialFingerprint(account), createdAt: Date.now() });
     let saved;
     try { saved = await store.exec([['SET', sessionKey(token), session, 'EX', SESSION_TTL]]); }
     catch { saved = null; }
@@ -245,15 +263,15 @@ function createHandler(deps = {}) {
   };
 }
 
-// با تنظیم NOOKA_DB_URL حساب‌ها و نشست‌ها از MySQL می‌آیند (lib/admin-db-auth.js)؛ وگرنه حالت قدیمی Environment+KV.
-const legacy = createHandler();
-let dbHandler = null;
-const handler = (req, res) => {
-  if (!process.env.NOOKA_DB_URL) return legacy(req, res);
-  if (!dbHandler) dbHandler = require('../lib/admin-db-auth').createDbHandler();
-  return dbHandler(req, res);
-};
+const handler = createHandler();
 handler.createHandler = createHandler;
 handler.passwordMatches = passwordMatches;
 handler.configuredAccounts = configuredAccounts;
+handler.allAccounts = allAccounts;
+handler.resolveSession = resolveSession;
+handler.cookieName = COOKIE;
+handler.sessionKey = sessionKey;
+handler.auditRecord = auditRecord;
+handler.ipHash = ipHash;
+handler.credentialFingerprint = credentialFingerprint;
 module.exports = handler;

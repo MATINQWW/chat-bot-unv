@@ -1,20 +1,16 @@
-// صفحهٔ گزارش پرسش‌ها برای مدیر — داده از /api/admin?report=1 با ADMIN_TOKEN
+// صفحهٔ گزارش پرسش‌ها برای Super Admin — نشست مشترک با /admin
 (function () {
   const $ = id => document.getElementById(id);
   const COLORS = { faq: 'var(--kb)', knowledge: 'var(--kb)', vector: 'var(--vec)', memory: 'var(--mem)', general: 'var(--gen)',
                    no_info: 'var(--no)', off_topic: 'var(--off)', error: '#991b1b', smalltalk: '#94a3b8', web: '#0f766e' };
   const fa = n => Number(n || 0).toLocaleString('fa-IR');
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let token = ''; try { token = sessionStorage.getItem('adm') || ''; } catch {}
-  $('token').value = token;
   let rep = null;
 
   async function api(path, opt = {}) {
-    token = $('token').value.trim();
-    try { sessionStorage.setItem('adm', token); } catch {}
-    const r = await fetch('/api/admin' + path, { ...opt, headers: { Authorization: 'Bearer ' + token, ...(opt.headers || {}) } });
-    if (r.status === 401) throw new Error('توکن نادرست است.');
-    if (r.status === 404) throw new Error('ADMIN_TOKEN روی سرور تنظیم نشده است.');
+    const r = await fetch('/api/admin' + path, { ...opt, credentials: 'same-origin', cache: 'no-store', headers: { ...(opt.headers || {}) } });
+    if (r.status === 401) throw new Error('ابتدا با حساب مدیر اصلی در پنل /admin وارد شوید.');
+    if (r.status === 503) throw new Error('اتصال Redis یا ذخیره‌ساز در دسترس نیست.');
     if (!r.ok) throw new Error('خطا ' + r.status);
     return r;
   }
@@ -87,5 +83,5 @@
   };
   $('filter').oninput = () => rep && renderQuestions();
   $('src').onchange = () => rep && renderQuestions();
-  if (token) $('load').onclick();
+  $('load').onclick();
 })();

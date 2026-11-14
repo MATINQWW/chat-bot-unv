@@ -7,7 +7,7 @@
   },
   "redirects": [
     {
-      "source": "/(knowledge/.*|scripts/.*|eval/.*|test/.*|docs/.*|deploy/.*|server\\.js|config\\.js|README\\.md|\\.github/.*|package\\.json|package-lock\\.json|vercel\\.json|\\.env.*|\\.nvmrc|\\.gitignore|lib/.*|db/.*)",
+      "source": "/(knowledge/.*|scripts/.*|eval/.*|test/.*|docs/.*|deploy/.*|server\\.js|config\\.js|README\\.md|\\.github/.*|package\\.json|package-lock\\.json|vercel\\.json|\\.env.*|\\.nvmrc|\\.gitignore|lib/.*)",
       "destination": "/",
       "permanent": false
     },

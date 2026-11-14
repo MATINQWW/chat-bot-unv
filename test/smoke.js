@@ -398,9 +398,10 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.strictEqual(hooks.length, 1); assert.strictEqual(hooks[0].phone, '09123456789'); assert.ok(!('ip' in hooks[0]));
   process.env.ADMIN_TOKEN = 'z'.repeat(20);
   r = await call(admin, { method: 'GET', headers: { authorization: 'Bearer ' + 'z'.repeat(20) } });
-  assert.strictEqual(r.json.leads[0].phone, '09123456789'); assert.ok(!r.json.leads[0].ip && !/</.test(r.json.leads[0].question));
-  r = await call(admin, { method: 'GET', headers: { authorization: 'Bearer wrong-token-xxxxxxxx' } }); assert.strictEqual(r.code, 401);
-  console.log('✓ درخواست تماس: اعتبارسنجی شماره (ارقام فارسی)، رضایت، پاکسازی متن، نمایش در پنل مدیر');
+  assert.ok([401, 503].includes(r.code), 'legacy ADMIN_TOKEN must not bypass the shared Super Admin session');
+  r = await call(admin, { method: 'GET', headers: { authorization: 'Bearer wrong-token-xxxxxxxx' } }); assert.ok([401, 503].includes(r.code));
+  delete process.env.ADMIN_TOKEN;
+  console.log('✓ درخواست تماس: اعتبارسنجی شماره (ارقام فارسی)، رضایت و پاکسازی متن؛ API قدیمی فقط با نشست Super Admin');
 
   delete process.env.LEAD_WEBHOOK_URL;
 
@@ -416,9 +417,7 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   await ask('سلام'); await ask('شهریه قسطی داره؟'); await ask('شهریه قسطی داره؟');
   await ask('بازار کار رشته مهندسی کامپیوتر'); await ask('رشته مهندسی کامپیوتر بازار کارش چطوره');
   await ask('شماره من 09123456789 هست بازار کار');
-  const AH = { authorization: 'Bearer ' + 'z'.repeat(20) };
-  r = await call(admin, { method: 'GET', url: '/api/admin?report=1', headers: AH });
-  const R = r.json;
+  const R = await rep0.build(require('../lib/common').kv);
   assert.strictEqual(R.summary.totals.smalltalk, 1); assert.strictEqual(R.summary.totals.faq, 2);
   assert.strictEqual(R.summary.privateQuestions, 1);
   assert.ok(!JSON.stringify(R).includes('09123456789'));
@@ -432,8 +431,8 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   assert.strictEqual(rep0.sourceOfReply('این سوال خارج از حوزه هدایت تحصیلی است.', 'no_info', 'general'), 'off_topic');
   assert.strictEqual(rep0.sourceOfReply('اطلاعات این رشته رو ندارم.', 'no_info', 'general'), 'no_info');
   assert.strictEqual(rep0.sourceOfReply('این سوال خارج از حوزه هدایت تحصیلی است', 'knowledge'), 'off_topic');
-  r = await call(admin, { method: 'GET', url: '/api/admin?report=csv', headers: AH });
-  assert.ok(/^\ufeffپرسش,تعداد/.test(r.body) && /کامپیوتر/.test(r.body));
+  const csvReport = rep0.csv(R);
+  assert.ok(/^\ufeffپرسش,تعداد/.test(csvReport) && /کامپیوتر/.test(csvReport));
   const hostileCsv = rep0.csv({ questions: [{
     question: '=HYPERLINK("https://example.invalid","click")', count: 1, similarPhrasings: 1,
     mainSource: 'general', fromKnowledgeRate: 0, sources: {}, knowledgeChunks: [],
@@ -441,7 +440,7 @@ function call(handler, { body, headers = {}, method = 'POST', url = '/api/x' }) 
   }] });
   assert.ok(hostileCsv.includes('"\t=HYPERLINK('), 'formula-leading question must be neutralized in CSV');
   assert.ok(hostileCsv.includes('"\t+cmd'), 'formula-leading variant must be neutralized in CSV');
-  r = await call(admin, { method: 'POST', body: { resetReport: true }, headers: AH }); assert.ok(r.json.ok);
+  await rep0.reset(require('../lib/common').kv);
   console.log('✓ گزارش پرسش‌ها: شمارش، ادغام عبارت‌های مشابه، منبع پاسخ (پایگاه دانش/وکتور/مدل)، بدون اطلاعات شخصی، CSV');
 
   // ۱۴) چند سرویس مدل: سرویس اول محدود (429) → دومی؛ سقف هم‌زمانی پر → 503 «شلوغ»

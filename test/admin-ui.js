@@ -32,7 +32,10 @@ const server = require('../server');
     assert.match(r.headers.get('content-type'), /javascript/);
     const js = await r.text();
     assert.match(js, /fetch\('\/api\/admin-auth'/);
-    assert.doesNotMatch(js, /owner@nooka\.demo|nooka-preview-super|data-demo-account/);
+    assert.doesNotMatch(js, /owner@nooka\.demo|nooka-preview-super|data-demo-account|NK-8F21A|owner@example\.invalid|۱۲,۸۴۶|نمونه ساختگی/);
+    assert.match(js, /\/api\/admin-data/);
+    assert.match(js, /\/api\/admin-users/);
+    assert.match(js, /داده‌ای برای نمایش وجود ندارد/);
 
     assert.equal((await get('/admin', 'POST')).status, 405);
     assert.equal((await get('/admin/unknown.js')).status, 404);
