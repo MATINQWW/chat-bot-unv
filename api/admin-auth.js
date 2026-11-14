@@ -245,7 +245,14 @@ function createHandler(deps = {}) {
   };
 }
 
-const handler = createHandler();
+// با تنظیم NOOKA_DB_URL حساب‌ها و نشست‌ها از MySQL می‌آیند (lib/admin-db-auth.js)؛ وگرنه حالت قدیمی Environment+KV.
+const legacy = createHandler();
+let dbHandler = null;
+const handler = (req, res) => {
+  if (!process.env.NOOKA_DB_URL) return legacy(req, res);
+  if (!dbHandler) dbHandler = require('../lib/admin-db-auth').createDbHandler();
+  return dbHandler(req, res);
+};
 handler.createHandler = createHandler;
 handler.passwordMatches = passwordMatches;
 handler.configuredAccounts = configuredAccounts;

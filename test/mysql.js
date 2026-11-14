@@ -79,7 +79,8 @@ if (!URL) { console.log('TEST_MYSQL_URL تنظیم نشده؛ تست MySQL رد 
   const chat = require('../api/chat.js'), lead = require('../api/lead.js'), admin = require('../api/admin.js');
   const call = (h, { body, headers = {}, method = 'POST', ip }) => new Promise(resolve => {
     const res = { code: 200, setHeader() {}, status(c) { this.code = c; return this; }, json(o) { resolve({ code: this.code, json: o }); }, end() { resolve({ code: this.code }); }, write() {} };
-    h({ method, body, headers: { host: 'x', 'content-length': '100', 'x-real-ip': ip || '10.1.1.1', ...headers }, socket: {} }, res);
+    // از 1.6.9 هدر x-real-ip بدون TRUST_PROXY نادیده گرفته می‌شود؛ آی‌پی مشتری از socket می‌آید
+    h({ method, body, headers: { host: 'x', 'content-length': '100', ...headers }, socket: { remoteAddress: ip || '10.1.1.1' } }, res);
   });
   const Q = 'ترمیم معدل در کدام ماه انجام میشه';
   let r = await call(chat, { body: { messages: [{ role: 'user', content: Q }] }, ip: '10.9.0.1' });
