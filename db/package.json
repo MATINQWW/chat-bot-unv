@@ -1,0 +1,13 @@
+{
+  "name": "nooka-db-tools",
+  "private": true,
+  "description": "ابزارهای دیتابیس MySQL پنل نوکا (ساخت ادمین و تست اسکیما)؛ جدا از package.json اصلی تا استقرار Vercel/VPS تغییر نکند",
+  "scripts": {
+    "test": "node --test tests/schema.test.js",
+    "create-admin": "node create-admin.js"
+  },
+  "dependencies": {
+    "argon2": "^0.45.2",
+    "mysql2": "^3.24.6"
+  }
+}

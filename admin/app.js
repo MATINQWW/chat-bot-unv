@@ -2,7 +2,7 @@
   'use strict';
   var $ = function (s, root) { return (root || document).querySelector(s); };
   var $$ = function (s, root) { return Array.prototype.slice.call((root || document).querySelectorAll(s)); };
-  var state = { view: 'dashboard', requestFilter: 'all', requestSearch: '', knowledgeType: 'all', knowledgeSearch: '', temporaryKnowledge: [], temporaryAdmins: [], currentAdmin: null };
+  var state = { view: 'dashboard', requestFilter: 'all', requestSearch: '', knowledgeType: 'all', knowledgeSearch: '', knowledgeSha: null, knowledgeList: null, currentAdmin: null };
   var viewNames = { dashboard: 'داشبورد', requests: 'درخواست‌ها و گفتگوها', tokens: 'مصرف توکن', knowledge: 'مدیریت دانش', admins: 'ادمین‌ها و دسترسی‌ها', audit: 'گزارش فعالیت‌ها', settings: 'تنظیمات' };
   // Identity and role arrive only from the server after credentials/session validation.
   function showLogin(message) {
@@ -186,17 +186,108 @@
       '<section class="panel"><div class="panel-head"><div><h2 class="panel-title">مصرف به تفکیک Provider</h2><div class="panel-subtitle">مقادیر ساختگی برای نمایش رابط</div></div></div>' + systemStatus('IranCopilot', 'icp-chat', '۷۲٪') + systemStatus('OpenRouter', 'مدل جایگزین', '۲۱٪') + systemStatus('سایر', 'سرویس‌های آزمایشی', '۷٪') + '<p class="modal-hint">پس از اتصال داده‌های عملیاتی، هزینه از جدول تعرفه مدل و Usage واقعی محاسبه می‌شود.</p></section></div>' +
       '<section class="panel table-panel"><div class="panel-head"><div><h2 class="panel-title">جزئیات مصرف هر درخواست</h2><div class="panel-subtitle">توکن ورودی، خروجی، هش و مدل</div></div></div><div class="table-wrap"><table><thead><tr><th>شناسه درخواست</th><th>مدل</th><th>ورودی</th><th>خروجی</th><th>مجموع</th><th>هش پرسش</th></tr></thead><tbody>' + requests.map(function (r) { return '<tr><td class="ltr">' + r.id + '</td><td>' + r.model + '</td><td class="ltr">' + r.input.toLocaleString('en-US') + '</td><td class="ltr">' + r.output.toLocaleString('en-US') + '</td><td class="ltr"><b>' + r.total.toLocaleString('en-US') + '</b></td><td class="ltr muted">a81f…' + r.id.slice(-4) + '</td></tr>'; }).join('') + '</tbody></table></div></section>';
   }
-  function knowledgeView() {
-    var all = knowledge.concat(state.temporaryKnowledge);
-    var list = all.filter(function (k) { return (state.knowledgeType === 'all' || k.type === state.knowledgeType) && (!state.knowledgeSearch || (k.title + k.id + k.category).toLowerCase().indexOf(state.knowledgeSearch.toLowerCase()) >= 0); });
-    var pills = [['all','همه · ۷۵'],['major','رشته‌ها · ۴۲'],['general','عمومی · ۲۰'],['faculty','دانشکده · ۷'],['faq','FAQ · ۵'],['list','فهرست · ۱']];
-    return pageHead('مدیریت پایگاه دانش', 'افزودن، دسته‌بندی و انتشار اطلاعات مرجع نوکا', '<button class="btn btn-primary" data-action="add-knowledge">' + icon('plus') + ' افزودن اطلاعات</button>') +
-      '<div class="callout"><div>ⓘ</div><div><strong>پیش‌نمایش گردش کار انتشار</strong><span>ثبت و ویرایش در این نسخه فقط در حافظه مرورگر شبیه‌سازی می‌شود. نسخه عملیاتی، محتوای اصلی را در MySQL ذخیره و ایندکس Vector را همگام می‌کند.</span></div></div>' +
-      '<div class="stats-grid">' + stat('کل تکه‌های دانش', '۷۵', 'داده فعلی نسخه ۱.۶.۹', icon('book'), '', 'up') + stat('دسته‌بندی‌ها', '۵', 'انواع فعلی اطلاعات', '▤', 'green', 'up') + stat('منتشرشده', '۷۵', 'همه رکوردهای فعلی', '✓', '', 'up') + stat('در انتظار همگام‌سازی', '۰', 'در حالت نمایشی', '↻', 'orange', 'up') + '</div>' +
-      '<div class="filters"><input class="search-control" id="knowledgeSearch" placeholder="جست‌وجوی عنوان، شناسه یا دسته..." value="' + esc(state.knowledgeSearch) + '"><span class="toolbar-note">' + list.length + ' مورد در این نما</span></div><div class="category-pills">' + pills.map(function (p) { return '<button class="category-pill ' + (state.knowledgeType === p[0] ? 'active' : '') + '" data-knowledge-type="' + p[0] + '">' + p[1] + '</button>'; }).join('') + '</div>' +
-      '<section class="panel table-panel">' + (list.length ? '<div class="table-wrap"><table><thead><tr><th>شناسه</th><th>عنوان اطلاعات</th><th>نوع</th><th>دسته‌بندی</th><th>آخرین ویرایش</th><th>وضعیت</th><th></th></tr></thead><tbody>' + list.map(function (k) { return '<tr><td class="ltr muted">' + esc(k.id) + '</td><td class="primary-cell">' + esc(k.title) + '</td><td><span class="source-tag">' + esc(k.type) + '</span></td><td>' + esc(k.category) + '</td><td>' + esc(k.updated) + '</td><td>' + badge('success','منتشرشده') + '</td><td><button class="btn btn-sm" data-knowledge-preview="' + esc(k.id) + '">پیش‌نمایش</button></td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty-state">موردی پیدا نشد.</div>') + '</section>';
+  var kState = { loading: false, error: null };
+  function loadKnowledge(force) {
+    if (!force && state.knowledgeList !== null) { render(); return; }
+    kState.loading = true; kState.error = null;
+    fetch('/api/admin-knowledge', { credentials: 'same-origin', cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.error) { kState.error = d.error; kState.loading = false; render(); return; }
+        state.knowledgeList = d.chunks || []; state.knowledgeSha = d.sha || null;
+        kState.loading = false; render();
+      }).catch(function(){ kState.error = 'network'; kState.loading = false; render(); });
   }
-  function adminsView() {
+  function typeFa(t){ return {general:'عمومی',major:'رشته',faculty:'دانشکده',faq:'FAQ',list:'فهرست'}[t]||t; }
+  function knowledgeView() {
+    if (!state.knowledgeList && !kState.loading && !kState.error) { loadKnowledge(true); return '<div class="loading-state">در حال بارگذاری پایگاه دانش…</div>'; }
+    if (kState.loading) return '<div class="loading-state">در حال بارگذاری…</div>';
+    if (kState.error) return pageHead('مدیریت پایگاه دانش','','') + '<div class="callout"><div>⚠️</div><div><strong>خطا</strong><span>'+esc(kState.error)+'</span></div></div>';
+    var all = state.knowledgeList || [];
+    var list = all.filter(function(k){ return (state.knowledgeType === 'all' || k.type === state.knowledgeType) && (!state.knowledgeSearch || (k.title+k.id).toLowerCase().indexOf(state.knowledgeSearch.toLowerCase()) >= 0); });
+    var tc = {}; all.forEach(function(k){ tc[k.type]=(tc[k.type]||0)+1; });
+    var pills = [['all','همه · '+all.length],['major','رشته‌ها · '+(tc.major||0)],['general','عمومی · '+(tc.general||0)],['faculty','دانشکده · '+(tc.faculty||0)],['faq','FAQ · '+(tc.faq||0)],['list','فهرست · '+(tc.list||0)]];
+    var canCreate = state.currentAdmin && (state.currentAdmin.permissions||[]).indexOf('knowledge.create') >= 0;
+    var canEdit   = state.currentAdmin && (state.currentAdmin.permissions||[]).indexOf('knowledge.edit') >= 0;
+    return pageHead('مدیریت پایگاه دانش','ویرایش مستقیم فایل دانش روی VPS',canCreate?'<button class="btn btn-primary" data-action="add-knowledge">'+icon('plus')+' افزودن</button>':'')+
+      (state.knowledgeSha?'<div class="callout"><div>✔</div><div><strong>اتصال برقرار</strong><span>'+all.length+' تکه · SHA: '+esc(state.knowledgeSha.slice(0,16))+'…</span></div><button class="btn btn-sm" data-action="reload-knowledge" style="margin-right:auto">↻ بارگذاری مجدد</button></div>':'')+
+      '<div class="filters"><input class="search-control" id="knowledgeSearch" placeholder="جست‌وجو…" value="'+esc(state.knowledgeSearch)+'"><span class="toolbar-note">'+list.length+' مورد</span></div>'+
+      '<div class="category-pills">'+pills.map(function(p){ return '<button class="category-pill '+(state.knowledgeType===p[0]?'active':'')+'" data-knowledge-type="'+p[0]+'">'+p[1]+'</button>'; }).join('')+'</div>'+
+      '<section class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>شناسه</th><th>عنوان</th><th>نوع</th><th>نویسه</th><th></th></tr></thead><tbody>'+
+      (list.length?list.map(function(k){ return '<tr><td class="ltr muted">'+esc(k.id)+'</td><td class="primary-cell">'+esc(k.title)+'</td><td><span class="source-tag">'+typeFa(k.type)+'</span></td><td class="ltr">'+esc(String(k.chars||''))+'</td><td><button class="btn btn-sm" data-knowledge-preview="'+esc(k.id)+'">مشاهده</button>'+(canEdit?' <button class="btn btn-sm" data-knowledge-edit="'+esc(k.id)+'">ویرایش</button>':'')+' </td></tr>'; }).join(''):'<tr><td colspan="5"><div class="empty-state">موردی پیدا نشد.</div></td></tr>')+
+      '</tbody></table></div></section>';
+  }
+  function kFormBody(c, isFaq) {
+    var v = c||{};
+    return '<div class="form-grid">'+
+      '<div class="form-field full"><label>عنوان'+(isFaq?' / سؤال اصلی':'')+'</label><input class="input-control" id="kTitle" value="'+esc(v.title||'')+'" placeholder="عنوان"></div>'+
+      (!c?'<div class="form-field"><label>نوع</label><select class="input-control" id="kType"><option value="general">عمومی</option><option value="major">رشته</option><option value="faculty">دانشکده</option><option value="faq">FAQ</option><option value="list">فهرست</option></select></div>':
+           '<div class="form-field"><label>نوع</label><input class="input-control" value="'+typeFa(v.type||'')+'" disabled></div>')+
+      '<div class="form-field full"><label>کلیدواژه‌ها (با ویرگول)</label><input class="input-control" id="kKeywords" value="'+esc((v.keywords||[]).join('، '))+'" placeholder="کلیدواژه، کلیدواژه"></div>'+
+      (isFaq?
+        '<div class="form-field full"><label>پاسخ</label><textarea class="textarea-control" id="kAnswer" rows="4">'+esc(v.answer||'')+'</textarea></div>'+
+        '<div class="form-field full"><label>سؤال‌های مشابه (هر خط)</label><textarea class="textarea-control" id="kQuestions" rows="3">'+esc((v.questions||[]).slice(1).join('
+'))+'</textarea></div>':
+        '<div class="form-field full"><label>متن دانش</label><textarea class="textarea-control" id="kText" rows="8">'+esc(v.text||'')+'</textarea></div>')+
+      '</div><p class="modal-hint">SHA: '+esc(state.knowledgeSha?state.knowledgeSha.slice(0,16)+'…':'نامشخص')+'</p>';
+  }
+  function collectKForm(fixedType) {
+    var type = fixedType||($('#kType')&&$('#kType').value)||'general';
+    var kw = ($('#kKeywords')||{value:''}).value.split(/[,،؛;\n]+/).map(function(x){return x.trim();}).filter(Boolean);
+    if (type==='faq') return { type:type, title:($('#kTitle')||{value:''}).value.trim(), keywords:kw, answer:($('#kAnswer')||{value:''}).value.trim(), questions:($('#kQuestions')||{value:''}).value.trim().split('\n').map(function(x){return x.trim();}).filter(Boolean) };
+    return { type:type, title:($('#kTitle')||{value:''}).value.trim(), keywords:kw, text:($('#kText')||{value:''}).value };
+  }
+  function saveKnowledgeApi(action, id, chunk, btn) {
+    if (!state.knowledgeSha) { toast('SHA نامشخص است؛ صفحه را مجدداً بارگذاری کنید.'); return; }
+    btn.disabled=true; btn.textContent='در حال ذخیره…';
+    var body = { action:action, baseSha:state.knowledgeSha, chunk:chunk };
+    if (id) body.id = id;
+    fetch('/api/admin-knowledge',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){ return r.json().then(function(d){return{ok:r.ok,d:d};}); })
+      .then(function(res){
+        if (!res.ok) {
+          var msg=(res.d&&res.d.error)||'خطا';
+          if (res.d&&res.d.fields) msg+=': '+Object.entries(res.d.fields).map(function(e){return e[0]+' — '+e[1];}).join(' | ');
+          if (res.d&&res.d.currentSha){state.knowledgeSha=res.d.currentSha;msg+=' (تعارض نسخه؛ دوباره تلاش کنید)';}
+          toast(msg); btn.disabled=false; btn.textContent='ذخیره'; return;
+        }
+        if (res.d.sha) state.knowledgeSha=res.d.sha;
+        state.knowledgeList=null; closeModal(); loadKnowledge(true);
+        toast(action==='create'?'تکه دانش افزوده شد.':'تکه دانش به‌روز شد.');
+      }).catch(function(){toast('خطای شبکه');btn.disabled=false;btn.textContent='ذخیره';});
+  }
+  function addKnowledgeModal() {
+    openModal('افزودن اطلاعات', kFormBody(null,false),
+      '<button class="btn" data-close-modal>انصراف</button><button class="btn btn-primary" id="saveKnowledge">ذخیره</button>');
+    var typeEl=document.getElementById('kType');
+    if (typeEl) typeEl.addEventListener('change',function(){
+      var t=typeEl.value; var bEl=document.querySelector('.modal-body');
+      if (bEl){bEl.innerHTML=kFormBody(null,t==='faq'); var ne=document.getElementById('kType'); if(ne){ne.value=t; ne.addEventListener('change',arguments.callee);}}
+    });
+  }
+  function editKnowledgeModal(id) {
+    fetch('/api/admin-knowledge?id='+encodeURIComponent(id),{credentials:'same-origin',cache:'no-store'})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.error){toast('خطا: '+d.error);return;}
+        var c=d.chunk; if(d.sha) state.knowledgeSha=d.sha;
+        openModal('ویرایش: '+esc(c.title), kFormBody(c,c.type==='faq'),
+          '<button class="btn" data-close-modal>انصراف</button><button class="btn btn-primary" id="saveEditKnowledge">ذخیره</button>');
+        document.getElementById('saveEditKnowledge').addEventListener('click',function(){
+          saveKnowledgeApi('update',id,collectKForm(c.type),this);
+        });
+      }).catch(function(){toast('خطای شبکه');});
+  }
+  function viewKnowledgeModal(id) {
+    var item=(state.knowledgeList||[]).find(function(k){return k.id===id;});
+    var canEdit=state.currentAdmin&&(state.currentAdmin.permissions||[]).indexOf('knowledge.edit')>=0;
+    var body='<p class="modal-hint">برای دیدن متن کامل، دکمه ویرایش را بزنید.</p>';
+    if (item) body='<div class="detail-grid"><div class="detail-box"><span>شناسه</span><strong class="ltr">'+esc(item.id)+'</strong></div><div class="detail-box"><span>نوع</span><strong>'+typeFa(item.type)+'</strong></div><div class="detail-box"><span>نویسه</span><strong class="ltr">'+esc(String(item.chars||''))+'</strong></div></div>'+body;
+    openModal('مشاهده دانش', body,
+      '<button class="btn" data-close-modal>بستن</button>'+(canEdit&&item?'<button class="btn btn-primary" data-knowledge-edit-modal="'+esc(id)+'">ویرایش</button>':''));
+  }
+
+    function adminsView() {
     var list = admins.concat(state.temporaryAdmins);
     return pageHead('ادمین‌ها و دسترسی‌ها', 'مدیریت اعضای پنل، نقش‌ها و مجوزهای عملیاتی', '<button class="btn btn-primary" data-action="add-admin">' + icon('plus') + ' افزودن ادمین</button>') +
       '<div class="callout"><div>' + icon('shield') + '</div><div><strong>اصل دسترسی حداقلی</strong><span>هر ادمین فقط باید به بخش‌های لازم دسترسی داشته باشد. نقش Super Admin در نسخه عملیاتی قابل واگذاری یا تغییر توسط ادمین عادی نیست.</span></div></div>' +
@@ -243,14 +334,8 @@
     var body = '<div class="detail-grid"><div class="detail-box"><span>شناسه درخواست</span><strong class="ltr">' + esc(r.id) + '</strong></div><div class="detail-box"><span>زمان ثبت</span><strong>' + esc(r.time) + '</strong></div><div class="detail-box"><span>منبع پاسخ</span><strong>' + esc(sourceName(r.source)) + '</strong></div><div class="detail-box"><span>وضعیت</span><strong>' + esc(r.statusText) + '</strong></div><div class="detail-box"><span>زمان پردازش</span><strong>' + esc(r.duration) + '</strong></div><div class="detail-box"><span>توکن کل</span><strong class="ltr">' + r.total + '</strong></div></div><div class="detail-text"><b>سؤال کاربر</b><br>' + esc(r.question) + '<br><br><b>پاسخ نوکا</b><br>' + esc(r.answer) + '</div><div class="detail-grid section-spacer"><div class="detail-box"><span>Provider</span><strong>' + esc(r.provider) + '</strong></div><div class="detail-box"><span>مدل</span><strong>' + esc(r.model) + '</strong></div><div class="detail-box"><span>توکن ورودی</span><strong class="ltr">' + r.input + '</strong></div><div class="detail-box"><span>توکن خروجی</span><strong class="ltr">' + r.output + '</strong></div></div><p class="modal-hint">نمونه ساختگی؛ پس از اتصال داده‌های عملیاتی جزئیات با مجوز requests.view_sensitive قابل مشاهده خواهد بود.</p>';
     openModal('جزئیات درخواست', body, '<button class="btn" data-close-modal>بستن</button>');
   }
-  function addKnowledgeModal() {
-    var body = '<div class="form-grid"><div class="form-field full"><label>عنوان اطلاعات</label><input class="input-control" id="newTitle" placeholder="مثلاً معرفی رشته مهندسی کامپیوتر"></div><div class="form-field"><label>نوع محتوا</label><select class="input-control" id="newType"><option value="general">عمومی</option><option value="major">رشته</option><option value="faculty">دانشکده</option><option value="faq">FAQ</option><option value="list">فهرست</option></select></div><div class="form-field"><label>دسته‌بندی</label><select class="input-control" id="newCategory"><option>اطلاعات عمومی</option><option>فنی و مهندسی</option><option>علوم انسانی</option><option>دانشکده‌ها</option><option>پرسش‌های متداول</option></select></div><div class="form-field full"><label>متن اطلاعات</label><textarea class="textarea-control" id="newContent" placeholder="متن مرجع را وارد کنید..."></textarea></div><div class="form-field full"><label>کلمات کلیدی</label><input class="input-control" id="newKeywords" placeholder="با ویرگول جدا کنید"></div></div><div class="modal-hint">این ثبت فقط برای نمایش روند کار است و با بستن یا بارگذاری مجدد صفحه از بین می‌رود.</div>';
-    openModal('افزودن اطلاعات به پایگاه دانش', body, '<button class="btn" data-close-modal>انصراف</button><button class="btn btn-primary" id="saveKnowledge">ثبت نمایشی</button>');
-  }
-  function addAdminModal() {
-    var body = '<div class="form-grid"><div class="form-field"><label>نام و نام خانوادگی</label><input class="input-control" id="adminName" placeholder="نام ادمین"></div><div class="form-field"><label>ایمیل</label><input class="input-control" id="adminEmail" type="email" placeholder="name@example.com"></div><div class="form-field full"><label>نقش</label><select class="input-control" id="adminRole"><option>Knowledge Manager</option><option>Support</option><option>Analyst</option><option>Admin</option></select></div></div><div class="modal-hint">ایجاد حساب و ارسال دعوت‌نامه در فاز فعلی فقط نمایشی است.</div>';
-    openModal('افزودن ادمین نمایشی', body, '<button class="btn" data-close-modal>انصراف</button><button class="btn btn-primary" id="saveAdmin">ثبت نمایشی</button>');
-  }
+
+
   function exportCSV(type) {
     var rows = type === 'audit' ? [['زمان','ادمین','عملیات','شرح','نتیجه']].concat(audit) : [['شناسه','سؤال','منبع','وضعیت','توکن ورودی','توکن خروجی']].concat(requests.map(function (r) { return [r.id,r.question,sourceName(r.source),r.statusText,r.input,r.output]; }));
     var csv = '\ufeff' + rows.map(function (r) { return r.map(function (x) { var s = String(x == null ? '' : x).replace(/"/g,'""'); return '"' + s + '"'; }).join(','); }).join('\r\n');
@@ -258,11 +343,11 @@
   }
   document.addEventListener('click', function (e) {
     var view = e.target.closest('[data-view]'); if (view) { var targetView = view.getAttribute('data-view'); if (!canView(targetView)) { toast('این بخش فقط برای Super Admin یا ادمین دارای مجوز قابل مشاهده است.'); return; } state.view = targetView; render(); return; }
-    var action = e.target.closest('[data-action]'); if (action) { var act = action.getAttribute('data-action'); if (act === 'add-knowledge' && canView('knowledge')) addKnowledgeModal(); if (act === 'add-admin' && isSuperAdmin()) addAdminModal(); if ((act === 'export-requests' || act === 'export-tokens') && (canView('requests') || canView('tokens'))) exportCSV('requests'); if (act === 'export-audit' && isSuperAdmin()) exportCSV('audit'); return; }
+    var action = e.target.closest('[data-action]'); if (action) { var act = action.getAttribute('data-action'); if (act === 'add-knowledge' && canView('knowledge')) addKnowledgeModal(); if (act === 'reload-knowledge') { state.knowledgeList=null; loadKnowledge(true); } if (act === 'add-admin' && isSuperAdmin()) addAdminModal(); if ((act === 'export-requests' || act === 'export-tokens') && (canView('requests') || canView('tokens'))) exportCSV('requests'); if (act === 'export-audit' && isSuperAdmin()) exportCSV('audit'); return; }
     var req = e.target.closest('[data-open-request]'); if (req) { openRequest(req.getAttribute('data-open-request')); return; }
     var row = e.target.closest('tr[data-request]'); if (row) { openRequest(row.getAttribute('data-request')); return; }
     var type = e.target.closest('[data-knowledge-type]'); if (type) { state.knowledgeType = type.getAttribute('data-knowledge-type'); render(); return; }
-    var krow = e.target.closest('[data-knowledge-preview]'); if (krow) { var item = knowledge.concat(state.temporaryKnowledge).find(function (k) { return k.id === krow.getAttribute('data-knowledge-preview'); }); if (item) openModal('پیش‌نمایش اطلاعات', '<div class="detail-grid"><div class="detail-box"><span>شناسه</span><strong class="ltr">' + esc(item.id) + '</strong></div><div class="detail-box"><span>نوع</span><strong>' + esc(item.type) + '</strong></div><div class="detail-box"><span>دسته‌بندی</span><strong>' + esc(item.category) + '</strong></div><div class="detail-box"><span>وضعیت</span><strong>منتشرشده (نمونه)</strong></div></div><p class="modal-hint">محتوای کامل رکورد از فایل دانش اصلی در این نمونه رابط بارگذاری نشده است.</p>', '<button class="btn" data-close-modal>بستن</button>'); return; }
+    var krow = e.target.closest('[data-knowledge-preview]'); if (krow) { viewKnowledgeModal(krow.getAttribute('data-knowledge-preview')); return; } var kedit = e.target.closest('[data-knowledge-edit]'); if (kedit) { editKnowledgeModal(kedit.getAttribute('data-knowledge-edit')); return; } var keditM = e.target.closest('[data-knowledge-edit-modal]'); if (keditM) { closeModal(); editKnowledgeModal(keditM.getAttribute('data-knowledge-edit-modal')); return; }
     var edit = e.target.closest('[data-admin-edit]'); if (edit) { if (!isSuperAdmin()) { toast('مدیریت ادمین‌ها فقط در دسترس Super Admin است.'); return; } var i = Number(edit.getAttribute('data-admin-edit')); var a = admins.concat(state.temporaryAdmins)[i]; if (a) openModal('سطح دسترسی ادمین', '<div class="detail-box"><span>ادمین</span><strong>' + esc(a.name) + ' · ' + esc(a.role) + '</strong></div><div class="section-spacer"><label style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">مشاهده درخواست‌ها <span class="toggle on"></span></label><label style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">مشاهده اطلاعات حساس <span class="toggle ' + (i < 2 ? 'on' : '') + '"></span></label><label style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">مدیریت پایگاه دانش <span class="toggle ' + (i === 1 ? 'on' : '') + '"></span></label><label style="display:flex;justify-content:space-between;padding:9px 0">مشاهده Audit Log <span class="toggle ' + (i === 0 || i === 3 ? 'on' : '') + '"></span></label></div><p class="modal-hint">تغییر مجوزها صرفاً نمایشی است. پس از اتصال داده‌های عملیاتی فقط Super Admin می‌تواند نقش و مجوزها را تغییر دهد.</p>', '<button class="btn" data-close-modal>بستن</button><button class="btn btn-primary" id="permissionDemo">نمایش تغییر</button>'); return; }
     if (e.target.closest('[data-close-modal]')) { closeModal(); return; }
   });
@@ -273,8 +358,8 @@
   });
   document.addEventListener('change', function (e) { if (e.target.id === 'requestFilter') { state.requestFilter = e.target.value; render(); } });
   document.addEventListener('click', function (e) {
-    if (e.target.id === 'saveKnowledge') { var title = $('#newTitle').value.trim(); var content = $('#newContent').value.trim(); if (!title || !content) { toast('عنوان و متن اطلاعات الزامی است.'); return; } state.temporaryKnowledge.push({ id: 'demo-' + Date.now(), type: $('#newType').value, title: title, category: $('#newCategory').value, updated: 'همین الان', status: 'published' }); closeModal(); render(); toast('رکورد فقط به‌صورت نمایشی اضافه شد.'); }
-    if (e.target.id === 'saveAdmin') { if (!isSuperAdmin()) { toast('فقط Super Admin می‌تواند ادمین جدید بسازد.'); return; } var name = $('#adminName').value.trim(); var email = $('#adminEmail').value.trim(); if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('نام و ایمیل معتبر وارد کنید.'); return; } state.temporaryAdmins.push({ name: name, email: email, role: $('#adminRole').value, state: 'فعال', initials: name.charAt(0), tone: 'green' }); closeModal(); render(); toast('ادمین فقط به‌صورت نمایشی اضافه شد.'); }
+    if (e.target.id === 'saveKnowledge') { var btn=e.target; var type=($('#kType')||{value:'general'}).value; var chunk=collectKForm(null); if (!chunk.title){toast('عنوان الزامی است.');return;} if (type==='faq'&&!chunk.answer){toast('پاسخ FAQ الزامی است.');return;} if (type!=='faq'&&!chunk.text){toast('متن دانش الزامی است.');return;} saveKnowledgeApi('create',null,chunk,btn); }
+    if (e.target.id === 'saveAdmin') { toast('مدیریت ادمین‌ها در این نسخه از طریق اسکریپت create-admin.js روی VPS انجام می‌شود.'); }
     if (e.target.id === 'permissionDemo') toast('تغییر دسترسی در حالت Preview ذخیره نمی‌شود.');
   });
   $('#loginForm').addEventListener('submit', function (e) {
