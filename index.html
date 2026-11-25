@@ -134,7 +134,7 @@
         <input class="lead-form__in" id="auth-username" name="username" type="text" autocomplete="username" maxlength="30" dir="ltr" data-i18n-placeholder="auth.username" placeholder="نام کاربری (انگلیسی، ۳ تا ۳۰ نویسه)" hidden>
         <input class="lead-form__in" id="auth-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="11" dir="ltr" data-i18n-placeholder="auth.phone" placeholder="شماره همراه (مثال: 09123456789)" hidden>
         <input class="lead-form__in" id="auth-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="40" dir="ltr" data-i18n-placeholder="auth.email" placeholder="ایمیل (فقط @gmail.com)" hidden>
-        <input class="lead-form__in" id="auth-pass" name="password" type="password" autocomplete="current-password" maxlength="64" dir="ltr" data-i18n-placeholder="auth.password" placeholder="رمز عبور">
+        <div class="pw-wrap"><input class="lead-form__in" id="auth-pass" name="password" type="password" autocomplete="current-password" maxlength="64" dir="ltr" data-i18n-placeholder="auth.password" placeholder="رمز عبور"><button type="button" class="pw-eye" data-toggle-pw="auth-pass" aria-label="نمایش رمز عبور"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
         <ul class="pass-rules" id="pass-rules" hidden>
           <li data-rule="len" data-i18n="auth.rule.len">حداقل ۶ نویسه</li>
           <li data-rule="upper" data-i18n="auth.rule.upper">یک حرف بزرگ انگلیسی (A-Z)</li>

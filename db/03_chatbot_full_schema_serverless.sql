@@ -1,4 +1,4 @@
--- نسخه سازگار با MySQL ابری / Serverless (بدون CREATE EVENT؛ پاک‌سازی با Vercel Cron انجام می‌شود)
+-- نسخه سازگار با MySQL ابری / Serverless (بدون CREATE EVENT)
 -- =====================================================================
 --  نوکا — تکمیل اسکیمای جامع چت‌بات (نسخه 1.7.0)
 --  ترتیب اجرا:
@@ -210,6 +210,7 @@ CREATE TABLE IF NOT EXISTS llm_provider_usage (
   intent_mode         ENUM('university','general','mixed','continuation','transcribe') NOT NULL DEFAULT 'university',
   prompt_tokens       INT UNSIGNED NOT NULL DEFAULT 0,
   completion_tokens   INT UNSIGNED NOT NULL DEFAULT 0,
+  cached_tokens       INT UNSIGNED NOT NULL DEFAULT 0,
   total_tokens        INT UNSIGNED GENERATED ALWAYS AS (prompt_tokens + completion_tokens) STORED,
   estimated_cost_usd  DECIMAL(10,6) NOT NULL DEFAULT 0.000000,
   latency_ms          INT UNSIGNED NOT NULL DEFAULT 0,
@@ -239,6 +240,6 @@ END$$
 DELIMITER ;
 
 -- ثبت نسخه مهاجرت
-INSERT INTO schema_meta (version, description)
-VALUES ('1.7.0', 'Full chatbot schema: user sessions, conversations/messages, SQL knowledge_chunks synced with Upstash Vector, learned_answers, question_clusters, and granular LLM telemetry')
-ON DUPLICATE KEY UPDATE description = VALUES(description);
+INSERT INTO schema_meta (meta_key, meta_value)
+VALUES ('schema_version', '1.7.1')
+ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value);

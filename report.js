@@ -3,7 +3,7 @@
   const $ = id => document.getElementById(id);
   const COLORS = { faq: 'var(--kb)', knowledge: 'var(--kb)', vector: 'var(--vec)', memory: 'var(--mem)', general: 'var(--gen)',
                    no_info: 'var(--no)', off_topic: 'var(--off)', error: '#991b1b', smalltalk: '#94a3b8', web: '#0f766e' };
-  const fa = n => Number(n || 0).toLocaleString('fa-IR');
+  const fa = n => Number(n || 0).toLocaleString('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran' });
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let rep = null;
 
@@ -33,7 +33,7 @@
           <div class="muted">${Object.entries(q.sources).map(([s, n]) => `${esc(rep.labels[s] || s)}: ${fa(n)}`).join('، ')}</div></td>
       <td>${fa(Math.round(q.fromKnowledgeRate * 100))}٪</td>
       <td class="muted">${(q.knowledgeChunks || []).map(c => esc(c.id)).join('<br>') || '—'}</td>
-      <td class="muted">${q.lastAskedAt ? new Date(q.lastAskedAt).toLocaleString('fa-IR') : ''}</td></tr>`).join('');
+      <td class="muted">${q.lastAskedAt ? new Date(q.lastAskedAt).toLocaleString('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran' }) : ''}</td></tr>`).join('');
   }
   const HEAD = '<tr><th>پرسش</th><th>تعداد</th><th>منبع پاسخ</th><th>از پایگاه دانش</th><th>تکه‌های دانش</th><th>آخرین بار</th></tr>';
 
@@ -61,9 +61,9 @@
     $('ut').innerHTML = HEAD + (rowsFor(rep.unanswered) || '<tr><td colspan="6" class="muted">موردی نیست.</td></tr>');
     const cols = Object.keys(rep.labels);
     $('dt').innerHTML = '<tr><th>روز</th><th>کل</th>' + cols.map(s => `<th>${esc(rep.labels[s])}</th>`).join('') + '</tr>' +
-      rep.byDay.map(d => `<tr><td>${new Date(d.date + 'T12:00:00Z').toLocaleDateString('fa-IR')}</td><td><b>${fa(d.total)}</b></td>${cols.map(s => `<td>${fa(d[s])}</td>`).join('')}</tr>`).join('');
+      rep.byDay.map(d => `<tr><td>${new Date(d.date + 'T12:00:00Z').toLocaleDateString('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran' })}</td><td><b>${fa(d.total)}</b></td>${cols.map(s => `<td>${fa(d[s])}</td>`).join('')}</tr>`).join('');
     $('out').hidden = false;
-    msg(`به‌روز شده: ${new Date(rep.generatedAt).toLocaleString('fa-IR')}` + (rep.kvRemote ? '' : ' — هشدار: ذخیره‌ساز مشترک (Redis/MySQL) وصل نیست؛ آمار فقط مال همین سرور است و با ری‌استارت پاک می‌شود.'));
+    msg(`به‌روز شده: ${new Date(rep.generatedAt).toLocaleString('fa-IR-u-ca-persian', { timeZone: 'Asia/Tehran' })}` + (rep.kvRemote ? '' : ' — هشدار: ذخیره‌ساز مشترک (Redis/MySQL) وصل نیست؛ آمار فقط مال همین سرور است و با ری‌استارت پاک می‌شود.'));
   }
 
   $('load').onclick = async () => {

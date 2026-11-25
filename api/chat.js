@@ -157,6 +157,31 @@ async function continueTruncatedReply({ reply, question, langHint, stream, idemp
   };
 }
 
+
+async function recordTokenUsage({ provider, model, intentMode, promptTokens, completionTokens, cachedTokens, latencyMs, httpStatus }) {
+  const p = Math.max(0, Number(promptTokens) || 0);
+  const c = Math.max(0, Number(completionTokens) || 0);
+  const ca = Math.max(0, Number(cachedTokens) || 0);
+  try {
+    if (p || c || ca) {
+      await kv.exec([
+        ['HINCRBY', 'stats', 'tokens_input', p],
+        ['HINCRBY', 'stats', 'tokens_output', c],
+        ['HINCRBY', 'stats', 'tokens_cached', ca],
+      ]).catch(() => {});
+    }
+    const dbMod = require('../lib/db');
+    if (dbMod.enabled()) {
+      const mode = ['university', 'general', 'mixed', 'continuation', 'transcribe'].includes(intentMode) ? intentMode : 'university';
+      await dbMod.getPool().execute(
+        `INSERT INTO llm_provider_usage (provider, model, intent_mode, prompt_tokens, completion_tokens, cached_tokens, latency_ms, http_status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [String(provider || 'cache').slice(0, 40), String(model || 'cache').slice(0, 80), mode, p, c, ca, Math.max(0, Number(latencyMs) || 0), Number(httpStatus) || 200]
+      ).catch(() => {});
+    }
+  } catch { /* best effort telemetry */ }
+}
+
 module.exports = async (req, res) => {
   baseHeaders(res);
   if (req.method !== 'POST') return res.status(405).end();
@@ -260,6 +285,7 @@ module.exports = async (req, res) => {
       const faq = faqAnswer(question);
       if (faq) {
         await report.record(kv, { info, source: 'faq', chunks: faq.id ? [faq.id] : [] });
+        await recordTokenUsage({ provider: 'faq', model: 'faq', intentMode: intent.mode, promptTokens: 0, completionTokens: 0, cachedTokens: Math.ceil((question.length + faq.answer.length) / 3), latencyMs: 0, httpStatus: 200 });
         return res.status(200).json({ reply: faq.answer, sig: safeSign(faq.answer), cid: '', cached: 'faq', lead: offerLead(faq.answer, intent.mode) });
       }
     }
@@ -278,6 +304,7 @@ module.exports = async (req, res) => {
       if (hit) {
         await L.recordHit(info, hit);
         await report.record(kv, { info, source: 'memory' });
+        await recordTokenUsage({ provider: 'memory', model: hit.via || 'memory', intentMode: intent.mode, promptTokens: 0, completionTokens: 0, cachedTokens: Math.ceil((question.length + hit.answer.length) / 3), latencyMs: 0, httpStatus: 200 });
         return res.status(200).json({ reply: hit.answer, sig: sign(hit.answer), cid: signCid(hit.key), cached: hit.via || true, lead: offerLead(hit.answer) });
       }
     }
@@ -322,7 +349,7 @@ module.exports = async (req, res) => {
       return out.join('\n\n---\n\n');
     };
 
-    let completion, streamed = false, release = () => {};
+    let completion, streamed = false, release = () => {}, usedProvider = '', usedModel = ''; const llmStartAt = Date.now();
     try {
       const generalMode = intent.mode === 'general';
       const plans = generalMode ? GENERAL_BUDGETS : activeBudgets;
@@ -351,7 +378,7 @@ module.exports = async (req, res) => {
             maxTokens: plan.maxTokens || C.llm.maxTokens || 800, stream: wantStream, vision: !!(att && att.kind === 'image'),
             idempotencyKey: `${idempotencyKey}-${intent.mode}-${b}`,
           });
-          completion = r.result; streamed = r.streamed; release = r.release;
+          completion = r.result; streamed = r.streamed; release = r.release; usedProvider = r.provider || (C.llm && C.llm.use) || 'llm'; usedModel = r.model || '';
           break;
         } catch (e) {
           if (llm.kind(e) === 'too_big' && b < plans.length - 1) {
@@ -464,8 +491,20 @@ module.exports = async (req, res) => {
     }
 
     const u = usage || {};
-    const used = (u.prompt_tokens || 0) + (u.completion_tokens || 0) ||
-      Math.ceil((RULES.length + knowledge.length + question.length + reply.length) / 3);
+    const promptToks = Number(u.prompt_tokens) || Math.ceil((RULES.length + knowledge.length + question.length) / 3);
+    const completionToks = Number(u.completion_tokens) || Math.ceil(reply.length / 3);
+    const cachedToks = Number((u.prompt_tokens_details && u.prompt_tokens_details.cached_tokens) || u.cached_tokens || 0);
+    const used = promptToks + completionToks;
+    await recordTokenUsage({
+      provider: usedProvider || 'llm',
+      model: usedModel || (C.llm && C.llm.providers && C.llm.providers[C.llm.use] && C.llm.providers[C.llm.use].model) || 'default',
+      intentMode: intent.mode,
+      promptTokens: promptToks,
+      completionTokens: completionToks,
+      cachedTokens: cachedToks,
+      latencyMs: Date.now() - llmStartAt,
+      httpStatus: 200,
+    });
 
     // ─── گزارش: پاسخ از کجا آمد ───
     await report.record(kv, {

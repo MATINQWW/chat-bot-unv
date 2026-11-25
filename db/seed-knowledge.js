@@ -31,7 +31,11 @@ function canonicalHash(c) {
   const chunks = Array.isArray(data.chunks) ? data.chunks : [];
   if (!chunks.length) throw new Error('هیچ تکه دانشی در knowledge/chunks.json پیدا نشد.');
 
-  const db = await mysql.createConnection({ uri: dbUrl, timezone: '+03:30', charset: 'utf8mb4' });
+  const { parseDbConfig } = require('../lib/db');
+  const cfg = parseDbConfig(dbUrl);
+  const connOpts = { uri: cfg.cleanUri, timezone: '+03:30', charset: 'utf8mb4' };
+  if (cfg.needSsl) connOpts.ssl = { rejectUnauthorized: cfg.rejectUnauth };
+  const db = await mysql.createConnection(connOpts);
   let inserted = 0;
   try {
     await db.beginTransaction();

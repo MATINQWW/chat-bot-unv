@@ -45,7 +45,11 @@ function askHidden(prompt) {
   if (policyErr) throw new Error('رمز عبور سیاست امنیتی را رعایت نمی‌کند: ' + policyErr);
   const hash = await argon2.hash(password, { type: argon2.argon2id, memoryCost: 65536, timeCost: 3, parallelism: 1 });
 
-  const db = await mysql.createConnection({ uri: dbUrl, timezone: '+03:30', charset: 'utf8mb4' });
+  const { parseDbConfig } = require('../lib/db');
+  const cfg = parseDbConfig(dbUrl);
+  const connOpts = { uri: cfg.cleanUri, timezone: '+03:30', charset: 'utf8mb4' };
+  if (cfg.needSsl) connOpts.ssl = { rejectUnauthorized: cfg.rejectUnauth };
+  const db = await mysql.createConnection(connOpts);
   try {
     await db.query('CALL sp_assert_time_zone()').catch(() => {});
     await db.beginTransaction();

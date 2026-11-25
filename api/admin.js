@@ -10,11 +10,12 @@ const { sameOrigin } = require('../lib/admin-guard');
 module.exports = async (req, res) => {
   baseHeaders(res);
   res.setHeader('Cache-Control', 'private, no-store, max-age=0');
-  if (!kv.remote) return res.status(503).json({ error: 'store_unavailable' });
+  const dbEnabled = require('../lib/db').enabled();
+  if (!kv.remote && !dbEnabled) return res.status(503).json({ error: 'store_unavailable' });
   if (req.method !== 'GET' && !sameOrigin(req)) return res.status(403).json({ error: 'origin_not_allowed' });
   if (await rateLimited(req, 'admin-report', 10, 60)) return res.status(429).json({ error: 'rate_limited' });
   let session;
-  try { session = await auth.resolveSession(req, kv, process.env); } catch { return res.status(503).json({ error: 'store_unavailable' }); }
+  try { session = await auth.resolveSession(req, undefined, process.env); } catch { return res.status(503).json({ error: 'store_unavailable' }); }
   if (!session) return res.status(401).json({ error: 'unauthorized' });
   if (session.account.key !== 'super') return res.status(403).json({ error: 'forbidden' });
   const L = getLearner();

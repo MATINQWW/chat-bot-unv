@@ -12,35 +12,48 @@
   <script src="app.js" defer></script>
 </head>
 <body>
-  <div class="status-ribbon"><span class="status-dot"></span> پنل مدیریت نوکا · داده‌های عملیاتی</div>
+  <div class="status-ribbon">
+    <span class="status-dot"></span>
+    <span id="ribbonText">پنل مدیریت نوکا · داده‌های عملیاتی</span>
+  </div>
   <main class="login-screen" id="loginScreen">
     <section class="login-card" aria-labelledby="loginTitle">
       <div class="login-brand">
         <div class="login-logo"><img src="../owl.png" alt="نوکا"></div>
-        <div><strong>نوکا</strong><span>مرکز مدیریت</span></div>
+        <div><strong id="loginBrandTitle">نوکا</strong><span id="loginBrandSub">مرکز مدیریت</span></div>
+        <select class="lang-select" id="loginLangSelect" aria-label="Language">
+          <option value="fa">فارسی</option>
+          <option value="en">English</option>
+          <option value="ar">العربية</option>
+        </select>
       </div>
       <div class="login-heading">
         <span class="login-kicker">ADMIN WORKSPACE</span>
         <h1 id="loginTitle">ورود به پنل مدیریت</h1>
-        <p>برای ادامه، با حساب مدیریتی خود وارد شوید.</p>
+        <p id="loginSubtitle">برای ادامه، با حساب مدیریتی خود وارد شوید.</p>
       </div>
       <form id="loginForm" autocomplete="on">
         <div class="login-field">
-          <label for="loginEmail">ایمیل یا نام کاربری</label>
+          <label for="loginEmail" id="loginEmailLabel">ایمیل یا نام کاربری</label>
           <input id="loginEmail" name="email" type="text" inputmode="email" autocomplete="username" placeholder="admin@example.com" required>
         </div>
         <div class="login-field">
-          <label for="loginPassword">رمز عبور</label>
-          <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="رمز عبور خود را وارد کنید" required minlength="12">
+          <label for="loginPassword" id="loginPasswordLabel">رمز عبور</label>
+          <div class="pw-wrap">
+            <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="رمز عبور خود را وارد کنید" required minlength="12">
+            <button class="pw-eye" type="button" data-toggle-pw="loginPassword" aria-label="نمایش رمز عبور">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
         <div class="login-error" id="loginError" role="alert" hidden>اطلاعات ورود معتبر نیست.</div>
-        <button class="login-submit" type="submit">ورود به پنل <span>←</span></button>
+        <button class="login-submit" type="submit" id="loginSubmitBtn">ورود به پنل <span>←</span></button>
       </form>
       <div class="auth-info">
-        <div class="auth-info-title"><span>◇</span><strong>ورود امن و نقش‌محور</strong></div>
-        <p>نوع دسترسی شما پس از تأیید سرور مشخص می‌شود. Super Admin به همه بخش‌های مدیریتی دسترسی دارد؛ دسترسی Admin محدود به مجوزهای تخصیص‌یافته است.</p>
+        <div class="auth-info-title"><span>◇</span><strong id="loginAuthInfoTitle">ورود امن و نقش‌محور</strong></div>
+        <p id="loginAuthInfoBody">نوع دسترسی شما پس از تأیید سرور مشخص می‌شود. Super Admin به همه بخش‌های مدیریتی دسترسی دارد؛ دسترسی Admin محدود به مجوزهای تخصیص‌یافته است.</p>
       </div>
-      <p class="login-disclaimer">اطلاعات ورود در سرور بررسی می‌شود و نشست با کوکی امن و سمت سرور نگهداری می‌شود.</p>
+      <p class="login-disclaimer" id="loginDisclaimer">اطلاعات ورود در سرور بررسی می‌شود و نشست با کوکی امن و سمت سرور نگهداری می‌شود.</p>
     </section>
     <div class="login-footer">NOOKA ADMIN <span>·</span> SECURE ACCESS</div>
   </main>
@@ -49,25 +62,25 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <div class="brand-logo"><img src="../owl.png" alt="نوکا"></div>
-        <div class="brand-copy"><strong>نوکا</strong><span>مرکز مدیریت</span></div>
+        <div class="brand-copy"><strong id="brandTitle">نوکا</strong><span id="brandSub">مرکز مدیریت</span></div>
         <button class="icon-button sidebar-close" id="sidebarClose" type="button" aria-label="بستن منو">×</button>
       </div>
       <div class="workspace">
         <span class="workspace-mark">N</span>
-        <div><strong>دانشگاه خوراسگان</strong><small>فضای مدیریتی</small></div>
+        <div><strong id="workspaceTitle">دانشگاه خوراسگان</strong><small id="workspaceSub">فضای مدیریتی</small></div>
       </div>
-      <div class="nav-label">مدیریت</div>
+      <div class="nav-label" id="navGroupMain">مدیریت</div>
       <nav class="main-nav" aria-label="منوی مدیریت">
-        <button class="nav-item active" type="button" data-view="dashboard"><span class="nav-icon">▦</span><span>داشبورد</span></button>
-        <button class="nav-item" type="button" data-view="requests"><span class="nav-icon">⌕</span><span>درخواست‌ها و گفتگوها</span></button>
-        <button class="nav-item" type="button" data-view="tokens"><span class="nav-icon">◉</span><span>مصرف توکن</span></button>
-        <button class="nav-item" type="button" data-view="knowledge"><span class="nav-icon">▤</span><span>مدیریت دانش</span></button>
+        <button class="nav-item active" type="button" data-view="dashboard"><span class="nav-icon">▦</span><span data-nav-label="dashboard">داشبورد</span></button>
+        <button class="nav-item" type="button" data-view="requests"><span class="nav-icon">⌕</span><span data-nav-label="requests">درخواست‌ها و گفتگوها</span></button>
+        <button class="nav-item" type="button" data-view="tokens"><span class="nav-icon">◉</span><span data-nav-label="tokens">مصرف توکن</span></button>
+        <button class="nav-item" type="button" data-view="knowledge"><span class="nav-icon">▤</span><span data-nav-label="knowledge">مدیریت دانش</span></button>
       </nav>
-      <div class="nav-label nav-label-spaced">مدیریت دسترسی</div>
+      <div class="nav-label nav-label-spaced" id="navGroupSec">مدیریت دسترسی</div>
       <nav class="main-nav" aria-label="دسترسی و امنیت">
-        <button class="nav-item" type="button" data-view="admins"><span class="nav-icon">♙</span><span>ادمین‌ها و دسترسی‌ها</span></button>
-        <button class="nav-item" type="button" data-view="audit"><span class="nav-icon">≋</span><span>گزارش فعالیت‌ها</span></button>
-        <button class="nav-item" type="button" data-view="settings"><span class="nav-icon">⚙</span><span>تنظیمات</span></button>
+        <button class="nav-item" type="button" data-view="admins"><span class="nav-icon">♙</span><span data-nav-label="admins">ادمین‌ها و دسترسی‌ها</span></button>
+        <button class="nav-item" type="button" data-view="audit"><span class="nav-icon">≋</span><span data-nav-label="audit">گزارش فعالیت‌ها</span></button>
+        <button class="nav-item" type="button" data-view="settings"><span class="nav-icon">⚙</span><span data-nav-label="settings">تنظیمات</span></button>
       </nav>
       <div class="sidebar-bottom">
         <div class="security-note">
@@ -86,18 +99,23 @@
       <header class="topbar">
         <div class="topbar-start">
           <button class="icon-button mobile-menu" id="mobileMenu" type="button" aria-label="بازکردن منو">☰</button>
-          <div class="breadcrumb"><span>نوکا</span><b>/</b><strong id="breadcrumbTitle">داشبورد</strong></div>
+          <div class="breadcrumb"><span id="crumbBrand">نوکا</span><b>/</b><strong id="breadcrumbTitle">داشبورد</strong></div>
         </div>
         <div class="topbar-actions">
-          <span class="preview-pill"><i></i> زنده</span>
+          <span class="preview-pill"><i></i> <span id="liveLabel">زنده</span></span>
           <span class="role-pill" id="currentRoleBadge"></span>
+          <select class="lang-select" id="topLangSelect" aria-label="Language">
+            <option value="fa">فارسی</option>
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+          </select>
           <button class="icon-button" id="themeToggle" type="button" aria-label="تغییر پوسته" title="تغییر پوسته">◐</button>
           <div class="top-avatar" id="topAvatar">م</div>
           <button class="logout-button" id="logoutButton" type="button">خروج</button>
         </div>
       </header>
       <section class="page-content" id="pageContent" aria-live="polite"></section>
-      <footer class="footer-note"><span>NOOKA ADMIN</span><span>رابط مدیریت نوکا</span><span>نمایش داده‌های ثبت‌شده</span></footer>
+      <footer class="footer-note"><span>NOOKA ADMIN</span><span id="footerMid">رابط مدیریت نوکا</span><span id="footerEnd">نمایش داده‌های ثبت‌شده</span></footer>
     </main>
   </div>
   <div id="modalRoot"></div>
