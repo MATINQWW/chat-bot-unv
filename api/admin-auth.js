@@ -134,7 +134,7 @@ function credentialFingerprint(account) { return crypto.createHash('sha256').upd
 async function resolveSession(req, store = defaultStore, env = process.env) {
   const token = readToken(req);
   if (!token || !/^[A-Za-z0-9_-]{40,60}$/.test(token)) return null;
-  if (store === defaultStore && require('../lib/db').enabled()) {
+  if (require('../lib/db').enabled()) {
     const ctx = await require('../lib/admin-store').sessionContext(token);
     if (!ctx) return null;
     return { token, account: ctx.admin, dbCtx: ctx };
