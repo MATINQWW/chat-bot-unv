@@ -15,8 +15,11 @@ const clean = (s, n) => String(s || '').replace(/[\u0000-\u001F<>]/g, ' ').repla
 
 const USER_RE = /^[A-Za-z0-9_.\-]{3,30}$/;
 const EMAIL_RE = /^[^\s@<>()]+@[^\s@<>()]+\.[^\s@<>()]{2,}$/;
+const PHONE_RE = /^09\d{9}$/;
+const toEnDigits = s => String(s || '').replace(/[۰-۹]/g, c => String(c.charCodeAt(0) - 1776)).replace(/[٠-٩]/g, c => String(c.charCodeAt(0) - 1632));
 const normUser = u => String(u || '').trim().toLowerCase();
 const normEmail = e => String(e || '').trim().toLowerCase().slice(0, 100);
+const normPhone = p => toEnDigits(p).replace(/[\s\-()]/g, '').replace(/^(?:\+98|0098)/, '0').slice(0, 15);
 function hashPw(pw, saltHex) {
   const salt = Buffer.from(saltHex, 'hex');
   return crypto.scryptSync(pw, salt, 64).toString('hex');
@@ -34,7 +37,7 @@ const isHttps = req => process.env.NODE_ENV === 'production' || (req.headers && 
 function setCookie(req, res, tok, maxAge) {
   res.setHeader('Set-Cookie', `${COOKIE}=${tok}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${isHttps(req) ? '; Secure' : ''}`);
 }
-const publicUser = u => ({ username: u.username, email: u.email });
+const publicUser = u => ({ username: u.username, email: u.email, phone: u.phone || '' });
 
 // استفاده در api/lead.js: کاربر واردشده را از کوکی پیدا کن (یا null = مهمان)
 async function currentUser(req) {
@@ -49,7 +52,8 @@ async function currentUser(req) {
 
 async function handler(req, res) {
   baseHeaders(res);
-  if (req.method !== 'POST') return res.status(405).end();
+  res.setHeader('Vary', 'Cookie');
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).end(); }
   if (!originAllowed(req)) return res.status(403).json({ error: 'forbidden' });
   const b = (req.body && typeof req.body === 'object') ? req.body : {};
   const action = String(b.action || '');
@@ -73,42 +77,66 @@ async function handler(req, res) {
     return res.status(503).json({ error: 'auth_unavailable', message: 'ورود و ثبت‌نام فعلاً فعال نیست.' });
   }
   const password = typeof b.password === 'string' ? b.password : '';
-  if (password.length < 6 || password.length > 100) return res.status(400).json({ error: 'bad_password', message: 'رمز عبور باید حداقل ۶ نویسه باشد.' });
+  if (password.length < 8 || password.length > 100) return res.status(400).json({ error: 'bad_password', message: 'رمز عبور باید حداقل ۸ نویسه باشد.' });
 
   let user;
   if (action === 'register') {
     const username = normUser(b.username);
     const email = normEmail(b.email);
+    const phone = b.phone ? normPhone(b.phone) : '';
     if (!USER_RE.test(username)) return res.status(400).json({ error: 'bad_username', message: 'نام کاربری باید ۳ تا ۳۰ نویسه و فقط شامل حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.' });
     if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'bad_email', message: 'ایمیل معتبر نیست.' });
-    const exU = await kv.exec([['HGET', 'chat:users', username]]);
-    if (exU && exU[0]) return res.status(409).json({ error: 'username_exists', message: 'این نام کاربری قبلاً گرفته شده است.' });
-    const exE = await kv.exec([['HGET', 'chat:emails', email]]);
-    if (exE && exE[0]) return res.status(409).json({ error: 'email_exists', message: 'با این ایمیل قبلاً ثبت‌نام شده است؛ وارد شوید.' });
+    if (phone && !PHONE_RE.test(phone)) return res.status(400).json({ error: 'bad_phone', message: 'شماره همراه باید ۱۱ رقم و با ۰۹ شروع شود.' });
     const salt = crypto.randomBytes(16).toString('hex');
-    user = { username, email, salt, hash: hashPw(password, salt), at: new Date().toISOString() };
-    await kv.exec([['HSET', 'chat:users', username, JSON.stringify(user)], ['HSET', 'chat:emails', email, username]]);
+    user = { username, email, phone, salt, hash: hashPw(password, salt), at: new Date().toISOString() };
+    const rU = await kv.exec([['HSETNX', 'chat:users', username, JSON.stringify(user)]]);
+    if (!rU) return res.status(503).json({ error: 'auth_unavailable', message: 'خطا در ذخیره‌سازی؛ دوباره امتحان کنید.' });
+    if (!rU[0]) return res.status(409).json({ error: 'username_exists', message: 'این نام کاربری قبلاً گرفته شده است.' });
+    const rE = await kv.exec([['HSETNX', 'chat:emails', email, username]]);
+    if (!rE || !rE[0]) {
+      await kv.exec([['HDEL', 'chat:users', username]]);
+      if (!rE) return res.status(503).json({ error: 'auth_unavailable', message: 'خطا در ذخیره‌سازی؛ دوباره امتحان کنید.' });
+      return res.status(409).json({ error: 'email_exists', message: 'با این ایمیل قبلاً ثبت‌نام شده است؛ وارد شوید.' });
+    }
+    if (phone) {
+      const rP = await kv.exec([['HSETNX', 'chat:phones', phone, username]]);
+      if (!rP || !rP[0]) {
+        await kv.exec([['HDEL', 'chat:users', username], ['HDEL', 'chat:emails', email]]);
+        if (!rP) return res.status(503).json({ error: 'auth_unavailable', message: 'خطا در ذخیره‌سازی؛ دوباره امتحان کنید.' });
+        return res.status(409).json({ error: 'phone_exists', message: 'با این شماره همراه قبلاً ثبت‌نام شده است؛ وارد شوید.' });
+      }
+    }
   } else {
-    // شناسه = نام کاربری یا ایمیل (اگر @ داشته باشد ایمیل است)
+    // شناسه = نام کاربری، ایمیل یا شماره همراه
     const ident = String(b.identifier || '').trim().toLowerCase().slice(0, 100);
+    const maybePhone = normPhone(ident);
     let username = ident;
     if (ident.includes('@')) {
       const m = await kv.exec([['HGET', 'chat:emails', ident]]);
-      username = (m && m[0]) || '';
+      if (!m) return res.status(503).json({ error: 'auth_unavailable', message: 'سرویس ورود موقتاً در دسترس نیست.' });
+      username = m[0] || '';
+    } else if (PHONE_RE.test(maybePhone)) {
+      const m = await kv.exec([['HGET', 'chat:phones', maybePhone]]);
+      if (!m) return res.status(503).json({ error: 'auth_unavailable', message: 'سرویس ورود موقتاً در دسترس نیست.' });
+      username = m[0] || '';
     }
     let r = null;
-    if (username && USER_RE.test(username)) r = await kv.exec([['HGET', 'chat:users', username]]);
+    if (username && USER_RE.test(username)) {
+      r = await kv.exec([['HGET', 'chat:users', username]]);
+      if (!r) return res.status(503).json({ error: 'auth_unavailable', message: 'سرویس ورود موقتاً در دسترس نیست.' });
+    }
     try { user = r && r[0] ? JSON.parse(r[0]) : null; } catch { user = null; }
     // زمان‌سنجی یکسان برای کاربر موجود/ناموجود
     const salt = user ? user.salt : '00'.repeat(16);
     const got = Buffer.from(hashPw(password, salt), 'hex');
     const want = Buffer.from(user ? user.hash : '00'.repeat(64), 'hex');
     if (!user || got.length !== want.length || !crypto.timingSafeEqual(got, want)) {
-      return res.status(401).json({ error: 'bad_credentials', message: 'نام کاربری/ایمیل یا رمز عبور اشتباه است.' });
+      return res.status(401).json({ error: 'bad_credentials', message: 'نام کاربری/ایمیل/شماره همراه یا رمز عبور اشتباه است.' });
     }
   }
   const tok = crypto.randomBytes(24).toString('hex');
-  await kv.exec([['SET', sessKey(tok), user.username, 'EX', TTL]]);
+  const saved = await kv.exec([['SET', sessKey(tok), user.username, 'EX', TTL]]);
+  if (!saved || saved[0] !== 'OK') return res.status(503).json({ error: 'auth_unavailable', message: 'خطا در ایجاد نشست؛ دوباره امتحان کنید.' });
   setCookie(req, res, tok, TTL);
   return res.status(200).json({ ok: true, user: publicUser(user) });
 }

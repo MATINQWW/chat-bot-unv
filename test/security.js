@@ -22,8 +22,8 @@ const common = require('../lib/common');
 
     assert.equal(common.ipOf({
       socket: { remoteAddress: '127.0.0.1' },
-      headers: { 'x-forwarded-for': '203.0.113.9, 10.0.0.2' },
-    }), '203.0.113.9', 'the first forwarded address is trusted only from loopback proxy');
+      headers: { 'x-forwarded-for': '198.51.100.99, 203.0.113.9' },
+    }), '203.0.113.9', 'the rightmost forwarded address added by local proxy is trusted to prevent spoofing');
 
     assert.equal(common.ipOf({
       socket: { remoteAddress: '::ffff:127.0.0.1' },

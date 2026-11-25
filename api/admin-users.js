@@ -20,10 +20,18 @@ function createHandler(deps = {}) {
   res.setHeader('Cache-Control', 'private, no-store, max-age=0');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Vary', 'Cookie');
   if (!['GET', 'POST', 'PUT', 'DELETE'].includes(req.method)) { res.setHeader('Allow', 'GET, POST, PUT, DELETE'); return res.status(405).end(); }
   if (req.method !== 'GET' && !sameOrigin(req)) return res.status(403).json({ error: 'origin_not_allowed' });
   if (Number(req.headers && req.headers['content-length'] || 0) > 8192) return res.status(413).json({ error: 'payload_too_large' });
   if (!store.remote) return res.status(503).json({ error: 'store_unavailable' });
+  if (!deps.kv) {
+    try {
+      if (await require('../lib/common').rateLimited(req, 'admin-users', 30, 200)) {
+        return res.status(429).json({ error: 'rate_limited' });
+      }
+    } catch { /* best effort */ }
+  }
   let session;
   try { session = await auth.resolveSession(req, store, env); } catch { return res.status(503).json({ error: 'store_unavailable' }); }
   if (!session) return res.status(401).json({ error: 'unauthorized' });
@@ -67,7 +75,10 @@ function createHandler(deps = {}) {
   const views = Array.isArray(b.views) ? [...new Set(b.views.filter(v => VIEWS.includes(v)))] : user.views;
   if (b.active === false) user.active = false;
   else if (b.active === true) user.active = true;
-  if (Array.isArray(b.views)) user.views = views;
+  if (Array.isArray(b.views)) {
+    if (!views.length) return res.status(400).json({ error: 'invalid_admin_data' });
+    user.views = views;
+  }
   if (typeof b.name === 'string' && b.name.trim()) user.name = b.name.trim().slice(0, 80);
   if (typeof b.password === 'string' && b.password) {
     if (b.password.length < 12 || b.password.length > 1024) return res.status(400).json({ error: 'invalid_password' });

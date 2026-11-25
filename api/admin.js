@@ -3,6 +3,7 @@ const { kv, originAllowed, rateLimited, baseHeaders } = require('../lib/common')
 const { getLearner } = require('../lib/prompt');
 const report = require('../lib/report');
 const auth = require('./admin-auth');
+const { sameOrigin } = require('../lib/admin-guard');
 
 // Legacy report endpoint is retained for /report.html, but it now shares the
 // main Super Admin session. ADMIN_TOKEN is no longer an independent credential.
@@ -10,11 +11,12 @@ module.exports = async (req, res) => {
   baseHeaders(res);
   res.setHeader('Cache-Control', 'private, no-store, max-age=0');
   if (!kv.remote) return res.status(503).json({ error: 'store_unavailable' });
-  if (req.method !== 'GET' && !originAllowed(req)) return res.status(403).end();
+  if (req.method !== 'GET' && !sameOrigin(req)) return res.status(403).json({ error: 'origin_not_allowed' });
   if (await rateLimited(req, 'admin-report', 10, 60)) return res.status(429).json({ error: 'rate_limited' });
   let session;
   try { session = await auth.resolveSession(req, kv, process.env); } catch { return res.status(503).json({ error: 'store_unavailable' }); }
-  if (!session || session.account.key !== 'super') return res.status(401).json({ error: 'unauthorized' });
+  if (!session) return res.status(401).json({ error: 'unauthorized' });
+  if (session.account.key !== 'super') return res.status(403).json({ error: 'forbidden' });
   const L = getLearner();
   const qs = new URL(req.url || '/', 'http://x').searchParams;
   if (req.method === 'GET' && qs.get('report')) {

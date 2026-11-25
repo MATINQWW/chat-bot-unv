@@ -199,13 +199,15 @@ const el={
 function md(text){
   if(!text)return'';
   const src=String(text);
+  const nonce=Math.random().toString(36).slice(2,8);
+  const MB=`\u2063MB_${nonce}_`,IC=`\u2063IC_${nonce}_`;
   const blocks=[],inl=[];
   let out=src.replace(/```([\w+#.-]*)[ \t]*\n?([\s\S]*?)```/g,(_,lang,code)=>{
     blocks.push({lang:lang||'text',code:code.replace(/\n$/,'')});
-    return `\u2063MB${blocks.length-1}\u2063`;
+    return `${MB}${blocks.length-1}\u2063`;
   });
-  out=out.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  out=out.replace(/`([^`\n]+)`/g,(_,c)=>{inl.push(c);return `\u2063IC${inl.length-1}\u2063`;});
+  out=out.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  out=out.replace(/`([^`\n]+)`/g,(_,c)=>{inl.push(c);return `${IC}${inl.length-1}\u2063`;});
   out=out.replace(/\*\*(?=\S)([^*\n]*?\S)\*\*/g,'<strong>$1</strong>');
   out=out.replace(/(^|[^*\w])\*(?=\S)([^*\n]*?\S)\*(?![*\w])/g,'$1<em>$2</em>');
   out=out.replace(/(?:^|\n)((?:\|.+\|[ \t]*(?:\n|$)){2,})/g,(m,b)=>{
@@ -220,7 +222,10 @@ function md(text){
   out=out.replace(/^### (.+)$/gm,'<h3>$1</h3>');
   out=out.replace(/^## (.+)$/gm,'<h2>$1</h2>');
   out=out.replace(/^# (.+)$/gm,'<h1>$1</h1>');
-  out=out.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)"']+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  out=out.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)"'\u2063]+)\)/g,(_,label,href)=>{
+    try{const u=new URL(href);if(u.protocol!=='http:'&&u.protocol!=='https:')return label;}catch{return label;}
+    return `<a href="${escAttr(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+  });
   out=out.replace(/(?:^|\n)((?:[-•*] .+(?:\n|$))+)/g,(_,b)=>{
     const items=b.trim().split('\n').map(l=>`<li>${l.replace(/^[-•*]\s+/,'')}</li>`).join('');
     return '\n<ul>'+items+'</ul>';
@@ -229,14 +234,18 @@ function md(text){
     const items=b.trim().split('\n').map(l=>`<li>${l.replace(/^[\d۰-۹]+[.)]\s+/,'')}</li>`).join('');
     return '\n<ol>'+items+'</ol>';
   });
-  out=out.replace(/\s*(<\/?(?:ul|ol|h[1-3]|blockquote|table|hr)>|<div class="tbl-wrap">|<\/div>(?=\s*(?:<br>|$|\n)))\s*/g,'$1').replace(/\s*(\u2063MB\d+\u2063)\s*/g,'$1');
+  const mbRe=new RegExp(`\\s*(${MB}\\d+\\u2063)\\s*`,'g');
+  const icRe=new RegExp(`${IC}(\\d+)\\u2063`,'g');
+  const mbRepl=new RegExp(`${MB}(\\d+)\\u2063`,'g');
+  out=out.replace(/\s*(<\/?(?:ul|ol|h[1-3]|blockquote|table|hr)>|<div class="tbl-wrap">|<\/div>(?=\s*(?:<br>|$|\n)))\s*/g,'$1').replace(mbRe,'$1');
   out=out.replace(/\n/g,'<br>').replace(/^(?:<br>)+|(?:<br>)+$/g,'');
-  out=out.replace(/\u2063IC(\d+)\u2063/g,(_,i)=>`<code>${inl[+i]}</code>`);
-  out=out.replace(/\u2063MB(\d+)\u2063/g,(_,i)=>{
-    const {lang,code}=blocks[+i];
+  out=out.replace(icRe,(_,i)=>inl[+i]!==undefined?`<code>${inl[+i]}</code>`:'');
+  out=out.replace(mbRepl,(_,i)=>{
+    const blk=blocks[+i];if(!blk)return '';
+    const {lang,code}=blk;
     const safe=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const id='cb_'+Math.random().toString(36).slice(2,8);
-    return `<div class="code-block" data-codeblock="${id}"><div class="code-block__head"><span class="code-block__lang">${esc(lang)}</span><button type="button" class="code-block__copy" data-copy-code="${id}">Copy</button></div><pre><code class="language-${esc(lang)}">${safe}</code></pre></div>`;
+    return `<div class="code-block" data-codeblock="${id}"><div class="code-block__head"><span class="code-block__lang">${esc(lang)}</span><button type="button" class="code-block__copy" data-copy-code="${id}">${esc(t('msg.copy')||'Copy')}</button></div><pre><code class="language-${escAttr(lang)}">${safe}</code></pre></div>`;
   });
   return out;
 }
@@ -940,24 +949,23 @@ async function authCall(body){
 /* ─── اعتبارسنجی فرم ورود / ثبت نام ─── */
 const FA_DIGITS='۰۱۲۳۴۵۶۷۸۹',AR_DIGITS='٠١٢٣٤٥٦٧٨٩';
 const normDigits=v=>String(v||'').replace(/[۰-۹]/g,c=>FA_DIGITS.indexOf(c)).replace(/[٠-٩]/g,c=>AR_DIGITS.indexOf(c));
-const RX_USER=/^[A-Za-z][A-Za-z0-9_]{2,29}$/;
+const RX_USER=/^[A-Za-z0-9_.\-]{3,30}$/;
 const RX_PHONE=/^09\d{9}$/;
-const RX_GMAIL=/^[A-Za-z0-9][A-Za-z0-9.]{4,29}@gmail\.com$/i;
-function passChecks(p){return{len:p.length>=6,upper:/[A-Z]/.test(p),digit:/\d/.test(p),sym:p.length>0&&/^[A-Za-z0-9]+$/.test(p)};}
+const RX_EMAIL=/^[^\s@<>()]+@[^\s@<>()]+\.[^\s@<>()]{2,}$/;
+function passChecks(p){return{len:p.length>=8,upper:/[A-Z]/.test(p),digit:/\d/.test(p),sym:p.length>=8&&p.length<=100};}
 function passError(p){
-  if(/[^A-Za-z0-9]/.test(p))return t('auth.err.passSym');
   const c=passChecks(p);
+  if(!c.len)return t('auth.err.passLen');
   if(!c.upper)return t('auth.err.passUpper');
   if(!c.digit)return t('auth.err.passDigit');
-  if(!c.len)return t('auth.err.passLen');
   return '';
 }
 function authFieldError(input){
   const id=input.id,v=input.value.trim();
-  if(id==='auth-id'){const n=normDigits(v);return(RX_USER.test(v)||RX_PHONE.test(n))?'':t('auth.err.id');}
+  if(id==='auth-id'){const n=normDigits(v);return(RX_USER.test(v)||RX_EMAIL.test(v)||RX_PHONE.test(n))?'':t('auth.err.id');}
   if(id==='auth-username')return RX_USER.test(v)?'':t('auth.err.user');
-  if(id==='auth-phone')return RX_PHONE.test(normDigits(v))?'':t('auth.err.phone');
-  if(id==='auth-email')return RX_GMAIL.test(v)?'':t('auth.err.email');
+  if(id==='auth-phone')return (!v||RX_PHONE.test(normDigits(v)))?'':t('auth.err.phone');
+  if(id==='auth-email')return (v.length<=100&&RX_EMAIL.test(v))?'':t('auth.err.email');
   if(id==='auth-pass')return AUTH.mode==='register'?passError(input.value):(input.value?'':t('auth.fillAll'));
   return '';
 }
@@ -1010,7 +1018,13 @@ async function submitAuth(){
 }
 async function logout(){
   try{await authCall({action:'logout'});}catch{}
-  AUTH.user=null;updateAccountUI();toast(t('auth.bye'),'info');
+  AUTH.user=null;
+  S.chats=[];S.messages=[];S.chatId=null;
+  try{localStorage.removeItem('n_chats');}catch{}
+  if(typeof removeAttachment==='function')removeAttachment();
+  if(typeof renderList==='function')renderList();
+  if(typeof newChat==='function')newChat();
+  updateAccountUI();toast(t('auth.bye'),'info');
 }
 async function initAuth(){
   document.addEventListener('click',e=>{
@@ -1566,7 +1580,7 @@ function maybeInsertDayDivider(){
 }
 async function callAPI(att){
   S.abort=new AbortController();
-  let timedOut=false;
+  let timedOut=false,keepTimer=false;
   const timer=setTimeout(()=>{timedOut=true;try{S.abort.abort();}catch{}},FETCH_TIMEOUT);
   const trimmed=S.messages.slice(-MAX_CTX);
   const messages=[];
@@ -1590,6 +1604,7 @@ async function callAPI(att){
       const e=new Error(sm||`Server error (${res.status})`);if(j.error==='busy'){e.name='BusyError';e.lead=!!j.lead;}throw e;}
     // پاسخ جریانی (SSE) فقط وقتی مدل صدا زده شده؛ کش/FAQ همان JSON است
     if((res.headers.get('content-type')||'').includes('text/event-stream')&&res.body){
+      keepTimer=true;
       return {stream:res.body,clear:()=>clearTimeout(timer)};
     }
     const data=await res.json();
@@ -1598,7 +1613,7 @@ async function callAPI(att){
   }catch(err){
     if(timedOut){const e=new Error('timeout');e.name='TimeoutError';throw e;}
     throw err;
-  }finally{clearTimeout(timer);}
+  }finally{if(!keepTimer)clearTimeout(timer);}
 }
 const STREAM_OK=typeof ReadableStream!=='undefined'&&typeof TextDecoder!=='undefined';
 // خواندن SSE و نمایش تدریجی در یک حباب تازه؛ خروجی: {reply,sig,cid,lead}
@@ -1611,10 +1626,11 @@ async function consumeStream(body,mid,stale){
   if(actions)actions.style.opacity='0';
   const cursor=document.createElement('span');cursor.className='typewriter-cursor';
   const reader=body.getReader(),dec=new TextDecoder();
-  let buf='',text='',final=null,lastRender=0,pending=false;
+  let buf='',text='',final=null,lastRender=0,pending=false,renderTimer=null,finished=false;
   const render=(force)=>{
+    if(finished||stale())return;
     const now=performance.now();
-    if(!force&&now-lastRender<60){if(!pending){pending=true;setTimeout(()=>{pending=false;render(true);},60);}return;}
+    if(!force&&now-lastRender<60){if(!pending){pending=true;renderTimer=setTimeout(()=>{renderTimer=null;pending=false;if(!finished&&!stale())render(true);},60);}return;}
     lastRender=now;
     let t=text;if((t.match(/```/g)||[]).length%2)t+='\n```';
     bubble.innerHTML=md(t);bubble.appendChild(cursor);
@@ -1636,7 +1652,8 @@ async function consumeStream(body,mid,stale){
         else if(ev.error){group.remove();throw new Error(ev.message||ev.error);}
       }
     }
-  }catch(e){if(e.name==='AbortError'&&text){final={reply:text,sig:'',cid:''};}else{group.remove();throw e;}}
+  }catch(e){finished=true;clearTimeout(renderTimer);if(e.name==='AbortError'&&text){final={reply:text,sig:'',cid:''};}else{group.remove();throw e;}}
+  finally{finished=true;clearTimeout(renderTimer);}
   if(!final){if(!text){group.remove();throw new Error('Empty reply');}final={reply:text,sig:'',cid:''};}
   bubble.innerHTML=md(final.reply);
   group.dataset.cid=final.cid||'';
@@ -1839,7 +1856,7 @@ const Voice={
     rec.onstart=()=>this.setUI(true);
     rec.onresult=e=>{gotResult=true;const tr=Array.from(e.results).map(r=>r[0].transcript).join('');el.input.value=tr;autoResize();updateSend();};
     rec.onerror=e=>{
-      if(!gotResult&&e.error!=='aborted'&&e.error!=='no-speech'){
+      if(!gotResult&&e.error!=='aborted'&&e.error!=='no-speech'&&e.error!=='not-allowed'&&e.error!=='service-not-allowed'){
         this.stopSR();this.setUI(false);
         if(navigator.mediaDevices?.getUserMedia&&!this.starting){
           this.starting=true;toast(t('toast.srFallback'),'info');this.mode='mr';
@@ -1883,6 +1900,7 @@ const Voice={
   async startMR(){
     try{this.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}
     catch{return toast(t('toast.micDenied'),'error');}
+    if(this.cancelled){this.cleanupMR();this.cancelled=false;return;}
     const mime=this.pickMime();
     if(mime===null){this.cleanupMR();return toast(t('toast.recNotSupported'),'warning');}
     this.chunks=[];
@@ -1912,23 +1930,25 @@ const Voice={
     btn.disabled=true;
     btn.innerHTML=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-9-9"/></svg>`;
     inputEl.dataset.prevPHKey='input.placeholder';
+    if(blob.size>2.5*1024*1024){btn.disabled=false;btn.innerHTML=oldHTML;toast(t('toast.fileTooBig'),'error');return;}
+    const prevValue=inputEl.value;
     inputEl.placeholder=t('toast.processingVoice');
-    inputEl.value='';inputEl.disabled=true;
+    inputEl.disabled=true;
     el.composer?.classList.add('voice-processing');
     toast(t('toast.transcribing'),'info');
     try{
       const res=await fetch('/api/transcribe?lang='+encodeURIComponent(S.lang),{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:blob});
-      if(!res.ok)throw new Error(`Server error (${res.status})`);
-      const data=await res.json();
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok)throw new Error(data.message||`Server error (${res.status})`);
       const text=(data.text||'').trim();
-      if(!text){toast(t('toast.recNothing'),'warning');return;}
-      inputEl.value=text;
+      if(!text){inputEl.value=prevValue;toast(t('toast.recNothing'),'warning');return;}
+      inputEl.value=prevValue?(prevValue.trim()+' '+text):text;
       autoResize();updateSend();
       toast(t('toast.recAdded'),'success');
       if(S.autoSendVoice){
         setTimeout(()=>{if(!S.generating&&(el.input.value.trim()||S.attachment))el.form.requestSubmit();},500);
       }else inputEl.focus();
-    }catch(e){console.error(e);toast(t('toast.recError'),'error');}
+    }catch(e){inputEl.value=prevValue;console.error(e);toast(e&&e.message&&!/^Server error/.test(e.message)?e.message:t('toast.recError'),'error');}
     finally{
       btn.disabled=false;
       btn.innerHTML=oldHTML;

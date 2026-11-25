@@ -87,10 +87,7 @@ function readToken(req) {
 }
 
 function ipHash(req) {
-  const headers = req.headers || {};
-  const remote = process.env.VERCEL === '1' && headers['x-vercel-forwarded-for']
-    ? String(headers['x-vercel-forwarded-for']).split(',')[0].trim()
-    : String((req.socket && req.socket.remoteAddress) || 'unknown');
+  const remote = require('../lib/common').ipOf(req);
   const pepper = process.env.CHAT_SIGNING_SECRET || process.env.KV_REST_API_TOKEN || 'nooka-admin-ip-v1';
   return crypto.createHmac('sha256', pepper).update(remote).digest('hex').slice(0, 24);
 }
@@ -126,7 +123,7 @@ async function allAccounts(store, env = process.env) {
       const u = JSON.parse(flat[i + 1]);
       if (!u || u.active === false || !u.email || !u.key || !/^scrypt\$[a-f0-9]{32}\$[a-f0-9]{128}$/i.test(u.passwordHash || '')) continue;
       if (!Array.isArray(u.views) || accounts.some(a => a.email === u.email)) continue;
-      accounts.push({ key: u.key, role: 'Admin', email: String(u.email).toLowerCase(), name: String(u.name || 'ادمین').slice(0, 80), passwordHash: u.passwordHash, views: u.views.filter(v => ROLE_VIEWS.super.includes(v) && v !== 'admins') });
+      accounts.push({ key: u.key, role: 'Admin', email: String(u.email).toLowerCase(), name: String(u.name || 'ادمین').slice(0, 80), passwordHash: u.passwordHash, sessionVersion: Number(u.sessionVersion) || 0, views: u.views.filter(v => ROLE_VIEWS.super.includes(v) && v !== 'admins') });
     } catch {}
   }
   return accounts;
@@ -137,6 +134,11 @@ function credentialFingerprint(account) { return crypto.createHash('sha256').upd
 async function resolveSession(req, store = defaultStore, env = process.env) {
   const token = readToken(req);
   if (!token || !/^[A-Za-z0-9_-]{40,60}$/.test(token)) return null;
+  if (store === defaultStore && require('../lib/db').enabled()) {
+    const ctx = await require('../lib/admin-store').sessionContext(token);
+    if (!ctx) return null;
+    return { token, account: ctx.admin, dbCtx: ctx };
+  }
   const result = await store.exec([['GET', sessionKey(token)]]);
   if (!result) throw new Error('session store unavailable');
   if (typeof result[0] !== 'string') return null;
@@ -157,7 +159,12 @@ function createHandler(deps = {}) {
 
   async function getSession(req) { return resolveSession(req, store, env); }
 
+  let dbHandler = null;
   return async function adminAuth(req, res) {
+    if (!deps.kv && require('../lib/db').enabled()) {
+      if (!dbHandler) dbHandler = require('../lib/admin-db-auth').createDbHandler();
+      return dbHandler(req, res);
+    }
     res.setHeader('Cache-Control', 'private, no-store, max-age=0');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -186,6 +193,7 @@ function createHandler(deps = {}) {
     if (!store.remote) return res.status(503).json({ error: 'session_store_unavailable' });
 
     const body = parseBody(req.body);
+    try { if (Buffer.byteLength(JSON.stringify(body)) > 8192) return res.status(413).json({ error: 'payload_too_large' }); } catch { return res.status(400).json({ error: 'invalid_action' }); }
     if (body.action === 'logout') {
       const token = readToken(req);
       if (token && /^[A-Za-z0-9_-]{40,60}$/.test(token)) {

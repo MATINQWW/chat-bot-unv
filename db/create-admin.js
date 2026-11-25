@@ -33,19 +33,21 @@ function askHidden(prompt) {
   const name = arg('name', null);
   if (!/^[a-z0-9_.-]{3,40}$/.test(username)) throw new Error('--username باید ۳ تا ۴۰ نویسهٔ a-z 0-9 _ . - باشد');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new Error('--email معتبر نیست');
-  if (!process.env.MYSQL_URL) throw new Error('MYSQL_URL تنظیم نشده');
+  const dbUrl = process.env.NOOKA_DB_URL || process.env.MYSQL_URL;
+  if (!dbUrl) throw new Error('NOOKA_DB_URL (یا MYSQL_URL) تنظیم نشده');
 
   const generated = process.argv.includes('--generate');
   const password = generated
     ? crypto.randomBytes(18).toString('base64url')           // ۲۴ نویسه
     : (process.env.NOOKA_NEW_ADMIN_PASSWORD || await askHidden('رمز عبور (حداقل ۱۲ نویسه): '));
-  if (typeof password !== 'string' || password.length < 12 || password.length > 1024) {
-    throw new Error('رمز باید بین ۱۲ تا ۱۰۲۴ نویسه باشد');
-  }
+  const { checkPolicy } = require('../lib/password');
+  const policyErr = checkPolicy(password, { username, email, minLength: 12 });
+  if (policyErr) throw new Error('رمز عبور سیاست امنیتی را رعایت نمی‌کند: ' + policyErr);
   const hash = await argon2.hash(password, { type: argon2.argon2id, memoryCost: 65536, timeCost: 3, parallelism: 1 });
 
-  const db = await mysql.createConnection(process.env.MYSQL_URL);
+  const db = await mysql.createConnection({ uri: dbUrl, timezone: '+03:30', charset: 'utf8mb4' });
   try {
+    await db.query('CALL sp_assert_time_zone()').catch(() => {});
     await db.beginTransaction();
     const [r] = await db.execute(
       `INSERT INTO admin_users (username, email, display_name, password_hash, must_change_password)

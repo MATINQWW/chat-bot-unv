@@ -23,7 +23,7 @@ async function readBody(req) {
 
 module.exports = async (req, res) => {
   baseHeaders(res);
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).end(); }
   if (!originAllowed(req)) return res.status(403).json({ error: 'forbidden' });
   const T = require('../config').transcribe || {};
   if (!T.url || !process.env.TRANSCRIBE_API_KEY) {
@@ -34,7 +34,8 @@ module.exports = async (req, res) => {
   if (len > MAX_BYTES) return res.status(413).json({ error: 'too_large' });
   try {
     const buf = await readBody(req);
-    if (!buf || !buf.length || buf.length > MAX_BYTES) return res.status(413).json({ error: 'too_large' });
+    if (!buf || buf.length > MAX_BYTES) return res.status(413).json({ error: 'too_large' });
+    if (!buf.length) return res.status(400).json({ error: 'empty_audio' });
     const kind = kindOf(buf);
     if (!kind) return res.status(415).json({ error: 'unsupported_audio' });
     const lang = String((req.query && req.query.lang) || 'fa').slice(0, 2);
@@ -50,5 +51,9 @@ module.exports = async (req, res) => {
     if (!r.ok) { console.error('stt upstream', r.status); return res.status(502).json({ error: 'stt_failed' }); }
     const j = await r.json();
     return res.status(200).json({ text: String(j.text || '').slice(0, 1000) });
-  } catch (e) { console.error('stt', e && e.message); return res.status(500).json({ error: 'server_error' }); }
+  } catch (e) {
+    console.error('stt', e && e.message);
+    if (e && (e.name === 'TimeoutError' || /timeout/i.test(String(e.message)))) return res.status(504).json({ error: 'stt_timeout' });
+    return res.status(500).json({ error: 'server_error' });
+  }
 };

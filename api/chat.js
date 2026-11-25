@@ -201,10 +201,11 @@ module.exports = async (req, res) => {
     // آخرین پیام کاربر برای سؤال/کش: با سقف هم‌اندازهٔ ورودی (نه سقف کوچک بودجه)
     const question0 = fullMessages[fullMessages.length - 1].content;
     const question = question0.slice(0, 500);
+    const safeSign = (txt) => { try { return sign(txt); } catch { return ''; } };
     const wantStream = body.stream === true && C.llm.stream !== false;
-    BUDGETS[0].knowledge = C.llm.knowledgeChars || 1800; BUDGETS[0].maxTokens = C.llm.maxTokens || 800;
+    const activeBudgets = BUDGETS.map((b, i) => i === 0 ? { ...b, knowledge: C.llm.knowledgeChars || 1800, maxTokens: C.llm.maxTokens || 800 } : b);
     const shape = (b) => {
-      const B = BUDGETS[b];
+      const B = activeBudgets[b];
       const prior = fullMessages.slice(0, -1);
       const prevQs = B.prevQ > 0
         ? prior.filter(m => m.role === 'user').slice(-B.prevQ).map(m => m.content.slice(0, B.qChars).replace(/\s+/g, ' '))
@@ -242,7 +243,7 @@ module.exports = async (req, res) => {
     // احوالپرسی و تشکر کوتاه خارج از دسته‌بندی موضوعی، اما مجاز است.
     if (!att) {
       const st = smallTalk(question);
-      if (st) { await report.record(kv, { info, source: 'smalltalk' }); return res.status(200).json({ reply: st, sig: sign(st), cid: '', cached: 'smalltalk', lead: false }); }
+      if (st) { await report.record(kv, { info, source: 'smalltalk' }); return res.status(200).json({ reply: st, sig: safeSign(st), cid: '', cached: 'smalltalk', lead: false }); }
     }
 
     const priorContext = fullMessages.slice(0, -1).filter(m => m.role === 'user').slice(-2).map(m => m.content).join('\n');
@@ -251,7 +252,7 @@ module.exports = async (req, res) => {
     if (intent.mode === 'out_of_scope') {
       const reply = 'من دستیار مشاوره تحصیلی نوکا هستم و فقط در زمینه انتخاب رشته، معرفی رشته‌ها، تحصیل، امور دانشگاهی و مسیر شغلی مرتبط با رشته‌های دانشگاهی می‌توانم راهنمایی‌تان کنم. اگر درباره این موضوعات سؤالی دارید، خوشحال می‌شوم کمک کنم.';
       await report.record(kv, { info, source: 'out_of_scope' });
-      return res.status(200).json({ reply, sig: sign(reply), cid: '', cached: 'scope', lead: false });
+      return res.status(200).json({ reply, sig: safeSign(reply), cid: '', cached: 'scope', lead: false });
     }
 
     // ─── ۰) FAQ آماده: صفر توکن، بدون شبکه ───
@@ -259,7 +260,7 @@ module.exports = async (req, res) => {
       const faq = faqAnswer(question);
       if (faq) {
         await report.record(kv, { info, source: 'faq', chunks: faq.id ? [faq.id] : [] });
-        return res.status(200).json({ reply: faq.answer, sig: sign(faq.answer), cid: '', cached: 'faq', lead: offerLead(faq.answer) });
+        return res.status(200).json({ reply: faq.answer, sig: safeSign(faq.answer), cid: '', cached: 'faq', lead: offerLead(faq.answer, intent.mode) });
       }
     }
 
@@ -306,12 +307,13 @@ module.exports = async (req, res) => {
 
     // بازیابی یک‌بار (Vector یک درخواست شبکه است)؛ در بودجه‌های کوچک‌تر فقط برش داده می‌شود
     // برای سؤال‌های پیگیری کوتاه («بازار کارش چطوره؟») سؤال قبلی کاربر هم به جست‌وجو اضافه می‌شود
-    const prevUser = fullMessages.length > 2 ? fullMessages[fullMessages.length - 3].content.slice(0, 200) : '';
+    const priorUsersAll = fullMessages.slice(0, -1).filter(m => m.role === 'user');
+    const prevUser = priorUsersAll.length ? priorUsersAll[priorUsersAll.length - 1].content.slice(0, 200) : '';
     const searchQ = (prevUser && (info.deictic || question.length < 40)) ? prevUser + '\n' + question : question;
     // در سؤال عمومی، RAG دانشگاه فقط نویز و توکن اضافه می‌سازد؛ منبع رسمی فقط برای university/mixed لازم است.
     const r0 = intent.mode === 'general'
       ? { text: '', ids: [], topScore: 0, viaVector: false }
-      : await retrieveKnowledge(searchQ, BUDGETS[0].knowledge);
+      : await retrieveKnowledge(searchQ, activeBudgets[0].knowledge);
     topScore = r0.topScore;
     const cut = (limit) => {
       const parts = r0.text ? r0.text.split('\n\n---\n\n') : [];
@@ -323,7 +325,7 @@ module.exports = async (req, res) => {
     let completion, streamed = false, release = () => {};
     try {
       const generalMode = intent.mode === 'general';
-      const plans = generalMode ? GENERAL_BUDGETS : BUDGETS;
+      const plans = generalMode ? GENERAL_BUDGETS : activeBudgets;
       for (let b = 0; b < plans.length; b++) {
         const plan = plans[b];
         knowledge = generalMode ? '' : (b === 0 ? r0.text : cut(plan.knowledge));
@@ -395,8 +397,10 @@ module.exports = async (req, res) => {
 
     let reply = '', finish = null, usage = null;
     const EMPTY = 'پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.';
+    let clientClosed = false;
+    if (typeof res.on === 'function') res.on('close', () => { clientClosed = true; });
     // SSE: «data: {"d":"تکه"}» … و در پایان «data: {"done":true,reply,sig,cid,lead}» یا «data: {"error":..}»
-    const sse = (o) => res.write('data: ' + JSON.stringify(o) + '\n\n');
+    const sse = (o) => { if (!clientClosed && !res.writableEnded) res.write('data: ' + JSON.stringify(o) + '\n\n'); };
     if (wantStream) {
       res.statusCode = 200;
       res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -406,6 +410,7 @@ module.exports = async (req, res) => {
         // سرویسی که stream ندارد: پاسخ کامل را یک‌جا به‌عنوان یک تکه بفرست
         const chunks = streamed ? completion : [{ choices: [{ delta: { content: completion.choices && completion.choices[0] && completion.choices[0].message && completion.choices[0].message.content }, finish_reason: completion.choices && completion.choices[0] && completion.choices[0].finish_reason }], usage: completion.usage }];
         for await (const ch of chunks) {
+          if (clientClosed) break;
           const c = ch && ch.choices && ch.choices[0];
           const d = c && c.delta && c.delta.content;
           if (d) { reply += d; sse({ d }); }
@@ -417,6 +422,7 @@ module.exports = async (req, res) => {
         if (!reply) { sse({ error: 'model_error', message: 'خطایی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.' }); return res.end(); }
         finish = 'length'; // پاسخ ناقص: نمایش داده می‌شود ولی در حافظه ذخیره نمی‌شود
       } finally { release(); }
+      if (clientClosed) return res.end();
       reply = reply.trim();
       if (!reply) { console.error('empty reply from model (stream)', finish); sse({ error: 'empty_reply', message: EMPTY }); return res.end(); }
     } else {
@@ -434,7 +440,7 @@ module.exports = async (req, res) => {
     // اگر مدل پاسخ را به‌علت سقف توکن قطع کرد، یک ادامهٔ کوچک می‌گیریم.
     // این درخواست فقط انتهای پاسخ را می‌فرستد؛ بنابراین راه‌حل 413 به Context بزرگ‌تر وابسته نیست.
     let truncated = false;
-    if (isLengthFinish(finish)) {
+    if (isLengthFinish(finish) && !clientClosed) {
       const extra = await continueTruncatedReply({
         reply, question: question0.slice(0, 500), langHint,
         stream: wantStream, idempotencyKey,
@@ -442,8 +448,9 @@ module.exports = async (req, res) => {
       if (extra.text) {
         const delta = continuationDelta(reply, extra.text);
         if (delta) {
-          reply += (reply && !/[\s\n]$/.test(reply) && !/^[،؛.!?؟]/.test(delta) ? '\n' : '') + delta;
-          if (wantStream) sse({ d: delta });
+          const sep = (reply && !/[\s\n]$/.test(reply) && !/^[،؛.!?؟]/.test(delta)) ? '\n' : '';
+          reply += sep + delta;
+          if (wantStream) sse({ d: sep + delta });
         }
         finish = extra.finish;
       }

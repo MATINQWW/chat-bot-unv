@@ -7,11 +7,12 @@
 --  بدون هیچ دسترسی مستقیم می‌تواند از طریق آن‌ها لاگ ممیزی و نسخهٔ تنظیمات بنویسد.
 -- =====================================================================
 
+-- ترتیب اجرا: 01_schema.sql ← 03_chatbot_full_schema.sql ← 02_grants.sql
 -- ۱) کاربر برنامه (Node / پنل ادمین)
 CREATE USER IF NOT EXISTS 'nooka_app'@'localhost' IDENTIFIED BY '<<APP_PASSWORD>>';
 
 -- جدول‌های عملیاتی: خواندن/نوشتن کامل
-GRANT SELECT, INSERT, UPDATE, DELETE ON nooka.admin_users        TO 'nooka_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE         ON nooka.admin_users        TO 'nooka_app'@'localhost';
 GRANT SELECT, INSERT, UPDATE, DELETE ON nooka.admin_user_roles   TO 'nooka_app'@'localhost';
 GRANT SELECT, INSERT, UPDATE, DELETE ON nooka.admin_sessions     TO 'nooka_app'@'localhost';
 GRANT SELECT, INSERT, UPDATE, DELETE ON nooka.admin_api_tokens   TO 'nooka_app'@'localhost';
@@ -30,6 +31,16 @@ GRANT SELECT, INSERT, UPDATE         ON nooka.daily_error_stats  TO 'nooka_app'@
 GRANT SELECT, INSERT, UPDATE         ON nooka.daily_counters     TO 'nooka_app'@'localhost';
 GRANT SELECT, INSERT                 ON nooka.chat_requests      TO 'nooka_app'@'localhost';  -- حذف با رویداد سرور
 GRANT SELECT, INSERT                 ON nooka.knowledge_revisions TO 'nooka_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON nooka.end_user_sessions   TO 'nooka_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON nooka.user_auth_tokens    TO 'nooka_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON nooka.conversations       TO 'nooka_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON nooka.chat_messages       TO 'nooka_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE         ON nooka.knowledge_chunks    TO 'nooka_app'@'localhost';
+GRANT SELECT, INSERT                 ON nooka.knowledge_chunk_versions TO 'nooka_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON nooka.learned_answers     TO 'nooka_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON nooka.question_clusters   TO 'nooka_app'@'localhost';
+GRANT SELECT, INSERT                 ON nooka.llm_provider_usage  TO 'nooka_app'@'localhost';
+GRANT SELECT                         ON nooka.v_knowledge_unsynced TO 'nooka_app'@'localhost';
 
 -- مرجع‌ها: فقط خواندن (تغییر نقش/دسترسی از مسیر مهاجرت کنترل‌شده)
 GRANT SELECT ON nooka.roles            TO 'nooka_app'@'localhost';
@@ -62,6 +73,8 @@ GRANT SELECT ON nooka.daily_counters     TO 'nooka_report'@'localhost';
 GRANT SELECT ON nooka.answer_sources     TO 'nooka_report'@'localhost';
 GRANT SELECT ON nooka.chat_requests      TO 'nooka_report'@'localhost';
 GRANT SELECT ON nooka.vector_snapshots   TO 'nooka_report'@'localhost';
+GRANT SELECT ON nooka.llm_provider_usage TO 'nooka_report'@'localhost';
+GRANT SELECT ON nooka.question_clusters  TO 'nooka_report'@'localhost';
 
 -- ۳) کاربر مهاجرت (فقط هنگام ارتقای اسکیما استفاده و بعد غیرفعال/قطع شود)
 CREATE USER IF NOT EXISTS 'nooka_migrator'@'localhost' IDENTIFIED BY '<<MIGRATOR_PASSWORD>>';

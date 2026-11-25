@@ -3,7 +3,7 @@
   "version": "1.6.15",
   "private": true,
   "engines": {
-    "node": "26.x"
+    "node": ">=20.12.0"
   },
   "scripts": {
     "test": "node test/smoke.js && node test/answer-policy.js",
@@ -24,6 +24,7 @@
     "@upstash/vector": "1.2.3",
     "mysql2": "3.24.6",
     "openai": "4.104.0",
-    "pdf-parse": "1.1.1"
+    "pdf-parse": "1.1.1",
+    "argon2": "0.45.2"
   }
 }

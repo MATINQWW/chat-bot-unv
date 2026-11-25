@@ -21,10 +21,13 @@ async function syncVector(chunk) {
     const { embedText } = require('../lib/knowledge');
     const data = embedText(chunk);
     const h = crypto.createHash('sha1').update(data).digest('hex').slice(0, 12);
-    await Promise.race([
-      idx.upsert([{ id: chunk.id, data, metadata: { h, type: chunk.type, title: chunk.title } }]),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000)),
-    ]);
+    let timer;
+    try {
+      await Promise.race([
+        idx.upsert([{ id: chunk.id, data, metadata: { h, type: chunk.type, title: chunk.title } }]),
+        new Promise((_, rej) => { timer = setTimeout(() => rej(new Error('timeout')), 6000); }),
+      ]);
+    } finally { clearTimeout(timer); }
     return 'synced';
   } catch { return 'failed'; }
 }
@@ -47,7 +50,7 @@ module.exports = async function adminKnowledge(req, res) {
   if (req.method === 'GET') {
     const ctx = await requireAdmin(req, res);
     if (!ctx) return;
-    if (!ctx.can('knowledge.view')) return deny(res, ctx, 'knowledge.update', 'knowledge.view');
+    if (!ctx.can('knowledge.view')) return deny(res, ctx, 'knowledge.view', 'knowledge.view');
     try {
       const id = query(req).get('id');
       return res.status(200).json(id ? store.get(id) : store.snapshot());

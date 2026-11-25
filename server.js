@@ -20,6 +20,8 @@ const MIME = {
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8',
 };
 const MAX_JSON = 4.5 * 1024 * 1024;
+const ROUTE_MAX_JSON = { chat: MAX_JSON, 'admin-knowledge': 128 * 1024 };
+const DEFAULT_MAX_JSON = 32 * 1024;
 
 const handlers = Object.create(null);
 const handler = name => handlers[name] || (handlers[name] = require(path.join(ROOT, 'api', name + '.js')));
@@ -34,12 +36,12 @@ function decorate(res) {
   return res;
 }
 
-async function readJson(req) {
+async function readJson(req, limit = DEFAULT_MAX_JSON) {
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > MAX_JSON) {
+    if (size > limit) {
       const error = new Error('payload too large');
       error.status = 413;
       throw error;
@@ -126,7 +128,12 @@ async function readiness() {
       storeReady = Array.isArray(probe);
     }
   }
-  return llmReady && storeReady;
+  let dbReady = true;
+  try {
+    const db = require('./lib/db');
+    if (db.enabled()) { await db.getPool().query('SELECT 1'); }
+  } catch { dbReady = false; }
+  return llmReady && storeReady && dbReady;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -163,8 +170,10 @@ const server = http.createServer(async (req, res) => {
       const name = apiMatch[1];
       if (!API.has(name)) return res.status(404).json({ error: 'not_found' });
       req.query = Object.fromEntries(url.searchParams);
-      // /api/transcribe consumes raw audio; all JSON methods (POST/PUT/PATCH/DELETE) are parsed.
-      if (!['GET', 'HEAD'].includes(req.method) && /application\/json/i.test(req.headers['content-type'] || '')) req.body = await readJson(req);
+      // /api/transcribe consumes raw audio; all JSON methods (POST/PUT/PATCH/DELETE) are parsed with per-route limits.
+      if (name !== 'transcribe' && !['GET', 'HEAD'].includes(req.method) && /application\/json/i.test(req.headers['content-type'] || '')) {
+        req.body = await readJson(req, ROUTE_MAX_JSON[name] || DEFAULT_MAX_JSON);
+      }
       else if (['GET', 'HEAD'].includes(req.method)) req.body = {};
       return await handler(name)(req, res);
     }
@@ -200,6 +209,8 @@ if (require.main === module) {
       try {
         const { kv } = require('./lib/common');
         if (typeof kv.end === 'function') await kv.end();
+        const db = require('./lib/db');
+        if (typeof db.closePool === 'function') await db.closePool();
       } catch (error) {
         console.error('shutdown cleanup failed:', error && (error.code || error.message));
       } finally {

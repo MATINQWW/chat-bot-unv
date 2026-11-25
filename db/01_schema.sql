@@ -174,6 +174,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   KEY ix_audit_time (occurred_at),
   KEY ix_audit_actor (actor_admin_id, occurred_at),
   KEY ix_audit_action (action_code, occurred_at),
+  KEY ix_audit_ratelimit_ip (action_code, ip_hash, occurred_at),
   KEY ix_audit_target (target_type, target_id),
   CONSTRAINT fk_audit_actor  FOREIGN KEY (actor_admin_id) REFERENCES admin_users (id) ON DELETE RESTRICT,
   CONSTRAINT fk_audit_action FOREIGN KEY (action_code)    REFERENCES audit_actions (code) ON DELETE RESTRICT
@@ -618,11 +619,12 @@ END$$
 DROP TRIGGER IF EXISTS audit_logs_bi$$
 CREATE TRIGGER audit_logs_bi BEFORE INSERT ON audit_logs FOR EACH ROW
 BEGIN
-  SET NEW.event_hash = UNHEX(SHA2(CONCAT_WS('|',
-        NEW.occurred_at, IFNULL(NEW.actor_admin_id,''), IFNULL(NEW.actor_label,''),
-        IFNULL(NEW.attempted_identifier_hash,''), NEW.action_code, NEW.outcome,
-        IFNULL(NEW.target_type,''), IFNULL(NEW.target_id,''), IFNULL(NEW.ip_hash,''),
-        IFNULL(CAST(NEW.details AS CHAR),'')), 256));
+  SET NEW.event_hash = UNHEX(SHA2(CAST(JSON_ARRAY(
+        DATE_FORMAT(NEW.occurred_at, '%Y-%m-%d %H:%i:%s.%f'),
+        NEW.actor_admin_id, NEW.actor_label, NEW.attempted_identifier_hash,
+        NEW.action_code, NEW.outcome, NEW.target_type, NEW.target_id,
+        NEW.session_id, NEW.ip_hash, NEW.user_agent, NEW.details
+      ) AS CHAR CHARACTER SET utf8mb4), 256));
 END$$
 DROP TRIGGER IF EXISTS audit_logs_bu$$
 CREATE TRIGGER audit_logs_bu BEFORE UPDATE ON audit_logs FOR EACH ROW
@@ -693,6 +695,11 @@ CREATE PROCEDURE sp_set_setting(IN p_key VARCHAR(100), IN p_value JSON, IN p_adm
                                 IN p_note VARCHAR(300), IN p_ip_hash VARCHAR(64))
 BEGIN
   DECLARE v_editable TINYINT(1);
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION
+  BEGIN
+    SET @app_admin_id = NULL, @app_change_note = NULL, @app_ip_hash = NULL;
+    RESIGNAL;
+  END;
   SELECT is_editable INTO v_editable FROM settings WHERE setting_key = p_key;
   IF v_editable IS NULL THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'unknown setting key';
@@ -749,7 +756,7 @@ BEGIN
   SELECT COALESCE(CAST(value_json AS UNSIGNED), 30) INTO v_days
     FROM settings WHERE setting_key = 'chat_requests.retention_days';
   REPEAT
-    DELETE FROM chat_requests WHERE created_at < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL v_days DAY) LIMIT 5000;
+    DELETE FROM chat_requests WHERE created_at < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL v_days DAY) ORDER BY created_at LIMIT 5000;
     SET v_loops = v_loops + 1;
   UNTIL ROW_COUNT() < 5000 OR v_loops >= 40 END REPEAT;
 END$$
@@ -758,7 +765,7 @@ END$$
 DROP PROCEDURE IF EXISTS sp_assert_time_zone$$
 CREATE PROCEDURE sp_assert_time_zone()
 BEGIN
-  IF TIMEDIFF(NOW(), UTC_TIMESTAMP()) <> '03:30:00' THEN
+  IF TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NOW()) <> 210 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'MySQL time zone must be +03:30 (Asia/Tehran); set default-time-zone in my.cnf';
   END IF;
 END$$
